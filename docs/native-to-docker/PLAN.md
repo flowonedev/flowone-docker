@@ -18,26 +18,29 @@ a later, optional phase.
 
 ## Todos / milestones
 
-- [ ] **Phase A — Foundations:** Lock decisions, stand up a private registry, create the
-  `docker/` tree, decide compose-templates-live-in-repo (not `blueprint_templates` DB), and
-  fix the multi-domain landmines (collab WS URL, OAuth + share/webhook flowone.pro origins,
-  OpenDMARC/OpenDKIM port drift, LiveKit ws_url empty/stunnel, turn.{domain} DNS seed, PHP 8.3 pin).
-- [ ] **Phase B — Author images:** Write multi-stage Dockerfiles per service (web=OLS+lsphp83
-  8.3, mariadb, redis, meilisearch, collab:1234, mailsync:1235, mail pod incl.
-  Rspamd/ClamAV/unbound:5335 + 8891/8893 milters, powerdns gmysql->mariadb, onlyoffice,
-  coturn/livekit), using `install-onlyoffice.sh` as the reference pattern.
-- [ ] **Phase B — Author compose:** Write the per-server `docker-compose.yml` (bridge vs host
-  networking, volumes, depends_on/health ordering) plus entrypoints that render config from a
-  per-host `.env`. Extend `email/docker-compose.local.yml` into a production-parity local stack
-  (8.3/OLS + MariaDB + collab + mailsync + mail pod).
+- [x] **Phase A — Foundations:** Multi-domain landmines fixed (collab WS URL, OAuth +
+  share/webhook flowone.pro origins, OpenDMARC/OpenDKIM port drift, LiveKit ws_url guard,
+  turn.{domain} DNS seed, PHP 8.3 pin) and the `docker/` tree created. Compose-templates-live-in-repo
+  decided (NOT `blueprint_templates` DB). Private registry deferred — building locally for now
+  (`REGISTRY`/`TAG` vars already in compose for when one exists).
+- [x] **Phase B — Author images:** Multi-stage Dockerfiles done + smoke-tested for the
+  bridge-net app tier: `web` (OLS+lsphp83 8.3, baked frontend dist + composer), `collab` (:1234),
+  `mailsync` (:1235); mariadb/redis/meilisearch use stock images. DEFERRED to Phase E (Linux box,
+  host networking unsupported on Docker Desktop/Windows): mail pod (Rspamd/ClamAV/unbound:5335 +
+  8891/8893 milters), powerdns gmysql, onlyoffice, coturn/livekit.
+- [x] **Phase B — Author compose:** Per-server `docker-compose.yml` written for the bridge tier
+  (mariadb, redis, meilisearch, web, collab, mailsync) with depends_on health ordering, named
+  volumes, shared `jwt_keys`, and `.env`-driven entrypoints. Boots clean locally end-to-end
+  (login verified against external IMAP). Host-net pods authored separately in Phase E.
 - [ ] **Phase C — Migration tooling:** Build snapshot/restore scripts (single mysqldump incl.
   per-site WordPress DBs + pdns gmysql tables, `/home/vmail` rsync, `/home/{domain}`, drive
   files, `/etc/letsencrypt`, DKIM keys, and the non-regenerable `/etc/flowone/*.key` + Fleet
   `encryption.key` + `IMAP_ENCRYPTION_KEY` + all `OAUTH_KEYS` versions + JWT PEMs) with a
   final-delta-sync mode.
-- [ ] **Phase C — Test suite:** Build the 3-layer server-side test suite (stack smoke,
-  functional e2e incl. client WP HTTP 200, old-vs-new parity) per the repo testing convention:
-  CLI flags, `[FLOWONE-TEST]` data, timeouts, timestamped logs, non-zero exit on failure.
+- [ ] **Phase C — Test suite:** 3-layer server-side suite. **Layer 1 (stack smoke) DONE** —
+  `email/backend/tests/docker-stack-smoke-test.php` (web->mariadb/redis/meili/collab/mailsync/imap,
+  schema/migrations, JWT/IMAP-key/OAuth canary), 16/16 green against the local stack. Layers 2
+  (functional e2e incl. client WP HTTP 200) and 3 (old-vs-new parity) pending the parallel box.
 - [ ] **Phase D — Fleet refactor:** Refactor the 8,354-line `ProvisioningService` from
   apt/systemctl steps to render `.env` + compose then `docker compose pull/up`; switch heartbeat
   health checks from `systemctl is-active` to `docker inspect` (reuse flowone-office pattern);

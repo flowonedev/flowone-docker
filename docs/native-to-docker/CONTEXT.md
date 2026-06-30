@@ -10,7 +10,30 @@
   (file: `c:\Users\KITCHEN\.cursor\plans\native_to_docker_transition_138837d6.plan.md`).
 - This repo (`flowonedev/flowone-docker`) is a fresh, single-commit baseline split off from the
   production `flowonedev/flowone` repo specifically for the Docker migration.
-- No Docker authoring started yet. **Next action = Milestone 1** (local stack boots + login).
+
+### Done so far
+
+- **Milestone 1 (local stack + login):** DONE. `email/docker-compose.local.yml` grown to
+  PHP 8.3 + OpenLiteSpeed/lsphp83 + MariaDB 10.11 (tmpfs for dev I/O) + Redis + Meilisearch +
+  Vite frontend + collab + mailsync. App opens locally and logs in against the dev mail server.
+- **Phase A landmine fixes:** DONE (collab WS URL, OAuth/share/webhook flowone.pro origins,
+  OpenDKIM 8891 / OpenDMARC 8893 port drift, LiveKit ws_url guard, turn.{domain} DNS seed).
+- **Phase B app tier:** DONE + smoke-tested. Production images `flowone-web` (multi-stage:
+  Vite build -> OLS/lsphp83 8.3 runtime, composer `--no-dev`, baked frontend), `flowone-collab`,
+  `flowone-mailsync`, plus `email/docker/docker-compose.yml` (bridge net: mariadb/redis/meili/
+  web/collab/mailsync). Full stack boots clean; login works end-to-end.
+- **Perf hardening:** MigrationService cross-worker `GET_LOCK` (no cold-start migration herd);
+  `SchemaGuard` gates ~44 services' per-request self-heal DDL behind a version marker
+  (`/api` ~16s -> ~15ms locally; web healthcheck passes).
+- **Phase C Layer 1:** DONE. `email/backend/tests/docker-stack-smoke-test.php` validates the
+  running stack's connectivity + schema + secrets (16/16 green).
+
+### Next action
+
+Continue Phase C: **migration tooling** (snapshot/restore) and the **Layer 2 functional e2e**
+suite. The remaining Phase B host-networking pods (mail, powerdns, coturn/livekit) and onlyoffice
+are authored + validated on the Linux box in Phase E — Docker Desktop on Windows can't run
+`network_mode: host` faithfully.
 
 ## Repo setup history (how this repo was created)
 
