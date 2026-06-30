@@ -19,7 +19,7 @@ class CrmSharingService
     {
         $this->config = $config;
         $this->db = \Webmail\Core\Database::getConnection($config);
-        $this->ensureTables();
+        \Webmail\Core\SchemaGuard::run(fn() => $this->ensureTables());
     }
 
     // =========================================================================

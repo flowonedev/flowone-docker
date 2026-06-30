@@ -22,7 +22,7 @@ class ContactsService
     {
         $this->db = $db;
         $this->config = $config;
-        $this->ensureTableExists();
+        \Webmail\Core\SchemaGuard::run(fn() => $this->ensureTableExists());
     }
 
     private function ensureTableExists(): void

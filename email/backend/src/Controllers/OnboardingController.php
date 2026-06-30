@@ -12,7 +12,7 @@ class OnboardingController extends BaseController
     public function __construct(array $config)
     {
         parent::__construct($config);
-        $this->ensureTable();
+        \Webmail\Core\SchemaGuard::run(fn() => $this->ensureTable());
     }
 
     /**

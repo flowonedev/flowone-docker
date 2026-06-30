@@ -23,7 +23,7 @@ class AddressBookService
     public function __construct(array $config)
     {
         $this->db = \Webmail\Core\Database::getConnection($config);
-        $this->ensureTablesExist();
+        \Webmail\Core\SchemaGuard::run(fn() => $this->ensureTablesExist());
     }
 
     private function ensureTablesExist(): void

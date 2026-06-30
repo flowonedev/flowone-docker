@@ -18,7 +18,7 @@ class CategoryService
     {
         $this->config = $config;
         $this->db = \Webmail\Core\Database::getConnection($config);
-        $this->ensureSchema();
+        \Webmail\Core\SchemaGuard::run(fn() => $this->ensureSchema());
 
         try {
             $this->redis = new \Webmail\Services\RedisCacheService($config);

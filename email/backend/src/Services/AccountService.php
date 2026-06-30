@@ -22,7 +22,7 @@ class AccountService
         $keySource = $imapKey ?: ($config['jwt']['secret'] ?? 'default_key');
         $this->encryptionKey = hash('sha256', $keySource, true);
         
-        $this->ensureTableExists();
+        \Webmail\Core\SchemaGuard::run(fn() => $this->ensureTableExists());
     }
     
     private function ensureTableExists(): void

@@ -99,6 +99,17 @@ class Database
     }
 
     /**
+     * Return the already-established shared connection without needing $config,
+     * or null if none has been created yet. Used by infrastructure helpers
+     * (e.g. SchemaGuard) that run inside a service that just opened the
+     * connection and so don't carry $config themselves.
+     */
+    public static function peek(): ?\PDO
+    {
+        return self::$instance;
+    }
+
+    /**
      * Close the shared connection (e.g. before a long-running operation).
      */
     public static function close(): void

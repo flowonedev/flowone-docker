@@ -30,7 +30,7 @@ class MicrosoftCalendarService
         
         $this->calendarService = new CalendarService($config);
         
-        $this->ensureTablesExist();
+        \Webmail\Core\SchemaGuard::run(fn() => $this->ensureTablesExist());
     }
     
     private function ensureTablesExist(): void

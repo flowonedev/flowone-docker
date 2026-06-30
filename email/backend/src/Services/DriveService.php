@@ -85,7 +85,7 @@ class DriveService
         // Storage path - now comes from StorageService (based on Panel config)
         $this->storagePath = $this->storage->getBasePath();
         
-        $this->ensureTablesExist();
+        \Webmail\Core\SchemaGuard::run(fn() => $this->ensureTablesExist());
     }
 
     /**

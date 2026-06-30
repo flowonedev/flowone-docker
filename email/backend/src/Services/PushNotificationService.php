@@ -24,7 +24,7 @@ class PushNotificationService
         
         $this->db = \Webmail\Core\Database::getConnection($config);
         
-        $this->ensureTableExists();
+        \Webmail\Core\SchemaGuard::run(fn() => $this->ensureTableExists());
         
         // Redis for syncing subscriptions to Node.js server
         try {

@@ -22,7 +22,7 @@ class MailingListService
         
         $this->db = \Webmail\Core\Database::getConnection($config);
         
-        $this->ensureTablesExist();
+        \Webmail\Core\SchemaGuard::run(fn() => $this->ensureTablesExist());
     }
     
     /**

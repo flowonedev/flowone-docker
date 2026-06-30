@@ -12,7 +12,7 @@ class EmailTemplateService
         $this->config = $config;
         $this->db = \Webmail\Core\Database::getConnection($config);
 
-        $this->ensureTableExists();
+        \Webmail\Core\SchemaGuard::run(fn() => $this->ensureTableExists());
     }
 
     private function ensureTableExists(): void

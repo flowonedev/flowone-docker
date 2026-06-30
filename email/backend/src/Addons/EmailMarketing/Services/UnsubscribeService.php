@@ -27,7 +27,7 @@ class UnsubscribeService
             $this->hmacSecret = hash('sha256', ($config['db']['name'] ?? 'webmail') . '-unsubscribe');
         }
         
-        $this->ensureTablesExist();
+        \Webmail\Core\SchemaGuard::run(fn() => $this->ensureTablesExist());
     }
     
     private function ensureTablesExist(): void

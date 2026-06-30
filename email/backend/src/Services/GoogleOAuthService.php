@@ -45,7 +45,7 @@ class GoogleOAuthService
         $this->tokenCache = $tokenCache ?? new OAuthTokenCache($config);
         $this->health = new OAuthHealthService($config, $this->tokenCache);
         
-        $this->ensureTableExists();
+        \Webmail\Core\SchemaGuard::run(fn() => $this->ensureTableExists());
     }
     
     private function ensureTableExists(): void

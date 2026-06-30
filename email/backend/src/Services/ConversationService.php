@@ -100,7 +100,7 @@ class ConversationService
         try {
             $this->db = \Webmail\Core\Database::getConnection($config);
             
-            $this->ensureTablesExist();
+            \Webmail\Core\SchemaGuard::run(fn() => $this->ensureTablesExist());
             
             // Initialize Redis cache (optional - degrades gracefully)
             try {

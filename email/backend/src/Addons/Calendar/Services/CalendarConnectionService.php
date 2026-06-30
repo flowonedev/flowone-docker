@@ -71,7 +71,7 @@ class CalendarConnectionService
         // CBC scheme, so we keep the in-line CBC fallback in decryptToken().
         $this->cryptor = new OAuthCryptor($config);
         
-        $this->ensureTablesExist();
+        \Webmail\Core\SchemaGuard::run(fn() => $this->ensureTablesExist());
     }
     
     private function ensureTablesExist(): void

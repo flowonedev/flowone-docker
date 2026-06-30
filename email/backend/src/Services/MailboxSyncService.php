@@ -81,7 +81,7 @@ final class MailboxSyncService
         $this->folderIndex = $folderIndex ?? new FolderIndexService($config);
         $this->cache       = $cache;
 
-        $this->ensureTableExists();
+        \Webmail\Core\SchemaGuard::run(fn() => $this->ensureTableExists());
     }
 
     /**

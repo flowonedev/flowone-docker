@@ -15,7 +15,7 @@ class CalendarInviteService
         $this->db = $db;
         $this->config = $config;
         $this->smtp = new SmtpService($config['smtp'] ?? []);
-        $this->ensureTablesExist();
+        \Webmail\Core\SchemaGuard::run(fn() => $this->ensureTablesExist());
     }
     
     /**

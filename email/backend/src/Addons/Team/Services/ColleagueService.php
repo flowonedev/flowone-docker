@@ -27,8 +27,8 @@ class ColleagueService
         // Main app database (also contains mail_accounts table from Dovecot)
         $this->db = \Webmail\Core\Database::getConnection($config);
         
-        // Ensure tables exist
-        $this->ensureTablesExist();
+        // Ensure tables exist (gated to once per code version, not per request)
+        \Webmail\Core\SchemaGuard::run(fn() => $this->ensureTablesExist());
         
         // Redis for broadcasting (optional - catches both Exception and Error)
         try {

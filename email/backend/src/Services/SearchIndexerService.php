@@ -47,7 +47,7 @@ class SearchIndexerService
         // Initialize Meilisearch service if configured
         $this->initMeilisearch();
         
-        $this->ensureTableExists();
+        \Webmail\Core\SchemaGuard::run(fn() => $this->ensureTableExists());
     }
     
     /**

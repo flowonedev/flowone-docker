@@ -92,8 +92,8 @@ class ChatService
         
         $this->db = \Webmail\Core\Database::getConnection($config);
         
-        // Ensure tables exist
-        $this->ensureTablesExist();
+        // Ensure tables exist (gated to once per code version, not per request)
+        \Webmail\Core\SchemaGuard::run(fn() => $this->ensureTablesExist());
         
         // Redis for real-time events (optional)
         try {

@@ -31,7 +31,7 @@ class ReactionService
         try {
             $this->db = \Webmail\Core\Database::getConnection($config);
             
-            $this->ensureTableExists();
+            \Webmail\Core\SchemaGuard::run(fn() => $this->ensureTableExists());
         } catch (\PDOException $e) {
             error_log("ReactionService DB connection error: " . $e->getMessage());
             throw $e;

@@ -15,7 +15,7 @@ class ProjectHubService
         $this->config = $config;
         $this->logFile = __DIR__ . '/../../../../storage/project-hub.log';
         $this->db = \Webmail\Core\Database::getConnection($config);
-        $this->ensureTablesExist();
+        \Webmail\Core\SchemaGuard::run(fn() => $this->ensureTablesExist());
     }
 
     public function getDb(): PDO

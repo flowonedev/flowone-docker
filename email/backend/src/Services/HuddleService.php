@@ -11,7 +11,7 @@ class HuddleService
     public function __construct(PDO $db)
     {
         $this->db = $db;
-        $this->ensureTables();
+        \Webmail\Core\SchemaGuard::run(fn() => $this->ensureTables());
     }
 
     private function ensureTables(): void

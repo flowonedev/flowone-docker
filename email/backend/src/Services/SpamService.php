@@ -29,7 +29,7 @@ class SpamService
         try {
             $this->db = \Webmail\Core\Database::getConnection($this->config);
             
-            $this->ensureTablesExist();
+            \Webmail\Core\SchemaGuard::run(fn() => $this->ensureTablesExist());
             $this->initialized = true;
         } catch (\PDOException $e) {
             error_log("SpamService database connection error: " . $e->getMessage());

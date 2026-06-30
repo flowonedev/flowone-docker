@@ -34,7 +34,7 @@ class GoogleCalendarService
         $this->calendarConnectionService = new CalendarConnectionService($config);
         $this->calendarService = new CalendarService($config);
         
-        $this->ensureTableExists();
+        \Webmail\Core\SchemaGuard::run(fn() => $this->ensureTableExists());
     }
     
     private function ensureTableExists(): void

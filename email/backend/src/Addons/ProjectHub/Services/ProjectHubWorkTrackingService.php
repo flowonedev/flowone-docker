@@ -15,7 +15,7 @@ class ProjectHubWorkTrackingService
         $this->config = $config;
         $this->logFile = __DIR__ . '/../../../../storage/project-hub.log';
         $this->db = \Webmail\Core\Database::getConnection($config);
-        $this->ensureSchema();
+        \Webmail\Core\SchemaGuard::run(fn() => $this->ensureSchema());
     }
 
     private function ensureSchema(): void

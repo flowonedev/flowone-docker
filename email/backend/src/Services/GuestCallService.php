@@ -22,7 +22,7 @@ class GuestCallService
     {
         $this->config = $config;
         $this->db = \Webmail\Core\Database::getConnection($config);
-        $this->ensureTable();
+        \Webmail\Core\SchemaGuard::run(fn() => $this->ensureTable());
     }
 
     private function ensureTable(): void
