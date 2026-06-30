@@ -711,6 +711,7 @@ import { useColleaguesStore } from '@/addons/team/stores/colleagues'
 import { useToastStore } from '@/stores/toast'
 import { useAddons } from '@/composables/useAddons'
 import api from '@/services/api'
+import { getPublicOrigin } from '@/services/serverRegistry'
 
 const { kanbanBoardsEnabled } = useAddons()
 const props = defineProps({
@@ -756,10 +757,10 @@ const shareLinkCopied = ref(false)
 
 const shareUrl = computed(() => {
   if (!props.board.share_token) return ''
-  let base = window.location.origin
-  if (!base || base === 'null' || !base.startsWith('http')) {
-    base = 'https://flowone.pro'
-  }
+  // Derive from the active deployment origin (white-label safe; native-safe via
+  // serverRegistry) instead of a hardcoded flowone.pro host.
+  const base = getPublicOrigin()
+  if (!base) return ''
   return `${base}/mood/share/${props.board.share_token}`
 })
 

@@ -12,20 +12,31 @@ import { isDebugEnabled } from '@/utils/debug'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import { useCollabStore } from '../stores/collabStore.js'
 
-// Configuration - auto-detect WebSocket URL based on environment
+// Configuration - auto-detect WebSocket URL based on environment.
+// Mirrors the mailsync resolution in serverRegistry.js so each deployment
+// connects to ITSELF (multi-domain / white-label safe) instead of a hardcoded
+// host. Production routes through the OLS reverse-proxy path /collab-ws
+// (configured in vhost-email.conf.template) on the standard 443 port, so no
+// per-domain :1234 firewall hole or extra cert is required.
 function getCollabWsUrl() {
-  // Check for explicit env var first
+  // Explicit override always wins (baked per-host via .env at build time).
   if (import.meta.env.VITE_COLLAB_WS_URL) {
     return import.meta.env.VITE_COLLAB_WS_URL
   }
-  
-  // In production, use direct WSS connection on port 1234
-  // This bypasses the reverse proxy which has WebSocket header issues
-  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
-    return `wss://${window.location.hostname}:1234`
+
+  // Local dev: Vite has no /collab-ws proxy, so connect directly to the
+  // published collab port (docker-compose publishes 1234).
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return 'ws://localhost:1234'
   }
-  
-  // Development fallback
+
+  // Production / white-label: same-origin reverse-proxy path, scheme derived
+  // from the page protocol so http->ws and https->wss.
+  if (typeof window !== 'undefined' && window.location?.host) {
+    const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
+    return `${proto}://${window.location.host}/collab-ws`
+  }
+
   return 'ws://localhost:1234'
 }
 

@@ -1761,6 +1761,7 @@ import { useRouter } from 'vue-router'
 import { useAutomationHubStore } from '../../stores/automationHub'
 import { useNodeRegistry } from '../../composables/useNodeRegistry'
 import { useAutomationData } from '../../composables/useAutomationData'
+import { getPublicOrigin } from '@/services/serverRegistry'
 
 const router = useRouter()
 const store = useAutomationHubStore()
@@ -1787,7 +1788,10 @@ const showVarDocs = ref(false)
 
 const webhookUrl = computed(() => {
   const token = config.value.webhook_token || node.value?.uid || ''
-  return `https://flowone.pro/api/automation-hub/webhook/${token}`
+  // External services POST to this URL, so it must point at THIS deployment's
+  // public origin (white-label safe) rather than a hardcoded flowone.pro host.
+  const base = getPublicOrigin()
+  return `${base}/api/automation-hub/webhook/${token}`
 })
 
 const printerSelectOptions = computed(() =>

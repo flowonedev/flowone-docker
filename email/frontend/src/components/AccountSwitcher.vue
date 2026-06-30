@@ -375,7 +375,7 @@ async function signInWithGoogle() {
     // Listen for OAuth callback via postMessage
     const handleOAuthMessage = async (event) => {
       // Verify origin
-      if (!event.origin.includes('flowone.pro')) return
+      if (event.origin !== window.location.origin) return
       if (event.data?.type !== 'oauth_callback') return
       if (messageHandled) return
       
@@ -514,7 +514,7 @@ async function signInWithMicrosoft() {
     // Listen for OAuth callback via postMessage
     const handleOAuthMessage = async (event) => {
       // Verify origin
-      if (!event.origin.includes('flowone.pro')) return
+      if (event.origin !== window.location.origin) return
       if (event.data?.type !== 'oauth_callback') return
       if (messageHandled) return
       
