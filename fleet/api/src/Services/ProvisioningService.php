@@ -4225,6 +4225,11 @@ BASH;
         $sql .= $dnsIns("_imaps._tcp.{$baseDomain}", 'SRV', "1 993 {$mailHost}");
         $sql .= $dnsIns("_submission._tcp.{$baseDomain}", 'SRV', "1 587 {$mailHost}");
 
+        // coTURN relay host. The coTURN/LiveKit config (and the stunnel TLS cert
+        // SANs) reference turn.<base>; without this A record clients can't resolve
+        // the TURN relay and ICE negotiation fails for every call/huddle.
+        $sql .= $dnsIns("turn.{$baseDomain}", 'A', $serverIp);
+
         // MX record pointing to base domain
         $sql .= $dnsIns($baseDomain, 'MX', $baseDomain, 3600, 10);
 
@@ -4256,7 +4261,7 @@ BASH;
         $result = $this->executeCommand("mariadb --defaults-file=/root/.my.cnf < /tmp/fleet-dns-seed.sql 2>&1");
 
         if ($result['success'] ?? false) {
-            $recordList = 'SOA, NS, A, MX, SPF, DMARC, autodiscover/autoconfig CNAME, SRV' . ($publishedDkim ? ', DKIM' : '');
+            $recordList = 'SOA, NS, A, turn A, MX, SPF, DMARC, autodiscover/autoconfig CNAME, SRV' . ($publishedDkim ? ', DKIM' : '');
             $this->log("DNS zone '{$baseDomain}' seeded with {$recordList} records");
         } else {
             $this->log("Warning: DNS seeding had issues: " . ($result['output'] ?? 'unknown'));
@@ -5019,11 +5024,25 @@ SUDOERS;
 
         // Append LiveKit credentials if configured
         if (!empty($variables['LIVEKIT_API_KEY'])) {
+            // LiveKit is configured, so the WS URL is mandatory: the email app
+            // throws a RuntimeException at call time when livekit_ws_url is blank,
+            // and a silently-empty value breaks every call/huddle. Fail provisioning
+            // loudly here instead of shipping a broken server. The expected value is
+            // the stunnel TLS port in front of LiveKit, e.g. wss://<base>:7443.
+            if (empty($variables['LIVEKIT_WS_URL'])) {
+                $baseDomain = preg_replace('/^panel\./', '', (string)($variables['PANEL_DOMAIN'] ?? ''));
+                $hint = $baseDomain !== '' ? "wss://{$baseDomain}:7443" : 'wss://<host>:7443';
+                throw new \RuntimeException(
+                    'LIVEKIT_WS_URL is empty but LiveKit API credentials are set. '
+                    . "Set LIVEKIT_WS_URL in the server config (stunnel TLS port, e.g. {$hint}) "
+                    . 'before provisioning; an empty ws_url breaks all calls/huddles.'
+                );
+            }
             $installerCmd .= sprintf(
                 ' --livekit-api-key=%s --livekit-api-secret=%s --livekit-ws-url=%s',
                 escapeshellarg($variables['LIVEKIT_API_KEY']),
                 escapeshellarg($variables['LIVEKIT_API_SECRET'] ?? ''),
-                escapeshellarg($variables['LIVEKIT_WS_URL'] ?? '')
+                escapeshellarg($variables['LIVEKIT_WS_URL'])
             );
         }
 

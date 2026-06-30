@@ -128,7 +128,7 @@ Mode                    sv
 PidFile                 /var/run/opendkim/opendkim.pid
 SignatureAlgorithm      rsa-sha256
 UserID                  opendkim:opendkim
-Socket                  inet:12301@localhost
+Socket                  inet:8891@localhost
 DKIMEOF
 
 cat > /etc/opendkim/TrustedHosts << THEOF
@@ -160,7 +160,7 @@ IgnoreMailFrom          ${MAIL_DOMAIN}
 IgnoreAuthenticatedClients true
 RequiredHeaders         true
 SPFSelfValidate         true
-Socket                  inet:54321@localhost
+Socket                  inet:8893@localhost
 UMask                   0002
 UserID                  opendmarc:opendmarc
 PidFile                 /var/run/opendmarc/opendmarc.pid

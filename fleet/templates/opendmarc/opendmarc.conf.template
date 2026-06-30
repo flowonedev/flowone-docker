@@ -8,7 +8,8 @@ IgnoreMailFrom          {{MAIL_DOMAIN}}
 IgnoreAuthenticatedClients true
 RequiredHeaders         true
 SPFSelfValidate         true
-Socket                  inet:54321@localhost
+# Must match Postfix smtpd_milters (inet:127.0.0.1:8893). Was 54321 (drift).
+Socket                  inet:8893@localhost
 UMask                   0002
 UserID                  opendmarc:opendmarc
 PidFile                 /var/run/opendmarc/opendmarc.pid
