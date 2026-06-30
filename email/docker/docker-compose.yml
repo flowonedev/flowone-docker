@@ -1,0 +1,139 @@
+# FlowOne PRODUCTION per-server stack (Phase B).
+#
+# One compose stack per server. Build once + push to a registry; servers pull
+# (REGISTRY/TAG) — the `build:` sections let you build locally as a fallback.
+# All config comes from .env (copy .env.example -> .env, fill per host).
+#
+#   docker compose build           # build the three app images locally
+#   docker compose up -d           # bring the stack up
+#
+# Bridge-network services only (web, mariadb, redis, meilisearch, collab,
+# mailsync). The host-networking pods (mail, powerdns, coturn/livekit) and
+# onlyoffice are authored separately and validated on Linux (Phase E) — Docker
+# Desktop on Windows can't run network_mode: host faithfully.
+name: flowone
+
+services:
+  mariadb:
+    image: mariadb:10.11
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DB_NAME}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      # First-time datadir init can be slow; don't fail depends_on early.
+      start_period: 120s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # appendonly for durability; require a password only when one is set. The
+    # conditional is evaluated by the CONTAINER shell at runtime ($$ escapes the
+    # var from compose interpolation), so an empty REDIS_PASSWORD = no auth.
+    command: ["sh", "-c", "if [ -n \"$$REDIS_PASSWORD\" ]; then exec redis-server --appendonly yes --requirepass \"$$REDIS_PASSWORD\"; else exec redis-server --appendonly yes; fi"]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "if [ -n \"$$REDIS_PASSWORD\" ]; then redis-cli -a \"$$REDIS_PASSWORD\" ping; else redis-cli ping; fi | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.6
+    restart: unless-stopped
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+      MEILI_NO_ANALYTICS: "true"
+      MEILI_ENV: production
+    volumes:
+      - meili_data:/meili_data
+
+  web:
+    image: ${REGISTRY:-flowone}/flowone-web:${TAG:-latest}
+    build:
+      context: ..
+      dockerfile: docker/web/Dockerfile
+    restart: unless-stopped
+    env_file: [.env]
+    # Compose-fixed values (service names / container bindings) override .env.
+    environment:
+      COLLAB_ADDR: collab:1234
+      MAILSYNC_ADDR: mailsync:1235
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - vps_email_storage:/var/www/vps-email/backend/storage
+      - vps_email_data:/var/www/vps-email/data
+      - jwt_keys:/etc/flowone/jwt:ro
+      # Only consulted when ENABLE_SSL=1; harmless to mount otherwise.
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      meilisearch:
+        condition: service_started
+      collab:
+        condition: service_started
+      mailsync:
+        condition: service_started
+
+  collab:
+    image: ${REGISTRY:-flowone}/flowone-collab:${TAG:-latest}
+    build:
+      context: ..
+      dockerfile: docker/collab/Dockerfile
+    restart: unless-stopped
+    env_file: [.env]
+    environment:
+      COLLAB_WS_HOST: 0.0.0.0
+      COLLAB_WS_PORT: "1234"
+      # collab validates collaborators against the backend over the bridge net.
+      PHP_BACKEND_URL: http://web:80/api
+    volumes:
+      - jwt_keys:/etc/flowone/jwt:ro
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  mailsync:
+    image: ${REGISTRY:-flowone}/flowone-mailsync:${TAG:-latest}
+    build:
+      context: ..
+      dockerfile: docker/mailsync/Dockerfile
+    restart: unless-stopped
+    # Single replica only: holds in-memory IMAP IDLE + call/huddle state.
+    env_file: [.env]
+    environment:
+      MAILSYNC_WS_HOST: 0.0.0.0
+      MAILSYNC_WS_PORT: "1235"
+      # mailsync reads DB_PASSWORD; the rest of the stack uses DB_PASS.
+      DB_PASSWORD: ${DB_PASS}
+    volumes:
+      - jwt_keys:/etc/flowone/jwt:ro
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  mariadb_data:
+  redis_data:
+  meili_data:
+  vps_email_storage:
+  vps_email_data:
+  jwt_keys:
