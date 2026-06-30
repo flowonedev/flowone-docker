@@ -27,13 +27,27 @@
   (`/api` ~16s -> ~15ms locally; web healthcheck passes).
 - **Phase C Layer 1:** DONE. `email/backend/tests/docker-stack-smoke-test.php` validates the
   running stack's connectivity + schema + secrets (16/16 green).
+- **Phase C Layer 2 (local slice):** DONE. `email/backend/tests/docker-stack-functional-test.php`
+  does real roundtrips: JWT sign/verify + tamper-reject, Redis set/get/del, Meili
+  index/await/search; optional `--email=/--password=` login->me->logout. 4 pass + 1 skip (login
+  needs creds).
 
 ### Next action
 
-Continue Phase C: **migration tooling** (snapshot/restore) and the **Layer 2 functional e2e**
-suite. The remaining Phase B host-networking pods (mail, powerdns, coturn/livekit) and onlyoffice
-are authored + validated on the Linux box in Phase E — Docker Desktop on Windows can't run
-`network_mode: host` faithfully.
+Two tracks remain, both gated on resources we don't have on Windows:
+
+1. **Linux/staging-dependent (Phase E):** author + validate the host-networking pods (mail incl.
+   Rspamd/ClamAV/unbound + 8891/8893 milters, powerdns gmysql, coturn/livekit) and onlyoffice;
+   then the rest of Layer 2 (SMTP/IMAP roundtrip, Sieve, DKIM/DMARC, client WP HTTP 200).
+2. **Migration tooling (Phase C/E):** snapshot (old native box) + restore (new docker box) for the
+   MIGRATE bucket — single `mysqldump --all-databases`, `/home/vmail`, `/home/{domain}`, drive,
+   `/etc/letsencrypt`, `/etc/opendkim`, and the non-regenerable keys (`/etc/flowone/{master,state}.key`,
+   Fleet `encryption.key`, JWT PEMs at `backend/storage/config/jwt-*.pem`, `IMAP_ENCRYPTION_KEY` +
+   `OAUTH_KEYS` from `.env`). DB dump/restore round-trip is locally testable against the mariadb
+   container; the filesystem/key capture is Linux-only.
+
+Docker Desktop on Windows can't run `network_mode: host` faithfully, so #1 is deferred to the
+Phase E Linux box.
 
 ## Repo setup history (how this repo was created)
 

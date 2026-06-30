@@ -38,9 +38,12 @@ a later, optional phase.
   `encryption.key` + `IMAP_ENCRYPTION_KEY` + all `OAUTH_KEYS` versions + JWT PEMs) with a
   final-delta-sync mode.
 - [ ] **Phase C — Test suite:** 3-layer server-side suite. **Layer 1 (stack smoke) DONE** —
-  `email/backend/tests/docker-stack-smoke-test.php` (web->mariadb/redis/meili/collab/mailsync/imap,
-  schema/migrations, JWT/IMAP-key/OAuth canary), 16/16 green against the local stack. Layers 2
-  (functional e2e incl. client WP HTTP 200) and 3 (old-vs-new parity) pending the parallel box.
+  `docker-stack-smoke-test.php` (web->mariadb/redis/meili/collab/mailsync/imap, schema/migrations,
+  JWT/IMAP-key/OAuth canary), 16/16 green. **Layer 2 (functional) — local slice DONE** —
+  `docker-stack-functional-test.php` does real write->read->delete roundtrips (JWT sign/verify +
+  tamper-reject, Redis set/get/del, Meili index/await/search) plus an optional credentialed
+  login->me->logout. The mail/Sieve/DKIM/DMARC + client-WP-HTTP-200 parts of Layer 2 and all of
+  Layer 3 (old-vs-new parity) need the mail pod + parallel box (Phase E).
 - [ ] **Phase D — Fleet refactor:** Refactor the 8,354-line `ProvisioningService` from
   apt/systemctl steps to render `.env` + compose then `docker compose pull/up`; switch heartbeat
   health checks from `systemctl is-active` to `docker inspect` (reuse flowone-office pattern);
