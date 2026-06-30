@@ -32,11 +32,18 @@ a later, optional phase.
   (mariadb, redis, meilisearch, web, collab, mailsync) with depends_on health ordering, named
   volumes, shared `jwt_keys`, and `.env`-driven entrypoints. Boots clean locally end-to-end
   (login verified against external IMAP). Host-net pods authored separately in Phase E.
-- [ ] **Phase C — Migration tooling:** Build snapshot/restore scripts (single mysqldump incl.
-  per-site WordPress DBs + pdns gmysql tables, `/home/vmail` rsync, `/home/{domain}`, drive
-  files, `/etc/letsencrypt`, DKIM keys, and the non-regenerable `/etc/flowone/*.key` + Fleet
-  `encryption.key` + `IMAP_ENCRYPTION_KEY` + all `OAUTH_KEYS` versions + JWT PEMs) with a
-  final-delta-sync mode.
+- [x] **Phase C — Migration tooling:** Authored in `migration/`: `snapshot.sh` (old native box ->
+  bundle: single `mysqldump --all-databases` incl. per-site WP DBs + pdns gmysql + mail DB,
+  `/home/vmail`, `/home/{domain}`, drive, `/etc/letsencrypt`, `/etc/opendkim`, Meili data, and the
+  non-regenerable secrets — `/etc/flowone/{master,state}.key` + storage.local.php, JWT PEMs,
+  backend `.env` with `IMAP_ENCRYPTION_KEY`+`OAUTH_KEYS`, Fleet `config.local.php` — plus a
+  sha256 manifest); `restore.sh` (verify manifest -> DB into the `mariadb` container, FS into named
+  volumes / host paths, secrets into the `jwt_keys` volume + `/etc/flowone`, `.env` staged for
+  manual merge, guarded by `--yes`/`--dry-run`); `db-parity-check.sh` (per-table row-count parity,
+  COMPARE old-vs-new + a `--self-test` dump->restore->compare round-trip). DB path VALIDATED
+  locally: self-test green, 313 tables, all row counts match. NOTE: not yet implemented — the
+  final-delta-sync (incremental) mode; current snapshot is a full capture (fine for the bulk +
+  short-window-delta done by re-running).
 - [ ] **Phase C — Test suite:** 3-layer server-side suite. **Layer 1 (stack smoke) DONE** —
   `docker-stack-smoke-test.php` (web->mariadb/redis/meili/collab/mailsync/imap, schema/migrations,
   JWT/IMAP-key/OAuth canary), 16/16 green. **Layer 2 (functional) — local slice DONE** —

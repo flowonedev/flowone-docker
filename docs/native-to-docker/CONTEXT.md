@@ -32,22 +32,29 @@
   index/await/search; optional `--email=/--password=` login->me->logout. 4 pass + 1 skip (login
   needs creds).
 
+- **Phase C migration tooling:** DONE (authored in `migration/`). `snapshot.sh` (old native box ->
+  checksummed bundle: `mysqldump --all-databases` + vmail/homes/drive/certs/dkim/meili + the
+  non-regenerable secrets), `restore.sh` (manifest verify -> DB into `mariadb` container + FS into
+  volumes/host paths + secrets into `jwt_keys`/`/etc/flowone`, guarded by `--yes`/`--dry-run`),
+  `db-parity-check.sh` (COMPARE old-vs-new + `--self-test`). DB dump->restore->parity self-test ran
+  green locally (313 tables, exact row-count match; scratch DB auto-dropped). Root `.gitattributes`
+  added so the `.sh` stay LF (authored on Windows, run on Linux).
+
 ### Next action
 
-Two tracks remain, both gated on resources we don't have on Windows:
+Remaining tracks are gated on resources we don't have on Windows:
 
 1. **Linux/staging-dependent (Phase E):** author + validate the host-networking pods (mail incl.
    Rspamd/ClamAV/unbound + 8891/8893 milters, powerdns gmysql, coturn/livekit) and onlyoffice;
-   then the rest of Layer 2 (SMTP/IMAP roundtrip, Sieve, DKIM/DMARC, client WP HTTP 200).
-2. **Migration tooling (Phase C/E):** snapshot (old native box) + restore (new docker box) for the
-   MIGRATE bucket — single `mysqldump --all-databases`, `/home/vmail`, `/home/{domain}`, drive,
-   `/etc/letsencrypt`, `/etc/opendkim`, and the non-regenerable keys (`/etc/flowone/{master,state}.key`,
-   Fleet `encryption.key`, JWT PEMs at `backend/storage/config/jwt-*.pem`, `IMAP_ENCRYPTION_KEY` +
-   `OAUTH_KEYS` from `.env`). DB dump/restore round-trip is locally testable against the mariadb
-   container; the filesystem/key capture is Linux-only.
-
-Docker Desktop on Windows can't run `network_mode: host` faithfully, so #1 is deferred to the
-Phase E Linux box.
+   then the rest of Layer 2 (SMTP/IMAP roundtrip, Sieve, DKIM/DMARC, client WP HTTP 200) and Layer 3
+   (run `db-parity-check.sh --source=... --target=...` old-box-DB vs new-box-DB, plus maildir byte
+   counts + drive checksums). Docker Desktop on Windows can't run `network_mode: host` faithfully.
+2. **Phase D Fleet refactor:** turn the 8,354-line apt/systemctl `ProvisioningService` into
+   render-`.env` + `docker compose up`; switch heartbeat from `systemctl is-active` to
+   `docker inspect`. This is editable/reviewable locally (PHP), though only runnable against the
+   Fleet stack.
+3. **Migration delta-sync mode** (deferred): `snapshot.sh` is a full capture today; add an
+   incremental/rsync-delta mode for the short cutover window.
 
 ## Repo setup history (how this repo was created)
 
