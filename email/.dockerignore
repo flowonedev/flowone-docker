@@ -1,0 +1,18 @@
+# Build-context trim for all images built from the email/ context (dev OLS,
+# dev Apache, and the production docker/web multi-stage image).
+# Dependencies and build outputs are regenerated inside the image, never copied
+# from the host (host artifacts are platform-specific and bloat the context).
+**/node_modules
+**/dist
+backend/vendor
+
+# Runtime / migrated-per-host state — never bake into the image.
+backend/storage
+backend/src/config.local.php
+**/*.log
+
+# VCS + mobile artifacts.
+.git
+*.apk
+*.aab
+*.ipa
