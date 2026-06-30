@@ -42,23 +42,57 @@ class MigrationService
             return [];
         }
         self::$hasRun = true;
-        
-        $this->ensureMigrationsTableExists();
-        
-        $executed = $this->getExecutedMigrations();
-        $files = $this->getMigrationFiles();
-        
-        $results = [];
-        
-        foreach ($files as $file) {
-            $name = basename($file);
-            
-            if (!in_array($name, $executed)) {
-                $results[] = $this->runMigration($file, $name);
+
+        // Cross-process guard: only one worker runs migrations at a time.
+        // Without this, a burst of requests on a cold start (or any moment a
+        // pending migration exists) each runs the FULL suite concurrently and
+        // the parallel ALTER/CREATE statements deadlock on table metadata
+        // locks. A MySQL named lock serialises the run: the first worker holds
+        // it and migrates; the others block briefly and, once they acquire it,
+        // see every migration already applied and no-op. If the lock can't be
+        // acquired within the timeout (a long run on slow storage), skip
+        // silently — a later request will finish the job.
+        $lockName = 'flowone_migrations';
+        $lockTimeout = 10; // seconds
+        $gotLock = false;
+        try {
+            $stmt = $this->db->prepare('SELECT GET_LOCK(?, ?)');
+            $stmt->execute([$lockName, $lockTimeout]);
+            $gotLock = ((string)$stmt->fetchColumn() === '1');
+        } catch (\Throwable $e) {
+            // GET_LOCK unavailable on this engine — fall back to unguarded run.
+            $gotLock = true;
+        }
+
+        if (!$gotLock) {
+            return [];
+        }
+
+        try {
+            $this->ensureMigrationsTableExists();
+
+            $executed = $this->getExecutedMigrations();
+            $files = $this->getMigrationFiles();
+
+            $results = [];
+
+            foreach ($files as $file) {
+                $name = basename($file);
+
+                if (!in_array($name, $executed)) {
+                    $results[] = $this->runMigration($file, $name);
+                }
+            }
+
+            return $results;
+        } finally {
+            try {
+                $rel = $this->db->prepare('SELECT RELEASE_LOCK(?)');
+                $rel->execute([$lockName]);
+            } catch (\Throwable $e) {
+                // Best-effort release; the lock also frees when the session ends.
             }
         }
-        
-        return $results;
     }
     
     /**

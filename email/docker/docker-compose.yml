@@ -20,10 +20,16 @@ services:
     environment:
       MARIADB_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MARIADB_DATABASE: ${DB_NAME}
+      # Create the app user on a fresh volume (granted on MARIADB_DATABASE).
+      # On a migrated/restored box the dump already carries users + grants.
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASS}
     volumes:
       - mariadb_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      # --su-mysql connects via the local socket as the mysql OS user, so it
+      # needs no provisioned `healthcheck` DB user (the stock --connect does).
+      test: ["CMD", "healthcheck.sh", "--su-mysql", "--connect", "--innodb_initialized"]
       interval: 10s
       timeout: 5s
       retries: 10
