@@ -1,0 +1,1 @@
+import{h as t,c as e}from"./index-CEfOT80C.js";const o={style:{display:"none"}},r={__name:"HowItWorksButton",props:{variant:String,active:Boolean},emits:["click"],setup(n){return(s,a)=>(t(),e("span",o))}};export{r as _};

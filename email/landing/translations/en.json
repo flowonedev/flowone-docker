@@ -1,0 +1,267 @@
+{
+  "meta": {
+    "title": "MailFlow - Private Business Communication Platform",
+    "description": "MailFlow is a private, self-hosted business communication platform. Email, file storage, and workflows - installed on your own server. You own the infrastructure. Zero Big Tech dependency."
+  },
+  "nav": {
+    "why_switch": "Why Switch",
+    "features": "Features",
+    "security": "Security",
+    "pricing": "Pricing",
+    "compare": "Compare",
+    "log_in": "Log In",
+    "get_started": "Get Started"
+  },
+  "hero": {
+    "badge_self_hosted": "Self-Hosted",
+    "badge_tagline": "Your Server. Your Data. Your Keys.",
+    "headline": "Client Email Becomes Work.",
+    "subheadline": "When an email arrives, MailFlow turns it into tasks, files, deadlines, and reports — running on infrastructure you own.",
+    "subheadline_2": "Clients email you normally. You execute systematically.",
+    "cta_get_started": "Get Started",
+    "cta_watch_demo": "Watch Demo",
+    "feature_projects": "Emails become projects",
+    "feature_calendar": "Deadlines sync to calendar",
+    "feature_files": "Files stay with the work",
+    "feature_server": "Your server, your data"
+  },
+  "problems": {
+    "section_title": "The Problem with SaaS Email",
+    "section_intro": "Email is where work starts — but SaaS email was never designed to execute work.",
+    "section_subtitle": "Gmail and Outlook are SaaS platforms. You rent access. They own the infrastructure, the data, and the terms. When they change pricing or policies, you have no choice but to comply.",
+    "vendor_lockin_title": "Vendor Lock-In",
+    "vendor_lockin_desc": "Your email, contacts, and files are trapped. Migrating away means losing years of data and workflows.",
+    "per_seat_title": "Per-Seat Pricing",
+    "per_seat_desc": "$6-25 per user, per month, forever. For a team of 20, that's $1,500-6,000/year — and growing.",
+    "third_party_title": "Third-Party Access",
+    "third_party_desc": "Your business emails sit on their servers. Subject to their policies, their breaches, their compliance failures.",
+    "sovereignty_title": "No Data Sovereignty",
+    "sovereignty_desc": "Data stored in unknown jurisdictions. You can't control where it lives or who can legally access it."
+  },
+  "solution": {
+    "section_title": "The Owned Infrastructure Alternative",
+    "section_subtitle": "MailFlow installs on your VPS. You own the server and the data. No third-party access. Ever.",
+    "own_keys_title": "You Own The Keys",
+    "own_keys_desc": "Root access. Full control. We install it, configure it, then hand you the keys. It's yours.",
+    "flat_cost_title": "Flat Infrastructure Cost",
+    "flat_cost_desc": "Pay for your VPS once. Add unlimited users. No per-seat fees, no scaling surprises.",
+    "jurisdiction_title": "Choose Your Jurisdiction",
+    "jurisdiction_desc": "Pick a VPS provider in your country. EU data stays in EU. Full GDPR control.",
+    "zero_access_title": "Zero Third-Party Access",
+    "zero_access_desc": "Data never leaves your server. No cloud dependencies. No vendor reading your mail."
+  },
+  "workflow": {
+    "section_title": "From Email to Execution",
+    "section_subtitle": "Real client communication becomes structured work — tasks, files, deadlines, and reporting — without separate tools, manual syncing, or SaaS dependencies. Projects live where the conversation started.",
+    "step_1_title": "Client Email Arrives",
+    "step_1_desc": "Real message in your inbox",
+    "step_2_title": "Becomes a Project",
+    "step_2_desc": "Tasks, timeline, files attached",
+    "step_3_title": "Report to Client",
+    "step_3_desc": "Generated from real project status",
+    "outcome_1": "Work starts from real emails",
+    "outcome_2": "Projects stay linked to inbox",
+    "outcome_3": "Deadlines sync to calendar",
+    "outcome_4": "Reports from real status",
+    "caption": "From email to execution — all on your server."
+  },
+  "tracking": {
+    "section_title": "Email Intelligence",
+    "section_subtitle": "Know when emails are opened, links clicked, and attachments downloaded. All data stored on your server.",
+    "opens_title": "Read Receipts",
+    "opens_desc": "Know exactly when your email was opened",
+    "clicks_title": "Link Tracking",
+    "clicks_desc": "See which links recipients clicked",
+    "analytics_title": "Analytics",
+    "analytics_desc": "Engagement patterns and response times"
+  },
+  "multi_account": {
+    "section_title": "Unified Inbox",
+    "section_subtitle": "Connect existing Gmail or Outlook accounts while you transition. Manage all accounts from one interface, then phase out SaaS dependencies at your own pace — or keep them connected if needed.",
+    "feature_1": "Connect unlimited external accounts",
+    "feature_2": "Unified view of all mailboxes",
+    "feature_3": "Gradual migration at your pace"
+  },
+  "filters": {
+    "section_title": "Advanced Filters",
+    "section_subtitle": "Server-side rules that work while you sleep. Auto-organize, auto-respond, auto-forward based on conditions you define.",
+    "feature_1": "Unlimited filter rules",
+    "feature_2": "Complex conditions",
+    "feature_3": "Automated actions"
+  },
+  "tasks": {
+    "section_title": "Email Tasks",
+    "section_subtitle": "Turn any email into a task with one click. Deadlines, priorities, and status tracking — all linked to the original conversation.",
+    "feature_1": "One-click task creation",
+    "feature_2": "Linked to email thread",
+    "feature_3": "Calendar integration"
+  },
+  "analytics": {
+    "section_title": "Communication Analytics",
+    "section_subtitle": "Understand your email patterns. Response times, peak hours, engagement rates — visibility into real communication stored on your server.",
+    "feature_1": "Response time tracking",
+    "feature_2": "Peak activity hours",
+    "feature_3": "Team performance metrics"
+  },
+  "drive": {
+    "section_title": "Personal Drive",
+    "section_subtitle": "Private file storage on your server. Email attachments, project files, documents — organized and searchable.",
+    "feature_1": "Unlimited storage (VPS limits)",
+    "feature_2": "File versioning",
+    "feature_3": "Search and organize"
+  },
+  "infrastructure": {
+    "layer_title": "The Infrastructure Layer",
+    "layer_subtitle": "Everything above runs on systems you own",
+    "server_title": "Your Server. Your Business.",
+    "server_subtitle": "MailFlow runs on a VPS you control. We install the complete stack — web server, mail server, database, security. Then we hand you root access. It's your infrastructure.",
+    "install_title": "We Install & Configure Everything",
+    "install_desc": "Full setup on your VPS. OpenLiteSpeed, Dovecot, Postfix, MariaDB — all configured and optimized.",
+    "keys_title": "You Own The Keys",
+    "keys_desc": "Root access, full control. We give you the keys and step back. It's YOUR server.",
+    "zero_access_title": "Zero Third-Party Access",
+    "zero_access_desc": "Data never leaves your server. No cloud dependency. Complete data sovereignty."
+  },
+  "panel": {
+    "section_title": "Your Private Business Server OS",
+    "section_subtitle": "DEVCON Panel is the control center for your business infrastructure. Manage email, websites, databases, DNS, SSL, security — everything your business needs, on one server you own.",
+    "feature_hosting": "Multi-Site Hosting",
+    "feature_hosting_desc": "Host unlimited websites on one server",
+    "feature_speed": "OpenLiteSpeed",
+    "feature_speed_desc": "10x faster than Apache, free forever",
+    "feature_email": "Email Server",
+    "feature_email_desc": "Postfix + Dovecot fully configured",
+    "feature_security": "Enterprise Security",
+    "feature_security_desc": "Fail2ban, ModSec, CPGuard WAF"
+  },
+  "security": {
+    "section_title": "Security Stack You Manage",
+    "section_subtitle": "Fail2ban, ModSecurity WAF, CPGuard malware scanner, firewalld — all configured on your server. You control the security policies. Full audit visibility.",
+    "fail2ban_title": "Fail2ban Jails",
+    "fail2ban_desc": "SSH, Postfix, Dovecot, LiteSpeed, FTP protection",
+    "modsec_title": "ModSecurity WAF",
+    "modsec_desc": "OWASP rules, SQL injection & XSS prevention",
+    "cpguard_title": "CPGuard Scanner",
+    "cpguard_desc": "Malware detection, brute force, CAPTCHA",
+    "firewall_title": "Firewalld",
+    "firewall_desc": "Zone-based firewall with rich rules"
+  },
+  "ai": {
+    "section_title": "Server Config Diagnostics",
+    "section_subtitle": "Optionally enable AI-assisted config analysis. Disabled by default. When enabled with your own API key, it reviews Postfix, Dovecot, and other configs for misconfigurations.",
+    "feature_1": "Disabled by default — enable only if needed",
+    "feature_2": "Uses your own OpenAI API key — we never see your data",
+    "feature_3": "Analyzes server configs for security issues",
+    "feature_4": "Plain-English explanations of complex settings"
+  },
+  "backups": {
+    "section_title": "Your Backups. Your Control.",
+    "section_subtitle": "Built-in backup system for configs, sites, and databases. Store locally or sync to your own S3/SFTP destination. Full audit trail of every server action.",
+    "config_title": "Config Backups",
+    "config_desc": "Web server, virtual hosts, PHP configs — all versioned",
+    "remote_title": "Remote Storage",
+    "remote_desc": "Sync backups to S3, SFTP, or any remote destination",
+    "audit_title": "Full Audit Trail",
+    "audit_desc": "Every action logged — who, what, when, success/failure"
+  },
+  "security_privacy": {
+    "section_title": "Security You Control",
+    "section_subtitle": "Enterprise security stack, configured on your server. You manage access, you set policies, you own the audit trail."
+  },
+  "who_for": {
+    "section_title": "Who MailFlow Is For",
+    "section_subtitle": "Built for businesses who want ownership, not rental agreements.",
+    "good_1": "Agencies managing client communication",
+    "good_2": "Consultants with sensitive client data",
+    "good_3": "Businesses requiring GDPR compliance",
+    "good_4": "Teams tired of per-seat pricing",
+    "good_5": "Organizations wanting data sovereignty",
+    "bad_1": "Users wanting free email",
+    "bad_2": "Those needing 24/7 managed support",
+    "bad_3": "Teams without basic tech skills"
+  },
+  "comparison": {
+    "section_title": "Owned vs. Rented",
+    "section_subtitle": "What you pay over 3 years for a 20-user team",
+    "google": "Google Workspace",
+    "microsoft": "Microsoft 365",
+    "msp": "MSP / Consultant",
+    "mailflow": "MailFlow",
+    "year_1": "Year 1",
+    "year_2": "Year 2",
+    "year_3": "Year 3",
+    "total": "3-Year Total",
+    "per_user": "per user/month",
+    "one_time": "one-time",
+    "vps_cost": "+ ~€15-25/month VPS",
+    "conclusion": "Most teams recover the infrastructure cost within 12-18 months. After that, they operate on owned systems with near-zero marginal cost."
+  },
+  "pricing": {
+    "section_title": "Owned Infrastructure Handover",
+    "section_subtitle": "One-time infrastructure handover. You get full ownership of your business communication platform. Optional managed oversight if you prefer hands-off maintenance.",
+    "owned_title": "Owned Infrastructure Handover",
+    "owned_price": "€3,490",
+    "owned_period": "one-time",
+    "owned_feature_1": "MailFlow platform",
+    "owned_feature_2": "DEVCON server panel",
+    "owned_feature_3": "Full installation & hardening",
+    "owned_feature_4": "Root access handover",
+    "owned_feature_5": "Unlimited users",
+    "owned_feature_6": "No lock-in",
+    "managed_title": "Optional: Managed Supervision",
+    "managed_price": "€149",
+    "managed_period": "/ month",
+    "managed_feature_1": "Security monitoring",
+    "managed_feature_2": "Updates & patches",
+    "managed_feature_3": "Backups",
+    "managed_feature_4": "Incident response",
+    "managed_note": "Cancel anytime. You keep everything.",
+    "vps_note": "Typical VPS cost: €15-25/month. We recommend Hetzner, Contabo, or OVH for European hosting."
+  },
+  "handover": {
+    "section_title": "How Handover Works",
+    "step_1_title": "Consultation",
+    "step_1_desc": "We discuss your requirements and choose the right VPS provider.",
+    "step_2_title": "Installation",
+    "step_2_desc": "We set up and configure everything on your server.",
+    "step_3_title": "Testing",
+    "step_3_desc": "We verify everything works correctly.",
+    "step_4_title": "Handover",
+    "step_4_desc": "We hand you the keys. It's your infrastructure now."
+  },
+  "cta": {
+    "title": "Ready to Own Your Infrastructure?",
+    "subtitle": "Stop renting. Start owning.",
+    "button": "Get Started"
+  },
+  "footer": {
+    "product": "Product",
+    "features": "Features",
+    "pricing": "Pricing",
+    "compare": "Compare",
+    "documentation": "Documentation",
+    "changelog": "Changelog",
+    "resources": "Resources",
+    "api_reference": "API Reference",
+    "server_requirements": "Server Requirements",
+    "community": "Community",
+    "blog": "Blog",
+    "legal": "Legal",
+    "privacy_policy": "Privacy Policy",
+    "terms_of_service": "Terms of Service",
+    "contact": "Contact",
+    "copyright": "2026 MailFlow. Built for businesses who own their infrastructure."
+  },
+  "common": {
+    "unlimited_users": "Unlimited users",
+    "root_access": "Full root access",
+    "you_own_everything": "You own everything",
+    "get_started": "Get Started",
+    "learn_more": "Learn More",
+    "contact_us": "Contact Us",
+    "running": "Running",
+    "active": "Active",
+    "enabled": "Enabled"
+  }
+}
+

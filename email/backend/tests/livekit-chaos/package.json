@@ -1,0 +1,21 @@
+{
+  "name": "flowone-livekit-chaos",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Browser-based chaos/resilience suite for the unified /guest/call/{token} meeting flow (LiveKit, waiting room, workshop mode). Driven by Playwright.",
+  "scripts": {
+    "install:browsers": "playwright install chromium",
+    "test": "playwright test",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:waiting": "playwright test --grep waiting",
+    "test:workshop": "playwright test --grep workshop",
+    "test:json": "playwright test --reporter=json"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.45.0",
+    "dotenv": "^16.4.5"
+  }
+}

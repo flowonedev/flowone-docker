@@ -1,0 +1,34 @@
+# MailSync Server - WebSocket IMAP sync service
+# Template for Fleet Manager deployment
+# Variables: {{EMAIL_DOMAIN}}
+
+[Unit]
+Description=MailSync WebSocket Server
+After=network.target dovecot.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/vps-email/mailsync
+ExecStart=/usr/bin/node /var/www/vps-email/mailsync/server.js
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+Environment=PORT=1235
+Environment=HOST=127.0.0.1
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mailsync-server
+
+# Security
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/vps-email/mailsync
+
+[Install]
+WantedBy=multi-user.target
+

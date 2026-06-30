@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlowOne Email Lifecycle Diagram</title>
+<link rel="stylesheet" href="/fonts/inter/font.css">
+<link rel="stylesheet" href="/fonts/material-symbols-rounded/font.css">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1c1c22;
+    --surface-2: #26262e;
+    --border: #37373f;
+    --text: #e4e4e7;
+    --text-muted: #9ca3af;
+    --green: #22c55e;
+    --blue: #3b82f6;
+    --purple: #a855f7;
+    --orange: #f59e0b;
+    --red: #ef4444;
+    --cyan: #06b6d4;
+    --pink: #ec4899;
+    --yellow: #eab308;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 40px;
+    line-height: 1.6;
+  }
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #fff;
+  }
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-bottom: 40px;
+  }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 36px;
+    padding: 16px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .flow-section {
+    margin-bottom: 48px;
+  }
+  .flow-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .flow-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+  }
+  .flow-title {
+    font-size: 20px;
+    font-weight: 600;
+  }
+  .flow-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .pipeline {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    overflow-x: auto;
+    padding: 4px 0 12px;
+  }
+  .stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 140px;
+    position: relative;
+  }
+  .stage-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    text-align: center;
+    width: 100%;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.2s;
+  }
+  .stage-box:hover {
+    border-color: var(--text-muted);
+  }
+  .stage-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .stage-detail {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+  .stage-component {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 6px;
+    font-family: 'Courier New', monospace;
+    background: var(--surface-2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    max-width: 140px;
+    word-break: break-all;
+  }
+  .arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    color: var(--text-muted);
+    font-size: 18px;
+    padding-bottom: 20px;
+  }
+  .arrow-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    position: absolute;
+    top: -14px;
+    white-space: nowrap;
+  }
+  .ws-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-top: 6px;
+    font-weight: 500;
+  }
+  .ws-badge.green { background: rgba(34,197,94,0.15); color: var(--green); }
+  .ws-badge.blue { background: rgba(59,130,246,0.15); color: var(--blue); }
+  .ws-badge.purple { background: rgba(168,85,247,0.15); color: var(--purple); }
+  .ws-badge.orange { background: rgba(245,158,11,0.15); color: var(--orange); }
+  .ws-badge.red { background: rgba(239,68,68,0.15); color: var(--red); }
+  .ws-badge.cyan { background: rgba(6,182,212,0.15); color: var(--cyan); }
+  .ws-badge.pink { background: rgba(236,72,153,0.15); color: var(--pink); }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 12px;
+  }
+  .detail-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .detail-card h4 {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .detail-card ul {
+    list-style: none;
+    padding: 0;
+  }
+  .detail-card li {
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 3px 0;
+    padding-left: 16px;
+    position: relative;
+  }
+  .detail-card li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 10px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+  }
+  code {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    background: var(--surface-2);
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: var(--cyan);
+  }
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 16px 0;
+  }
+  .branch {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .branch-path {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .branch-path h5 {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .branch-path p {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+  .material-symbols-rounded {
+    font-size: 20px;
+    vertical-align: middle;
+  }
+  .storage-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+  .storage-tag {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--surface-2);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<h1>FlowOne -- Email Lifecycle</h1>
+<p class="subtitle">Full trace of every email action: from user click through backend, IMAP, cache, WebSocket, and frontend sync.</p>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> IMAP Server</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div> Redis Cache</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div> WebSocket Event</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div> Database (SQLite/MariaDB)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--cyan)"></div> Frontend (Pinia Store)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> SMTP Server</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--pink)"></div> Conversation Service</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SEND EMAIL -->
+<!-- ============================================================ -->
+<div class="flow-section">
+  <div class="flow-header">
+    <div class="flow-icon" style="background:rgba(239,68,68,0.15); color:var(--red);">
+      <span class="material-symbols-rounded">send</span>
+    </div>
+    <div>
+      <div class="flow-title">Send Email</div>
+      <div class="flow-desc">POST /api/messages/send -- MessageController::send()</div>
+    </div>
+  </div>
+  <div class="pipeline">
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--cyan)">Frontend</div>
+        <div class="stage-detail">User composes & clicks Send</div>
+        <div class="stage-component">ComposeView.vue</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--text)">Backend</div>
+        <div class="stage-detail">Validate recipients, resolve credentials (primary / secondary / OAuth)</div>
+        <div class="stage-component">MessageController</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--red)">SMTP</div>
+        <div class="stage-detail">Send per-recipient (each gets unique tracking pixel)</div>
+        <div class="stage-component">SmtpService</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--green)">IMAP</div>
+        <div class="stage-detail">Save clean copy to Sent folder (no tracking pixel)</div>
+        <div class="stage-component">imap->saveToSent()</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--pink)">Conversation</div>
+        <div class="stage-detail">Assign sent message to conversation thread (uid=0 until sync)</div>
+        <div class="stage-component">ConversationService</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--orange)">Side Effects</div>
+        <div class="stage-detail">Record contacts, update client activity, save attachments to Drive</div>
+        <div class="storage-row">
+          <span class="storage-tag">ContactsService</span>
+          <span class="storage-tag">ClientService</span>
+          <span class="storage-tag">DriveService</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- READ / OPEN EMAIL -->
+<!-- ============================================================ -->
+<div class="flow-section">
+  <div class="flow-header">
+    <div class="flow-icon" style="background:rgba(59,130,246,0.15); color:var(--blue);">
+      <span class="material-symbols-rounded">mark_email_read</span>
+    </div>
+    <div>
+      <div class="flow-title">Read / Open Email</div>
+      <div class="flow-desc">GET /api/mailbox/{folder}/messages/{uid} -- MailboxController::message()</div>
+    </div>
+  </div>
+  <div class="pipeline">
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--cyan)">Frontend</div>
+        <div class="stage-detail">User clicks email in list</div>
+        <div class="stage-component">MessageList.vue</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--green)">IMAP</div>
+        <div class="stage-detail">Fetch full message body from IMAP (source of truth)</div>
+        <div class="stage-component">imap->getMessage()</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--text)">Sanitize</div>
+        <div class="stage-detail">HTML sanitize, strip own tracking pixels, parse calendar</div>
+        <div class="stage-component">HtmlSanitizer</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--green)">Auto-Mark Read</div>
+        <div class="stage-detail">If <code>!seen</code>: set \Seen flag on IMAP</div>
+        <div class="stage-component">imap->setFlag('seen')</div>
+        <div class="ws-badge green">Only if unread</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--blue)">Cache</div>
+        <div class="stage-detail">Invalidate message cache, index body for search</div>
+        <div class="storage-row">
+          <span class="storage-tag">invalidateMessage</span>
+          <span class="storage-tag">SearchIndexer</span>
+        </div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--purple)">WebSocket</div>
+        <div class="stage-detail">Broadcast to all devices</div>
+        <div class="ws-badge purple">FLAGS_CHANGED</div>
+        <div class="ws-badge purple">FOLDER_COUNTS</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- FLAG / STAR -->
+<!-- ============================================================ -->
+<div class="flow-section">
+  <div class="flow-header">
+    <div class="flow-icon" style="background:rgba(234,179,8,0.15); color:var(--yellow);">
+      <span class="material-symbols-rounded">star</span>
+    </div>
+    <div>
+      <div class="flow-title">Flag / Star / Mark Read / Mark Unread</div>
+      <div class="flow-desc">POST /api/mailbox/{folder}/messages/{uid}/flag -- MailboxController::setFlag()</div>
+    </div>
+  </div>
+  <div class="pipeline">
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--cyan)">Frontend</div>
+        <div class="stage-detail">Toggle star, mark read/unread</div>
+        <div class="stage-component">MessageActions</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--green)">IMAP</div>
+        <div class="stage-detail">Set flag: \Flagged, \Seen, \Answered, \Deleted, \Draft</div>
+        <div class="stage-component">imap->setFlag()</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--blue)">Cache</div>
+        <div class="stage-detail">Invalidate cached message</div>
+        <div class="stage-component">invalidateMessage</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--pink)">Conversation</div>
+        <div class="stage-detail">If \Seen: update member read status in conversation DB</div>
+        <div class="stage-component">updateMemberReadStatus</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--purple)">WebSocket</div>
+        <div class="stage-detail">Broadcast flag change + folder counts (if \Seen)</div>
+        <div class="ws-badge purple">FLAGS_CHANGED</div>
+        <div class="ws-badge purple">FOLDER_COUNTS</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--cyan)">All Devices</div>
+        <div class="stage-detail">handleFlagsChanged() updates message in store, handleFolderCounts() updates badges</div>
+        <div class="stage-component">useMailSyncIntegration</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PIN -->
+<!-- ============================================================ -->
+<div class="flow-section">
+  <div class="flow-header">
+    <div class="flow-icon" style="background:rgba(236,72,153,0.15); color:var(--pink);">
+      <span class="material-symbols-rounded">push_pin</span>
+    </div>
+    <div>
+      <div class="flow-title">Pin / Unpin Email</div>
+      <div class="flow-desc">POST|DELETE /api/mailbox/{folder}/messages/{uid}/pin -- MailboxController::pinEmail() / unpinEmail()</div>
+    </div>
+  </div>
+  <div class="pipeline">
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--cyan)">Frontend</div>
+        <div class="stage-detail">User clicks pin toggle</div>
+        <div class="stage-component">MessageActions</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--orange)">Database</div>
+        <div class="stage-detail">INSERT / DELETE in <code>pinned_emails</code> table (SQLite)</div>
+        <div class="ws-badge orange">Not IMAP -- DB only</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--purple)">WebSocket</div>
+        <div class="stage-detail">Broadcast pin state change</div>
+        <div class="ws-badge purple">PIN_CHANGED</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--cyan)">All Devices</div>
+        <div class="stage-detail">handlePinChanged() adds/removes from pinned list in Pinia store</div>
+        <div class="stage-component">useMailSyncIntegration</div>
+      </div>
+    </div>
+  </div>
+  <div class="detail-grid" style="margin-top:12px">
+    <div class="detail-card">
+      <h4><span class="material-symbols-rounded" style="color:var(--orange);font-size:16px">info</span> Note: Pin is app-level only</h4>
+      <ul>
+        <li>Pins are stored in a local SQLite database, NOT as IMAP flags</li>
+        <li>Pins do not affect the IMAP server or other email clients</li>
+        <li>Pins sync across FlowOne devices via WebSocket only</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- DELETE -->
+<!-- ============================================================ -->
+<div class="flow-section">
+  <div class="flow-header">
+    <div class="flow-icon" style="background:rgba(239,68,68,0.15); color:var(--red);">
+      <span class="material-symbols-rounded">delete</span>
+    </div>
+    <div>
+      <div class="flow-title">Delete Email</div>
+      <div class="flow-desc">DELETE /api/mailbox/{folder}/messages/{uid} -- MailboxController::delete()</div>
+    </div>
+  </div>
+  <div class="pipeline">
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--cyan)">Frontend</div>
+        <div class="stage-detail">User clicks delete</div>
+        <div class="stage-component">MessageActions</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--text)">Decision</div>
+        <div class="stage-detail">Is <code>?permanent=true</code>? Is message already in Trash?</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage" style="min-width:240px">
+      <div class="stage-box" style="border-color:var(--red)">
+        <div class="stage-label" style="color:var(--red)">Branch A: Soft Delete</div>
+        <div class="stage-detail">IMAP move to Trash folder. New UID assigned by server.</div>
+        <div class="stage-component">imap->moveMessage()</div>
+        <div class="stage-component">getLastMoveNewUid()</div>
+      </div>
+    </div>
+    <div class="arrow"> | </div>
+    <div class="stage" style="min-width:240px">
+      <div class="stage-box" style="border-color:var(--red)">
+        <div class="stage-label" style="color:var(--red)">Branch B: Permanent</div>
+        <div class="stage-detail">IMAP permanent delete (expunge). No recovery.</div>
+        <div class="stage-component">imap->deleteMessage()</div>
+      </div>
+    </div>
+  </div>
+  <div class="detail-grid">
+    <div class="detail-card">
+      <h4 style="color:var(--blue)"><span class="material-symbols-rounded" style="font-size:16px">database</span> Cache + Conversation</h4>
+      <ul>
+        <li><code>invalidateMessage(folder, uid)</code> -- remove stale cache</li>
+        <li><code>invalidateFolder(folder)</code> -- source folder</li>
+        <li>Soft delete: <code>moveConversationMember()</code> with new UID in Trash</li>
+        <li>Permanent: <code>deleteConversationMember()</code> removes from DB</li>
+        <li>Soft delete: also <code>invalidateFolder(trashFolder)</code></li>
+      </ul>
+    </div>
+    <div class="detail-card">
+      <h4 style="color:var(--purple)"><span class="material-symbols-rounded" style="font-size:16px">cell_tower</span> WebSocket Events</h4>
+      <ul>
+        <li>Soft delete: <code>MESSAGE_MOVED</code> (sourceFolder, trashFolder, oldUid, newUid)</li>
+        <li>Permanent: <code>MESSAGE_DELETED</code> (folder, uid, permanent=true)</li>
+        <li>Frontend: removes message from current view, refreshes folder counts</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MOVE TO FOLDER -->
+<!-- ============================================================ -->
+<div class="flow-section">
+  <div class="flow-header">
+    <div class="flow-icon" style="background:rgba(168,85,247,0.15); color:var(--purple);">
+      <span class="material-symbols-rounded">drive_file_move</span>
+    </div>
+    <div>
+      <div class="flow-title">Move to Folder</div>
+      <div class="flow-desc">POST /api/mailbox/{folder}/messages/{uid}/move -- MailboxController::move()</div>
+    </div>
+  </div>
+  <div class="pipeline">
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--cyan)">Frontend</div>
+        <div class="stage-detail">User selects target folder from dropdown</div>
+        <div class="stage-component">MoveToFolder.vue</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--green)">IMAP</div>
+        <div class="stage-detail">IMAP MOVE command. Server assigns new UID in target folder.</div>
+        <div class="stage-component">imap->moveMessage()</div>
+        <div class="ws-badge green">UID changes!</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--blue)">Cache</div>
+        <div class="stage-detail">Invalidate message + both source and target folders</div>
+        <div class="storage-row">
+          <span class="storage-tag">invalidateMessage</span>
+          <span class="storage-tag">invalidateFolder x2</span>
+        </div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--pink)">Conversation</div>
+        <div class="stage-detail">Update folder + UID in conversation DB</div>
+        <div class="stage-component">moveConversationMember()</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--purple)">WebSocket</div>
+        <div class="stage-detail">Broadcast move event with old/new UIDs</div>
+        <div class="ws-badge purple">MESSAGE_MOVED</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--cyan)">All Devices</div>
+        <div class="stage-detail">Remove from source view. If viewing target: debounced fetch.</div>
+        <div class="stage-component">handleMessageMoved()</div>
+      </div>
+    </div>
+  </div>
+  <div class="detail-grid" style="margin-top:12px">
+    <div class="detail-card">
+      <h4><span class="material-symbols-rounded" style="color:var(--orange);font-size:16px">warning</span> UID Change is Critical</h4>
+      <ul>
+        <li>IMAP assigns a <strong>new UID</strong> when a message moves between folders</li>
+        <li>The old UID is permanently invalidated in the source folder</li>
+        <li><code>getLastMoveNewUid()</code> captures the server-assigned UID</li>
+        <li>ConversationService is updated with the new UID so threads remain intact</li>
+        <li>If new UID capture fails, conversation reconciliation fixes it later (2-min cycle)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- RESTORE FROM TRASH -->
+<!-- ============================================================ -->
+<div class="flow-section">
+  <div class="flow-header">
+    <div class="flow-icon" style="background:rgba(34,197,94,0.15); color:var(--green);">
+      <span class="material-symbols-rounded">restore_from_trash</span>
+    </div>
+    <div>
+      <div class="flow-title">Restore from Trash</div>
+      <div class="flow-desc">POST /api/mailbox/{folder}/messages/{uid}/restore -- MailboxController::restoreMessage()</div>
+    </div>
+  </div>
+  <div class="pipeline">
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--cyan)">Frontend</div>
+        <div class="stage-detail">User clicks restore (defaults to INBOX)</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--green)">IMAP</div>
+        <div class="stage-detail">Move from Trash to target. New UID assigned.</div>
+        <div class="stage-component">imap->moveMessage()</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--blue)">Cache</div>
+        <div class="stage-detail">Invalidate message + source + target folders</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--pink)">Conversation</div>
+        <div class="stage-detail">Update folder + UID</div>
+        <div class="stage-component">moveConversationMember()</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage">
+      <div class="stage-box">
+        <div class="stage-label" style="color:var(--purple)">WebSocket</div>
+        <div class="ws-badge purple">MESSAGE_MOVED</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SUMMARY TABLE -->
+<!-- ============================================================ -->
+<div class="flow-section" style="margin-top:48px">
+  <div class="flow-header">
+    <div class="flow-icon" style="background:rgba(255,255,255,0.08); color:var(--text);">
+      <span class="material-symbols-rounded">table_chart</span>
+    </div>
+    <div>
+      <div class="flow-title">WebSocket Event Summary</div>
+      <div class="flow-desc">Every action and the events it publishes for real-time multi-device sync</div>
+    </div>
+  </div>
+  <div style="overflow-x:auto; margin-top:16px">
+    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+      <thead>
+        <tr style="border-bottom:2px solid var(--border);">
+          <th style="text-align:left; padding:10px 12px; color:var(--text-muted); font-weight:600;">Action</th>
+          <th style="text-align:left; padding:10px 12px; color:var(--text-muted); font-weight:600;">IMAP</th>
+          <th style="text-align:left; padding:10px 12px; color:var(--text-muted); font-weight:600;">Redis Cache</th>
+          <th style="text-align:left; padding:10px 12px; color:var(--text-muted); font-weight:600;">Conversation DB</th>
+          <th style="text-align:left; padding:10px 12px; color:var(--text-muted); font-weight:600;">WebSocket Events</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 12px; font-weight:500;">Send</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">SMTP send + save to Sent</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">--</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">assignMessageToConversation</td>
+          <td style="padding:10px 12px;"><span class="ws-badge" style="background:rgba(255,255,255,0.06);color:var(--text-muted);">None (picked up by IDLE)</span></td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 12px; font-weight:500;">Read / Open</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">setFlag(\Seen) if unread</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">invalidateMessage</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">--</td>
+          <td style="padding:10px 12px;"><span class="ws-badge purple">FLAGS_CHANGED</span> <span class="ws-badge purple">FOLDER_COUNTS</span></td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 12px; font-weight:500;">Star / Flag</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">setFlag(\Flagged)</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">invalidateMessage</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">--</td>
+          <td style="padding:10px 12px;"><span class="ws-badge purple">FLAGS_CHANGED</span></td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 12px; font-weight:500;">Mark Read/Unread</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">setFlag(\Seen)</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">invalidateMessage</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">updateMemberReadStatus</td>
+          <td style="padding:10px 12px;"><span class="ws-badge purple">FLAGS_CHANGED</span> <span class="ws-badge purple">FOLDER_COUNTS</span></td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 12px; font-weight:500;">Pin / Unpin</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">-- (DB only)</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">--</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">pinned_emails table</td>
+          <td style="padding:10px 12px;"><span class="ws-badge purple">PIN_CHANGED</span></td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 12px; font-weight:500;">Move to Folder</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">moveMessage (UID changes)</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">invalidateMessage + 2x invalidateFolder</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">moveConversationMember</td>
+          <td style="padding:10px 12px;"><span class="ws-badge purple">MESSAGE_MOVED</span></td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 12px; font-weight:500;">Delete (soft)</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">moveMessage to Trash</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">invalidateMessage + invalidateFolder (src + trash)</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">moveConversationMember</td>
+          <td style="padding:10px 12px;"><span class="ws-badge purple">MESSAGE_MOVED</span></td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 12px; font-weight:500;">Delete (permanent)</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">deleteMessage (expunge)</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">invalidateMessage + invalidateFolder</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">deleteConversationMember</td>
+          <td style="padding:10px 12px;"><span class="ws-badge red">MESSAGE_DELETED</span></td>
+        </tr>
+        <tr>
+          <td style="padding:10px 12px; font-weight:500;">Restore from Trash</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">moveMessage to INBOX</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">invalidateMessage + 2x invalidateFolder</td>
+          <td style="padding:10px 12px; color:var(--text-muted);">moveConversationMember</td>
+          <td style="padding:10px 12px;"><span class="ws-badge purple">MESSAGE_MOVED</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- REAL-TIME SYNC DIAGRAM -->
+<!-- ============================================================ -->
+<div class="flow-section" style="margin-top:48px">
+  <div class="flow-header">
+    <div class="flow-icon" style="background:rgba(6,182,212,0.15); color:var(--cyan);">
+      <span class="material-symbols-rounded">sync</span>
+    </div>
+    <div>
+      <div class="flow-title">Real-Time Sync Pipeline</div>
+      <div class="flow-desc">How events flow from PHP backend to every connected client</div>
+    </div>
+  </div>
+  <div class="pipeline">
+    <div class="stage" style="min-width:160px">
+      <div class="stage-box" style="border-color:var(--green)">
+        <div class="stage-label" style="color:var(--green)">PHP Backend</div>
+        <div class="stage-detail">Controller action completes. Calls RedisCacheService publish method.</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage" style="min-width:160px">
+      <div class="stage-box" style="border-color:var(--blue)">
+        <div class="stage-label" style="color:var(--blue)">Redis Pub/Sub</div>
+        <div class="stage-detail">Event published to channel <code>mailbox:{email}</code></div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage" style="min-width:160px">
+      <div class="stage-box" style="border-color:var(--orange)">
+        <div class="stage-label" style="color:var(--orange)">Mailsync Server</div>
+        <div class="stage-detail">Node.js WebSocket server subscribed to Redis. Forwards to connected clients.</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage" style="min-width:160px">
+      <div class="stage-box" style="border-color:var(--purple)">
+        <div class="stage-label" style="color:var(--purple)">WebSocket</div>
+        <div class="stage-detail">Event delivered over persistent WS connection to each browser/desktop client.</div>
+      </div>
+    </div>
+    <div class="arrow">--></div>
+    <div class="stage" style="min-width:160px">
+      <div class="stage-box" style="border-color:var(--cyan)">
+        <div class="stage-label" style="color:var(--cyan)">Frontend Handler</div>
+        <div class="stage-detail"><code>useMailSyncIntegration</code> dispatches to the right handler. Pinia store updates. UI re-renders.</div>
+      </div>
+    </div>
+  </div>
+  <div class="detail-grid" style="margin-top: 16px">
+    <div class="detail-card">
+      <h4><span class="material-symbols-rounded" style="color:var(--cyan);font-size:16px">shield</span> Safety Nets</h4>
+      <ul>
+        <li><strong>Reconciliation timer</strong>: Every 2 minutes, re-fetches folders + current folder as a safety net for missed events</li>
+        <li><strong>Event versioning</strong>: <code>lastEventVersion</code> persisted in IndexedDB to detect gaps</li>
+        <li><strong>Duplicate guard</strong>: <code>processedEventIds</code> Set prevents handling the same event twice</li>
+        <li><strong>Visibility refresh</strong>: When tab becomes visible after being hidden, triggers a full refresh</li>
+        <li><strong>Reconnect handler</strong>: On WebSocket reconnect, refreshes all data to catch up</li>
+      </ul>
+    </div>
+    <div class="detail-card">
+      <h4><span class="material-symbols-rounded" style="color:var(--orange);font-size:16px">speed</span> Performance Guards</h4>
+      <ul>
+        <li><strong>Debounced fetches</strong>: Folder and message fetches are debounced (300ms default) to prevent API flood</li>
+        <li><strong>Conditional auto-read</strong>: <code>message()</code> only sets \Seen if message is actually unread</li>
+        <li><strong>Debounced rule evaluation</strong>: Board Pro email rules batched on 300ms timer</li>
+        <li><strong>Duplicate Sieve guard</strong>: Block-sender filter checks for existing rules before appending</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

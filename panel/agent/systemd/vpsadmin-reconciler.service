@@ -1,0 +1,57 @@
+[Unit]
+Description=FlowOne VPS Admin site reconciler (one-shot)
+Documentation=file:///var/www/vps-admin/agent/reconcile-sites.php
+After=mariadb.service network-online.target vpsadmin-worker.service
+Wants=mariadb.service
+# Reconciler runs read-mostly probes (filesystem, MariaDB, /etc/passwd)
+# then enqueues RECONCILE jobs into site_jobs. Without the worker
+# running those enqueued jobs sit forever, so we order ourselves
+# after it (best effort - we don't Require= it so a flapping worker
+# doesn't block reconciliation entirely).
+
+[Service]
+Type=oneshot
+
+# Must run as root because:
+#  - probes need to stat /home/<domain> directories owned by
+#    individual site users (some have restrictive perms),
+#  - the MysqlAdminCredentials resolver reads /root/.my.cnf,
+#  - enqueue + state transitions write to MariaDB via the same
+#    socket the worker uses.
+User=root
+Group=root
+
+ExecStart=/usr/local/lsws/lsphp83/bin/php /var/www/vps-admin/agent/reconcile-sites.php --json
+
+# A full scan over a few hundred sites should finish well under 30s.
+# Probes are bounded by per-call adapter timeouts; if we ever hit 60s
+# something is wrong (DB lock, runaway probe). Let systemd kill it so
+# the next timer firing gets a clean slot.
+TimeoutStartSec=60
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=vpsadmin-reconciler
+
+# Sandboxing. Reconciler is read-mostly and writes only to MariaDB
+# (which is reached via /run/mysqld/mysqld.sock). It does NOT need
+# write access to /home, /usr/local/lsws/conf, or storage.
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+PrivateTmp=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+
+# AF_UNIX for the MariaDB socket; AF_INET/INET6 left enabled so a
+# future hosted DB or PowerDNS HTTP API call can reach the network.
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+# No filesystem writes outside the DB socket and journald.
+ReadWritePaths=
+
+LimitNOFILE=1024
+LimitNPROC=64

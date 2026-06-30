@@ -1,0 +1,35 @@
+---
+description: Never build components, services, or features without wiring them into the app
+alwaysApply: true
+---
+
+# Never Leave Orphan Features
+
+## The Rule
+
+When you build something, **wire it in**. No exceptions. A component that exists but is never imported is worthless.
+
+## What This Means
+
+Every new feature must be **fully connected** before the task is considered done:
+
+- New **component** -> must be imported and rendered in a parent view/layout
+- New **store** -> must be used by at least one component
+- New **service/API function** -> must be called from at least one store or component
+- New **backend endpoint** -> must be registered in `routes.php` AND called from the frontend
+- New **dialog/modal** -> must have a trigger button/action that opens it
+- New **composable** -> must be used in at least one component
+- New **migration** -> must be referenced by at least one service method
+
+## Completion Checklist
+
+Before saying a feature is done, verify:
+
+1. Can a user actually reach/trigger this feature through the UI?
+2. Is there a visible button, tab, menu item, or navigation link that leads to it?
+3. If the feature is in Settings, is there a control to enable/configure it?
+4. If it's a CRUD feature, can the user Create, Read, Update, AND Delete?
+
+## If You Cannot Wire It In
+
+If wiring requires decisions you cannot make (e.g. where in the UI it should go), **ask immediately**. Do not build the component and leave it for later. Either wire it in or don't build it yet.

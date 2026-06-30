@@ -1,0 +1,43 @@
+---
+description: Mobile layout spacing conventions for Capacitor iOS app
+globs: email/frontend/src/**/*.{vue,css}
+alwaysApply: false
+---
+
+# Mobile Layout Spacing
+
+All mobile views run inside a Capacitor iOS shell with a native status bar. Apply these rules whenever positioning or spacing elements for mobile (max-width: 768px / 640px).
+
+## 4rem Top Offset Rule
+
+Every full-screen panel, modal, sidebar, or overlay on mobile **must** account for the header/status bar with a `4rem` offset:
+
+- **Prefer `padding-top: 4rem`** over `top: 4rem` when the element is `position: fixed` and `top: 0`.
+- Use `top: 4rem` when the element should start below the header (e.g. slide-up panels, notification panels).
+
+```css
+/* Preferred: padding approach */
+.sidebar-container {
+  position: fixed;
+  top: 0;
+  padding-top: 4rem;
+}
+
+/* Alternative: top offset approach */
+.more-panel {
+  position: fixed;
+  top: 4rem;
+}
+```
+
+## Scrollable Root on Mobile
+
+Mobile views must use `overflow-y-auto` on the root container instead of `overflow-hidden`. Desktop keeps `overflow-hidden` with nested scroll areas.
+
+```html
+<div class="h-[100dvh] flex flex-col" :class="isMobile ? 'overflow-y-auto' : 'overflow-hidden'">
+```
+
+## Bottom Padding for MobileBottomNav
+
+Content areas on mobile need `pb-20` to `pb-24` to clear the fixed bottom navigation bar.

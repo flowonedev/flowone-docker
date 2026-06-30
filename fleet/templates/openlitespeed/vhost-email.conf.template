@@ -1,0 +1,180 @@
+# OpenLiteSpeed Virtual Host Configuration - Email App
+# Template for Fleet Manager deployment
+# Variables: {{EMAIL_DOMAIN}}, {{ADMIN_EMAIL}}, {{EMAIL_USER}}
+
+docRoot                   /var/www/vps-email/dist
+vhDomain                  {{EMAIL_DOMAIN}}
+vhAliases                 www.{{EMAIL_DOMAIN}}
+adminEmails               {{ADMIN_EMAIL}}
+enableGzip                1
+enableIpGeo               1
+
+index  {
+  useServer               0
+  indexFiles              index.php, index.html
+}
+
+errorlog /var/log/lsws/{{EMAIL_DOMAIN}}.error_log {
+  useServer               0
+  logLevel                WARN
+  rollingSize             10M
+  keepDays                30
+}
+
+accesslog /var/log/lsws/{{EMAIL_DOMAIN}}.access_log {
+  useServer               0
+  logFormat               "%h %l %u %t \"%r\" %>s %b"
+  rollingSize             10M
+  keepDays                30
+}
+
+extprocessor {{EMAIL_USER}} {
+  type                    lsapi
+  address                 uds://tmp/lshttpd/{{EMAIL_USER}}.sock
+  maxConns                35
+  env                     PHP_LSAPI_CHILDREN=35
+  env                     LSAPI_AVOID_FORK=200M
+  initTimeout             60
+  retryTimeout            0
+  persistConn             1
+  respBuffer              0
+  autoStart               2
+  path                    /usr/local/lsws/lsphp83/bin/lsphp
+  backlog                 100
+  instances               1
+  extUser                 {{EMAIL_USER}}
+  extGroup                {{EMAIL_USER}}
+  runOnStartUp            3
+  priority                0
+  memSoftLimit            2047M
+  memHardLimit            2047M
+  procSoftLimit           1400
+  procHardLimit           1500
+}
+
+extprocessor collab_ws {
+  type                    proxy
+  address                 127.0.0.1:1234
+  maxConns                100
+  initTimeout             60
+  retryTimeout            0
+  respBuffer              0
+}
+
+extprocessor mailsync_ws {
+  type                    proxy
+  address                 127.0.0.1:1235
+  maxConns                100
+  initTimeout             60
+  retryTimeout            0
+  respBuffer              0
+}
+
+scripthandler  {
+  add                     lsapi:{{EMAIL_USER}} php
+}
+
+rewrite  {
+  enable                  1
+  autoLoadHtaccess        1
+  rules                   <<<END_rules
+RewriteEngine On
+# Mail client auto-configuration (PUBLIC XML endpoints served by the PHP
+# backend). autodiscover.<domain> / autoconfig.<domain> are CNAMEd at this
+# server and wildcard-mapped to this vhost, so Outlook / Thunderbird / Apple
+# Mail requests land here and must reach the backend router, not the SPA.
+RewriteRule ^/?autodiscover/autodiscover\.xml$ /api/autodiscover/autodiscover.xml [NC,L]
+RewriteRule ^/?mail/config-v1\.1\.xml$ /api/mail/config-v1.1.xml [L]
+RewriteRule ^/?autoconfig/mail/config-v1\.1\.xml$ /api/autoconfig/mail/config-v1.1.xml [L]
+RewriteRule ^/?\.well-known/autoconfig/mail/config-v1\.1\.xml$ /api/.well-known/autoconfig/mail/config-v1.1.xml [L]
+END_rules
+}
+
+context /api/ {
+  type                    NULL
+  location                /var/www/vps-email/backend/public/
+  allowBrowse             1
+  indexFiles              index.php
+  rewrite  {
+    enable                1
+    inherit               0
+    rules                 <<<END_rules
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [L,QSA]
+END_rules
+  }
+}
+
+context / {
+  location                /var/www/vps-email/dist/
+  allowBrowse             1
+
+  rewrite  {
+    enable                1
+    inherit               1
+    rules                 <<<END_rules
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ /index.html [L]
+END_rules
+  }
+}
+
+vhssl  {
+  keyFile                 /etc/letsencrypt/live/{{EMAIL_DOMAIN}}/privkey.pem
+  certFile                /etc/letsencrypt/live/{{EMAIL_DOMAIN}}/fullchain.pem
+  certChain               1
+  sslProtocol             24
+  ciphers                 ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384
+  enableECDHE             1
+  renegProtection         1
+  sslSessionCache         1
+  enableSpdy              15
+  enableQuic              1
+  enableStapling          1
+  ocspRespMaxAge          86400
+}
+
+websocket /collab-ws {
+  address                 127.0.0.1:1234
+}
+
+websocket /mailsync_ws {
+  address                 127.0.0.1:1235
+}
+
+errorPage 404 {
+  url /error/404.html
+}
+errorPage 403 {
+  url /error/403.html
+}
+errorPage 500 {
+  url /error/500.html
+}
+errorPage 503 {
+  url /error/503.html
+}
+
+context /collab-ws {
+  type                    proxy
+  handler                 collab_ws
+  addDefaultCharset       off
+  extraHeaders            <<<END_extraHeaders
+set Upgrade "websocket"
+set Connection "Upgrade"
+END_extraHeaders
+}
+
+context /mailsync_ws {
+  type                    proxy
+  handler                 mailsync_ws
+  addDefaultCharset       off
+  extraHeaders            <<<END_extraHeaders
+set Upgrade "websocket"
+set Connection "Upgrade"
+END_extraHeaders
+}

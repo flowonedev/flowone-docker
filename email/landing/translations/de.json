@@ -1,0 +1,267 @@
+{
+  "meta": {
+    "title": "MailFlow - Private Geschäftskommunikationsplattform",
+    "description": "MailFlow ist eine private, selbst gehostete Geschäftskommunikationsplattform. E-Mail, Dateispeicherung und Workflows — auf Ihrem eigenen Server installiert. Sie besitzen die Infrastruktur. Null Big-Tech-Abhängigkeit."
+  },
+  "nav": {
+    "why_switch": "Warum Wechseln",
+    "features": "Funktionen",
+    "security": "Sicherheit",
+    "pricing": "Preise",
+    "compare": "Vergleich",
+    "log_in": "Anmelden",
+    "get_started": "Jetzt Starten"
+  },
+  "hero": {
+    "badge_self_hosted": "Self-Hosted",
+    "badge_tagline": "Ihr Server. Ihre Daten. Ihre Schlüssel.",
+    "headline": "Kunden-E-Mail wird Arbeit.",
+    "subheadline": "Wenn eine E-Mail eintrifft, verwandelt MailFlow sie in Aufgaben, Dateien, Fristen und Berichte — auf Infrastruktur, die Sie besitzen.",
+    "subheadline_2": "Kunden schreiben Ihnen normal. Sie führen systematisch aus.",
+    "cta_get_started": "Jetzt Starten",
+    "cta_watch_demo": "Demo Ansehen",
+    "feature_projects": "E-Mails werden zu Projekten",
+    "feature_calendar": "Fristen synchronisieren mit Kalender",
+    "feature_files": "Dateien bleiben bei der Arbeit",
+    "feature_server": "Ihr Server, Ihre Daten"
+  },
+  "problems": {
+    "section_title": "Das Problem mit SaaS-E-Mail",
+    "section_intro": "Arbeit beginnt mit E-Mail — aber SaaS-E-Mail wurde nie dafür konzipiert, Arbeit auszuführen.",
+    "section_subtitle": "Gmail und Outlook sind SaaS-Plattformen. Sie mieten Zugang. Die besitzen die Infrastruktur, die Daten und die Bedingungen. Wenn sie Preise oder Richtlinien ändern, haben Sie keine andere Wahl als zu akzeptieren.",
+    "vendor_lockin_title": "Anbieter-Lock-in",
+    "vendor_lockin_desc": "Ihre E-Mails, Kontakte und Dateien sind gefangen. Migration bedeutet den Verlust jahrelanger Daten und Workflows.",
+    "per_seat_title": "Pro-Benutzer-Preise",
+    "per_seat_desc": "$6-25 pro Benutzer, pro Monat, für immer. Bei einem 20-köpfigen Team sind das $1.500-6.000/Jahr — und steigend.",
+    "third_party_title": "Drittanbieter-Zugriff",
+    "third_party_desc": "Ihre Geschäfts-E-Mails liegen auf deren Servern. Ihren Richtlinien, ihren Datenschutzverletzungen, ihren Compliance-Fehlern ausgesetzt.",
+    "sovereignty_title": "Keine Datensouveränität",
+    "sovereignty_desc": "Daten in unbekannten Jurisdiktionen gespeichert. Sie können nicht kontrollieren, wo sie liegen oder wer legal darauf zugreifen kann."
+  },
+  "solution": {
+    "section_title": "Die Alternative der eigenen Infrastruktur",
+    "section_subtitle": "MailFlow wird auf Ihrem VPS installiert. Sie besitzen den Server und die Daten. Kein Drittanbieter-Zugriff. Niemals.",
+    "own_keys_title": "Sie Besitzen die Schlüssel",
+    "own_keys_desc": "Root-Zugang. Volle Kontrolle. Wir installieren, konfigurieren, dann übergeben wir Ihnen die Schlüssel. Es gehört Ihnen.",
+    "flat_cost_title": "Feste Infrastrukturkosten",
+    "flat_cost_desc": "Zahlen Sie einmal für Ihren VPS. Fügen Sie unbegrenzt Benutzer hinzu. Keine Pro-Benutzer-Gebühren, keine Skalierungsüberraschungen.",
+    "jurisdiction_title": "Wählen Sie Ihre Jurisdiktion",
+    "jurisdiction_desc": "Wählen Sie einen VPS-Anbieter in Ihrem Land. EU-Daten bleiben in der EU. Volle DSGVO-Kontrolle.",
+    "zero_access_title": "Null Drittanbieter-Zugriff",
+    "zero_access_desc": "Daten verlassen niemals Ihren Server. Keine Cloud-Abhängigkeiten. Kein Anbieter liest Ihre E-Mails."
+  },
+  "workflow": {
+    "section_title": "Von E-Mail zur Ausführung",
+    "section_subtitle": "Echte Kundenkommunikation wird zu strukturierter Arbeit — Aufgaben, Dateien, Fristen und Berichterstattung — ohne separate Tools, manuelle Synchronisierung oder SaaS-Abhängigkeiten. Projekte leben dort, wo das Gespräch begann.",
+    "step_1_title": "Kunden-E-Mail Trifft Ein",
+    "step_1_desc": "Echte Nachricht in Ihrem Posteingang",
+    "step_2_title": "Wird ein Projekt",
+    "step_2_desc": "Aufgaben, Timeline, angehängte Dateien",
+    "step_3_title": "Bericht an Kunden",
+    "step_3_desc": "Aus echtem Projektstatus generiert",
+    "outcome_1": "Arbeit beginnt mit echten E-Mails",
+    "outcome_2": "Projekte bleiben mit Posteingang verbunden",
+    "outcome_3": "Fristen synchronisieren mit Kalender",
+    "outcome_4": "Berichte aus echtem Status",
+    "caption": "Von E-Mail zur Ausführung — alles auf Ihrem Server."
+  },
+  "tracking": {
+    "section_title": "E-Mail-Intelligenz",
+    "section_subtitle": "Wissen Sie, wann E-Mails geöffnet werden, Links geklickt und Anhänge heruntergeladen werden. Alle Daten auf Ihrem Server gespeichert.",
+    "opens_title": "Lesebestätigung",
+    "opens_desc": "Wissen Sie genau, wann Ihre E-Mail geöffnet wurde",
+    "clicks_title": "Link-Tracking",
+    "clicks_desc": "Sehen Sie, welche Links Empfänger geklickt haben",
+    "analytics_title": "Analyse",
+    "analytics_desc": "Engagement-Muster und Antwortzeiten"
+  },
+  "multi_account": {
+    "section_title": "Einheitlicher Posteingang",
+    "section_subtitle": "Verbinden Sie bestehende Gmail- oder Outlook-Konten während der Umstellung. Verwalten Sie alle Konten von einer Oberfläche, dann reduzieren Sie SaaS-Abhängigkeiten in Ihrem Tempo — oder behalten Sie sie verbunden, wenn nötig.",
+    "feature_1": "Unbegrenzte externe Konten verbinden",
+    "feature_2": "Einheitliche Ansicht aller Postfächer",
+    "feature_3": "Schrittweise Migration in Ihrem Tempo"
+  },
+  "filters": {
+    "section_title": "Erweiterte Filter",
+    "section_subtitle": "Serverseitige Regeln, die arbeiten, während Sie schlafen. Auto-Organisieren, Auto-Antworten, Auto-Weiterleiten basierend auf Bedingungen, die Sie definieren.",
+    "feature_1": "Unbegrenzte Filterregeln",
+    "feature_2": "Komplexe Bedingungen",
+    "feature_3": "Automatisierte Aktionen"
+  },
+  "tasks": {
+    "section_title": "E-Mail-Aufgaben",
+    "section_subtitle": "Verwandeln Sie jede E-Mail mit einem Klick in eine Aufgabe. Fristen, Prioritäten und Statusverfolgung — alles mit der ursprünglichen Konversation verbunden.",
+    "feature_1": "Ein-Klick-Aufgabenerstellung",
+    "feature_2": "Mit E-Mail-Thread verbunden",
+    "feature_3": "Kalenderintegration"
+  },
+  "analytics": {
+    "section_title": "Kommunikationsanalyse",
+    "section_subtitle": "Verstehen Sie Ihre E-Mail-Muster. Antwortzeiten, Spitzenzeiten, Engagement-Raten — Einblick in echte Kommunikation auf Ihrem Server gespeichert.",
+    "feature_1": "Antwortzeit-Tracking",
+    "feature_2": "Spitzenaktivitätszeiten",
+    "feature_3": "Team-Performance-Metriken"
+  },
+  "drive": {
+    "section_title": "Persönliches Laufwerk",
+    "section_subtitle": "Private Dateispeicherung auf Ihrem Server. E-Mail-Anhänge, Projektdateien, Dokumente — organisiert und durchsuchbar.",
+    "feature_1": "Unbegrenzter Speicher (VPS-Limits)",
+    "feature_2": "Dateiversionierung",
+    "feature_3": "Suchen und Organisieren"
+  },
+  "infrastructure": {
+    "layer_title": "Die Infrastrukturschicht",
+    "layer_subtitle": "Alles oben läuft auf Systemen, die Sie besitzen",
+    "server_title": "Ihr Server. Ihr Geschäft.",
+    "server_subtitle": "MailFlow läuft auf einem VPS, den Sie kontrollieren. Wir installieren den kompletten Stack — Webserver, Mailserver, Datenbank, Sicherheit. Dann übergeben wir Ihnen Root-Zugang. Es ist Ihre Infrastruktur.",
+    "install_title": "Wir Installieren und Konfigurieren Alles",
+    "install_desc": "Komplettes Setup auf Ihrem VPS. OpenLiteSpeed, Dovecot, Postfix, MariaDB — alles konfiguriert und optimiert.",
+    "keys_title": "Sie Besitzen die Schlüssel",
+    "keys_desc": "Root-Zugang, volle Kontrolle. Wir geben Ihnen die Schlüssel und treten zurück. Es ist IHR Server.",
+    "zero_access_title": "Null Drittanbieter-Zugriff",
+    "zero_access_desc": "Daten verlassen niemals Ihren Server. Keine Cloud-Abhängigkeit. Vollständige Datensouveränität."
+  },
+  "panel": {
+    "section_title": "Ihr Privates Geschäftsserver-Betriebssystem",
+    "section_subtitle": "DEVCON Panel ist die Kommandozentrale für Ihre Geschäftsinfrastruktur. Verwalten Sie E-Mail, Websites, Datenbanken, DNS, SSL, Sicherheit — alles, was Ihr Geschäft braucht, auf einem Server, den Sie besitzen.",
+    "feature_hosting": "Multi-Site-Hosting",
+    "feature_hosting_desc": "Unbegrenzte Websites auf einem Server hosten",
+    "feature_speed": "OpenLiteSpeed",
+    "feature_speed_desc": "10x schneller als Apache, für immer kostenlos",
+    "feature_email": "E-Mail-Server",
+    "feature_email_desc": "Postfix + Dovecot vollständig konfiguriert",
+    "feature_security": "Enterprise-Sicherheit",
+    "feature_security_desc": "Fail2ban, ModSec, CPGuard WAF"
+  },
+  "security": {
+    "section_title": "Sicherheits-Stack, den Sie Verwalten",
+    "section_subtitle": "Fail2ban, ModSecurity WAF, CPGuard Malware-Scanner, firewalld — alles auf Ihrem Server konfiguriert. Sie kontrollieren die Sicherheitsrichtlinien. Vollständige Audit-Sichtbarkeit.",
+    "fail2ban_title": "Fail2ban Jails",
+    "fail2ban_desc": "SSH, Postfix, Dovecot, LiteSpeed, FTP-Schutz",
+    "modsec_title": "ModSecurity WAF",
+    "modsec_desc": "OWASP-Regeln, SQL-Injection- und XSS-Prävention",
+    "cpguard_title": "CPGuard Scanner",
+    "cpguard_desc": "Malware-Erkennung, Brute-Force, CAPTCHA",
+    "firewall_title": "Firewalld",
+    "firewall_desc": "Zonenbasierte Firewall mit erweiterten Regeln"
+  },
+  "ai": {
+    "section_title": "Server-Konfig-Diagnose",
+    "section_subtitle": "Optional KI-gestützte Konfigurationsanalyse aktivieren. Standardmäßig deaktiviert. Wenn mit Ihrem eigenen API-Schlüssel aktiviert, überprüft es Postfix-, Dovecot- und andere Konfigurationen auf Fehlkonfigurationen.",
+    "feature_1": "Standardmäßig deaktiviert — nur bei Bedarf aktivieren",
+    "feature_2": "Verwendet Ihren eigenen OpenAI-API-Schlüssel — wir sehen niemals Ihre Daten",
+    "feature_3": "Analysiert Server-Konfigurationen auf Sicherheitsprobleme",
+    "feature_4": "Klartext-Erklärungen komplexer Einstellungen"
+  },
+  "backups": {
+    "section_title": "Ihre Backups. Ihre Kontrolle.",
+    "section_subtitle": "Eingebautes Backup-System für Konfigurationen, Sites und Datenbanken. Lokal speichern oder zu Ihrem eigenen S3/SFTP-Ziel synchronisieren. Vollständiger Audit-Trail jeder Serveraktion.",
+    "config_title": "Konfig-Backups",
+    "config_desc": "Webserver, virtuelle Hosts, PHP-Konfigurationen — alle versioniert",
+    "remote_title": "Remote-Speicherung",
+    "remote_desc": "Backups zu S3, SFTP oder jedem Remote-Ziel synchronisieren",
+    "audit_title": "Vollständiger Audit-Trail",
+    "audit_desc": "Jede Aktion protokolliert — wer, was, wann, Erfolg/Misserfolg"
+  },
+  "security_privacy": {
+    "section_title": "Sicherheit, die Sie Kontrollieren",
+    "section_subtitle": "Enterprise-Sicherheits-Stack, auf Ihrem Server konfiguriert. Sie verwalten den Zugang, Sie setzen die Richtlinien, Sie besitzen den Audit-Trail."
+  },
+  "who_for": {
+    "section_title": "Für Wen MailFlow Ist",
+    "section_subtitle": "Gebaut für Unternehmen, die Eigentum wollen, keine Mietverträge.",
+    "good_1": "Agenturen, die Kundenkommunikation verwalten",
+    "good_2": "Berater mit sensiblen Kundendaten",
+    "good_3": "Unternehmen mit DSGVO-Anforderungen",
+    "good_4": "Teams, die Pro-Benutzer-Preise satt haben",
+    "good_5": "Organisationen, die Datensouveränität wollen",
+    "bad_1": "Nutzer, die kostenlose E-Mail wollen",
+    "bad_2": "Die, die 24/7 verwalteten Support brauchen",
+    "bad_3": "Teams ohne grundlegende Tech-Kenntnisse"
+  },
+  "comparison": {
+    "section_title": "Eigentum vs. Miete",
+    "section_subtitle": "Was Sie über 3 Jahre für ein 20-köpfiges Team zahlen",
+    "google": "Google Workspace",
+    "microsoft": "Microsoft 365",
+    "msp": "MSP / Berater",
+    "mailflow": "MailFlow",
+    "year_1": "Jahr 1",
+    "year_2": "Jahr 2",
+    "year_3": "Jahr 3",
+    "total": "3-Jahres-Gesamt",
+    "per_user": "pro Benutzer/Monat",
+    "one_time": "einmalig",
+    "vps_cost": "+ ~€15-25/Monat VPS",
+    "conclusion": "Die meisten Teams holen die Infrastrukturkosten innerhalb von 12-18 Monaten zurück. Danach arbeiten sie auf eigenen Systemen mit nahezu null Grenzkosten."
+  },
+  "pricing": {
+    "section_title": "Übergabe Eigener Infrastruktur",
+    "section_subtitle": "Einmalige Infrastrukturübergabe. Sie erhalten vollständiges Eigentum an Ihrer Geschäftskommunikationsplattform. Optionale verwaltete Überwachung, wenn Sie hands-off Wartung bevorzugen.",
+    "owned_title": "Übergabe Eigener Infrastruktur",
+    "owned_price": "€3.490",
+    "owned_period": "einmalig",
+    "owned_feature_1": "MailFlow-Plattform",
+    "owned_feature_2": "DEVCON Server-Panel",
+    "owned_feature_3": "Vollständige Installation und Härtung",
+    "owned_feature_4": "Root-Zugangsübergabe",
+    "owned_feature_5": "Unbegrenzte Benutzer",
+    "owned_feature_6": "Kein Lock-in",
+    "managed_title": "Optional: Verwaltete Überwachung",
+    "managed_price": "€149",
+    "managed_period": "/ Monat",
+    "managed_feature_1": "Sicherheitsüberwachung",
+    "managed_feature_2": "Updates und Patches",
+    "managed_feature_3": "Backups",
+    "managed_feature_4": "Incident Response",
+    "managed_note": "Jederzeit kündbar. Sie behalten alles.",
+    "vps_note": "Typische VPS-Kosten: €15-25/Monat. Wir empfehlen Hetzner, Contabo oder OVH für europäisches Hosting."
+  },
+  "handover": {
+    "section_title": "Wie die Übergabe Funktioniert",
+    "step_1_title": "Beratung",
+    "step_1_desc": "Wir besprechen Ihre Anforderungen und wählen den richtigen VPS-Anbieter.",
+    "step_2_title": "Installation",
+    "step_2_desc": "Wir richten alles auf Ihrem Server ein und konfigurieren es.",
+    "step_3_title": "Testen",
+    "step_3_desc": "Wir überprüfen, dass alles korrekt funktioniert.",
+    "step_4_title": "Übergabe",
+    "step_4_desc": "Wir übergeben Ihnen die Schlüssel. Es ist jetzt Ihre Infrastruktur."
+  },
+  "cta": {
+    "title": "Bereit, Ihre Infrastruktur zu Besitzen?",
+    "subtitle": "Hören Sie auf zu mieten. Beginnen Sie zu besitzen.",
+    "button": "Jetzt Starten"
+  },
+  "footer": {
+    "product": "Produkt",
+    "features": "Funktionen",
+    "pricing": "Preise",
+    "compare": "Vergleich",
+    "documentation": "Dokumentation",
+    "changelog": "Änderungsprotokoll",
+    "resources": "Ressourcen",
+    "api_reference": "API-Referenz",
+    "server_requirements": "Server-Anforderungen",
+    "community": "Community",
+    "blog": "Blog",
+    "legal": "Rechtliches",
+    "privacy_policy": "Datenschutzerklärung",
+    "terms_of_service": "Nutzungsbedingungen",
+    "contact": "Kontakt",
+    "copyright": "2026 MailFlow. Gebaut für Unternehmen, die ihre Infrastruktur besitzen."
+  },
+  "common": {
+    "unlimited_users": "Unbegrenzte Benutzer",
+    "root_access": "Voller Root-Zugang",
+    "you_own_everything": "Sie besitzen alles",
+    "get_started": "Jetzt Starten",
+    "learn_more": "Mehr Erfahren",
+    "contact_us": "Kontaktieren Sie Uns",
+    "running": "Läuft",
+    "active": "Aktiv",
+    "enabled": "Aktiviert"
+  }
+}
+

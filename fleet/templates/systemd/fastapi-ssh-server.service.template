@@ -1,0 +1,26 @@
+# FastAPI SSH Server - Python SSH terminal proxy
+# Template for Fleet Manager deployment
+# Variables: {{PANEL_DOMAIN}}
+
+[Unit]
+Description=FastAPI SSH Terminal Server
+After=network.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/var/www/vps-admin/ssh-server
+ExecStart=/usr/bin/python3 -m uvicorn main:app --host 127.0.0.1 --port 8765 --workers 1
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=fastapi-ssh
+
+[Install]
+WantedBy=multi-user.target
+

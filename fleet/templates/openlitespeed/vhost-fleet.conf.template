@@ -1,0 +1,142 @@
+# OpenLiteSpeed Virtual Host Configuration - Fleet Manager
+# Template for Fleet Manager deployment
+# Variables: {{FLEET_DOMAIN}}, {{ADMIN_EMAIL}}
+
+docRoot                   /var/www/vps-fleet
+vhDomain                  {{FLEET_DOMAIN}}
+vhAliases                 www.{{FLEET_DOMAIN}}, mail.{{FLEET_DOMAIN}}
+adminEmails               {{ADMIN_EMAIL}}
+enableGzip                0
+enableIpGeo               1
+
+index  {
+  useServer               0
+  indexFiles              index.php, index.html
+}
+
+errorlog /var/log/lsws/{{FLEET_DOMAIN}}.error_log {
+  useServer               0
+  logLevel                WARN
+  rollingSize             10M
+}
+
+accesslog /var/log/lsws/{{FLEET_DOMAIN}}.access_log {
+  useServer               0
+  logFormat               "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\""
+  logHeaders              5
+  rollingSize             10M
+  keepDays                10
+  compressArchive         1
+}
+
+scripthandler  {
+  add                     lsapi:fleet_manager php
+}
+
+extprocessor fleet_manager {
+  type                    lsapi
+  address                 UDS://tmp/lshttpd/fleet_manager.sock
+  maxConns                10
+  env                     LSAPI_CHILDREN=10
+  initTimeout             600
+  retryTimeout            0
+  persistConn             1
+  pcKeepAliveTimeout      1
+  respBuffer              0
+  reqBodyBufSize          10M
+  autoStart               1
+  path                    /usr/local/lsws/lsphp83/bin/lsphp
+  extUser                 www-data
+  extGroup                www-data
+  memSoftLimit            1024M
+  memHardLimit            1024M
+  procSoftLimit           400
+  procHardLimit           500
+}
+
+phpIniOverride  {
+
+}
+
+module cache {
+  storagePath /usr/local/lsws/cachedata/{{FLEET_DOMAIN}}
+}
+
+rewrite  {
+  enable                  1
+  autoLoadHtaccess        0
+  rules                   <<<END_rules
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_URI} ^/api/
+RewriteRule ^ - [L]
+RewriteRule ^ /index.html [L]
+END_rules
+}
+
+context /api/ {
+  type                    NULL
+  location                $DOC_ROOT/api/public/
+  allowBrowse             1
+  indexFiles              index.php
+  rewrite  {
+    enable                1
+    inherit               0
+    rules                 <<<END_rules
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [L,QSA]
+END_rules
+  }
+}
+
+context /.well-known/acme-challenge {
+  location                $DOC_ROOT/.well-known/acme-challenge
+  allowBrowse             1
+
+  rewrite  {
+    enable                0
+  }
+  addDefaultCharset       off
+
+  phpIniOverride  {
+
+  }
+}
+
+context / {
+  location                $DOC_ROOT/
+  allowBrowse             1
+  rewrite  {
+    enable                1
+    rules                 <<<END_RULES
+RewriteRule .* - [E=XFO:SAMEORIGIN]
+RewriteRule .* - [E=XCTO:nosniff]
+RewriteRule .* - [E=RP:strict-origin-when-cross-origin]
+END_RULES
+  }
+  extraHeaders            <<<END_HEADERS
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+X-Frame-Options: %{XFO}e
+X-Content-Type-Options: %{XCTO}e
+Referrer-Policy: %{RP}e
+END_HEADERS
+}
+
+vhssl  {
+  keyFile                 /etc/letsencrypt/live/{{FLEET_DOMAIN}}/privkey.pem
+  certFile                /etc/letsencrypt/live/{{FLEET_DOMAIN}}/fullchain.pem
+  certChain               1
+  sslProtocol             24
+  enableECDHE             1
+  renegProtection         1
+  sslSessionCache         1
+  enableSpdy              15
+  enableStapling          1
+  ocspRespMaxAge          86400
+  ciphers                 ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES256-GCM-SHA384
+  sslSessionTickets       1
+  enableQuic              1
+}
+

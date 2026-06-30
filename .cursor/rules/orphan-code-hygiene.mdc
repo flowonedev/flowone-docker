@@ -1,0 +1,69 @@
+---
+description: Enforces deep orphan code detection and cleanup after every structural change to prevent dead code accumulation
+alwaysApply: true
+---
+
+# Orphan Code Hygiene
+
+## When to Run This Check
+
+After EVERY change that does any of the following:
+- Removes, renames, or moves a component, service, composable, or store
+- Removes or changes an import path
+- Removes a feature, route, or addon gate
+- Refactors a file into smaller modules
+- Deletes or replaces an API endpoint
+
+## What to Check (the full chain)
+
+For each affected symbol (component, function, service, variable, route, i18n key):
+
+1. **Imports**: search the entire codebase for `import` statements referencing the old path or name
+2. **Template usage**: search for component tag names in `.vue` templates (PascalCase and kebab-case)
+3. **Dynamic imports**: search for `defineAsyncComponent(() => import('...'))` and `import('...')` patterns
+4. **Store references**: search for `use[StoreName]()` calls outside the store's own file
+5. **API callers**: search for the endpoint path string (e.g. `/project-hub/work-sessions/summary`)
+6. **Route references**: search for `router.push`, `router-link :to`, and route `name:` references
+7. **i18n keys**: if a component is removed, check if its i18n keys are used elsewhere
+8. **Event listeners**: search for `@event-name` or `$emit('event-name')` that no parent handles
+
+## Depth Requirement
+
+Do NOT just check the immediate file. Trace connections at least 2 levels deep:
+- If component A imports service B, and you delete B, check that A is not itself orphaned
+- If route X pointed to view Y, and Y is removed, check that no sidebar/nav still links to X
+
+## Decision Process
+
+Before deleting any code:
+1. Search for ALL references (imports, template tags, API calls, route links, emits)
+2. If zero references found: mark as orphan, safe to delete
+3. If references exist but all are in files also being removed: safe to delete as a group
+4. If references exist in files that are staying: NOT an orphan, do not delete
+5. If uncertain: flag it and ask before deleting
+
+## What Counts as Orphan Code
+
+- Components with zero imports anywhere in the codebase
+- Functions defined but never called (no template binding, no other function call)
+- Variables/refs imported or declared but never read
+- API service functions never called from any component or store
+- Route definitions that no navigation or link targets
+- i18n keys referenced only by deleted components
+- Event emits that no parent component listens to
+
+## Reporting
+
+When orphan code is found during a change, report it immediately:
+- File path and line range
+- What it is (component, function, variable, route, i18n)
+- Why it is orphaned (what was removed/changed that severed the connection)
+- Confidence level (certain orphan vs needs verification)
+
+## Never Delete Without Verification
+
+Even if code looks orphaned:
+- Check for dynamic/computed references (`components[name]`, `import(path + variable)`)
+- Check for test files that may reference it
+- Check for server-side rendering or build-time usage
+- Check for external entry points (e.g. public API, CLI scripts, cron jobs)

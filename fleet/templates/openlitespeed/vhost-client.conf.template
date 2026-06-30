@@ -1,0 +1,133 @@
+# OpenLiteSpeed Virtual Host Configuration - Client Site
+# Template for VPS Admin Panel site creation
+# Variables: {{DOMAIN}}, {{ADMIN_EMAIL}}, {{SITE_USER}}
+
+docRoot                   $VH_ROOT/public_html
+vhDomain                  {{DOMAIN}}
+vhAliases                 www.{{DOMAIN}}, mail.{{DOMAIN}}
+adminEmails               {{ADMIN_EMAIL}}
+enableGzip                0
+enableIpGeo               1
+
+index  {
+  useServer               0
+  indexFiles              index.php, index.html
+}
+
+errorlog $VH_ROOT/logs/{{DOMAIN}}.error_log {
+  useServer               0
+  logLevel                WARN
+  rollingSize             10M
+}
+
+accesslog $VH_ROOT/logs/{{DOMAIN}}.access_log {
+  useServer               0
+  logFormat               "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\""
+  logHeaders              5
+  rollingSize             10M
+  keepDays                10
+  compressArchive         1
+}
+
+scripthandler  {
+  add                     lsapi:{{SITE_USER}} php
+}
+
+extprocessor {{SITE_USER}} {
+  type                    lsapi
+  address                 UDS://tmp/lshttpd/{{SITE_USER}}.sock
+  maxConns                10
+  env                     LSAPI_CHILDREN=10
+  initTimeout             600
+  retryTimeout            0
+  persistConn             1
+  pcKeepAliveTimeout      1
+  respBuffer              0
+  autoStart               1
+  path                    /usr/local/lsws/lsphp83/bin/lsphp
+  extUser                 {{SITE_USER}}
+  extGroup                {{SITE_USER}}
+  memSoftLimit            1024M
+  memHardLimit            1024M
+  procSoftLimit           400
+  procHardLimit           500
+}
+
+phpIniOverride  {
+
+}
+
+module cache {
+  storagePath /usr/local/lsws/cachedata/{{DOMAIN}}
+}
+
+rewrite  {
+  enable                  1
+  autoLoadHtaccess        1
+}
+
+context /.well-known/acme-challenge {
+  location                $DOC_ROOT/.well-known/acme-challenge
+  allowBrowse             1
+
+  rewrite  {
+    enable                0
+  }
+  addDefaultCharset       off
+
+  phpIniOverride  {
+
+  }
+}
+
+context / {
+  location                $DOC_ROOT/
+  allowBrowse             1
+  rewrite  {
+    enable                1
+    rules                 <<<END_RULES
+RewriteRule .* - [E=XFO:SAMEORIGIN]
+RewriteRule .* - [E=XCTO:nosniff]
+RewriteRule .* - [E=RP:strict-origin-when-cross-origin]
+END_RULES
+  }
+  extraHeaders            <<<END_HEADERS
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+X-Frame-Options: %{XFO}e
+X-Content-Type-Options: %{XCTO}e
+Referrer-Policy: %{RP}e
+END_HEADERS
+}
+
+vhssl  {
+  keyFile                 /etc/letsencrypt/live/{{DOMAIN}}/privkey.pem
+  certFile                /etc/letsencrypt/live/{{DOMAIN}}/fullchain.pem
+  certChain               1
+  sslProtocol             24
+  enableECDHE             1
+  renegProtection         1
+  sslSessionCache         1
+  enableSpdy              15
+  enableStapling          1
+  ocspRespMaxAge          86400
+  ciphers                 ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES256-GCM-SHA384
+  sslSessionTickets       1
+  enableQuic              1
+}
+
+errorPage 404 {
+  url /error/404.html
+}
+
+errorPage 403 {
+  url /error/403.html
+}
+
+errorPage 500 {
+  url /error/500.html
+}
+
+errorPage 503 {
+  url /error/503.html
+}
+

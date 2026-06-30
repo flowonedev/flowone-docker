@@ -1,0 +1,78 @@
+services:
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: localroot
+      MYSQL_DATABASE: flowone_local
+      MYSQL_USER: flowone
+      MYSQL_PASSWORD: flowone
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-plocalroot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.6
+    environment:
+      MEILI_MASTER_KEY: localdevmasterkey
+      MEILI_NO_ANALYTICS: "true"
+    ports:
+      - "7700:7700"
+    volumes:
+      - meili_data:/meili_data
+
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile.local
+    ports:
+      - "8000:80"
+    volumes:
+      - ./backend:/var/www/html/backend
+      - ./collab:/var/www/html/collab
+      # Persist per-user settings JSON files across container restarts.
+      # Live server uses /var/www/vps-email/data — many controllers hardcode it.
+      - vps_email_data:/var/www/vps-email/data
+    environment:
+      DB_HOST: db
+      DB_NAME: flowone_local
+      DB_USER: flowone
+      DB_PASS: flowone
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: ""
+      REDIS_DATABASE: "0"
+      MEILI_HOST: http://meilisearch:7700
+      MEILI_MASTER_KEY: localdevmasterkey
+      MEILI_SEARCH_KEY: localdevmasterkey
+      JWT_SECRET: localdev_jwt_secret_change_this_if_you_care
+      JWT_ALGORITHM: HS256
+      PANEL_API_URL: https://panel.devcon1.hu/api
+      PANEL_API_KEY: ""
+      APP_DEBUG: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      meilisearch:
+        condition: service_started
+
+volumes:
+  db_data:
+  redis_data:
+  meili_data:
+  vps_email_data:

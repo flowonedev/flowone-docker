@@ -1,0 +1,18 @@
+# Postfix Virtual Mailboxes MySQL Configuration
+# Template for Fleet Manager deployment
+# Variables: {{MAIL_DB_USER}}, {{MAIL_DB_PASS}}, {{MAIL_DB_NAME}}
+#
+# This file tells Postfix which email addresses have mailboxes.
+# Returns the maildir path for local delivery.
+# Place at: /etc/postfix/mysql-virtual-mailboxes.cf
+
+user = {{MAIL_DB_USER}}
+password = {{MAIL_DB_PASS}}
+hosts = 127.0.0.1
+dbname = {{MAIL_DB_NAME}}
+
+# Query returns maildir path: domain/username/
+# Relative to virtual_mailbox_base (/home/vmail) in main.cf; the actual
+# delivery path is determined by Dovecot's mail_location (LDA pipe transport)
+query = SELECT CONCAT(domain, '/', username, '/') FROM mail_accounts WHERE email='%s' AND status='active'
+

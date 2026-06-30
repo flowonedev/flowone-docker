@@ -1,0 +1,63 @@
+# Redis Configuration - Managed by DEVCON Fleet Manager
+# Template variables: {{REDIS_PASS}}, {{REDIS_MAXMEM}}
+
+# Network
+bind 127.0.0.1 ::1
+port 6379
+protected-mode yes
+tcp-backlog 511
+timeout 0
+tcp-keepalive 300
+
+# General
+daemonize no
+supervised systemd
+pidfile /run/redis/redis-server.pid
+loglevel notice
+logfile /var/log/redis/redis-server.log
+databases 16
+
+# Snapshotting - disabled for cache-only usage
+save ""
+
+# Security
+requirepass {{REDIS_PASS}}
+
+# Memory
+maxmemory {{REDIS_MAXMEM}}
+maxmemory-policy allkeys-lru
+maxmemory-samples 5
+
+# Append Only Mode - disabled for cache-only usage
+appendonly no
+
+# Lua scripting
+lua-time-limit 5000
+
+# Slow Log
+slowlog-log-slower-than 10000
+slowlog-max-len 128
+
+# Latency Monitor
+latency-monitor-threshold 0
+
+# Notifications
+notify-keyspace-events ""
+
+# Advanced
+hash-max-ziplist-entries 512
+hash-max-ziplist-value 64
+list-max-ziplist-size -2
+list-compress-depth 0
+set-max-intset-entries 512
+zset-max-ziplist-entries 128
+zset-max-ziplist-value 64
+hll-sparse-max-bytes 3000
+stream-node-max-bytes 4096
+stream-node-max-entries 100
+activerehashing yes
+hz 10
+dynamic-hz yes
+aof-rewrite-incremental-fsync yes
+rdb-save-incremental-fsync yes
+

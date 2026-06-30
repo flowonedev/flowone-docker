@@ -1,0 +1,24 @@
+Jun 26 23:08:32.289046 App(CallKit)[28472] <Notice>: Requesting calls from host
+Jun 26 23:08:32.289575 callservicesd(CallKit)[27380] <Notice>: Asked to accept new connection from <private>
+Jun 26 23:08:32.291460 callservicesd(CallKit)[27380] <Notice>: Created <private>
+Jun 26 23:08:32.291674 callservicesd(CallKit)[27380] <Notice>: callControllerHostConnection: <private>
+Jun 26 23:08:32.291921 App(CallKit)[28472] <Notice>: Received requested calls from host: <private>
+Jun 26 23:08:32.328278 App(CallKit)[28472] <Notice>: Registering configuration <private>
+Jun 26 23:08:32.330937 callservicesd(CallKit)[27380] <Notice>: listener: <private> newConnection: <private>
+Jun 26 23:08:32.332905 callservicesd(CallKit)[27380] <Notice>: Created CXXPCCallSource with identifier: <private> bundleIdentifier: <private> bundleURL: <private> hasVoIPBackgroundMode: 1 capabilities: <private> connection: <private>
+Jun 26 23:08:32.332923 callservicesd(CallKit)[27380] <Notice>: Asked to add call source <private>
+Jun 26 23:08:32.333246 callservicesd(CallKit)[27380] <Notice>: Received -[CXCallSource registerWithConfiguration:] with configuration: <private>
+Jun 26 23:09:31.316482 callservicesd(CallKit)[27380] <Notice>: Connection invalidated for call controller host connection: <private>
+Jun 26 23:09:31.316522 callservicesd(CallKit)[27380] <Notice>: Connection invalidated for XPC call source <private>
+Jun 26 23:09:31.317326 callservicesd(CallKit)[27380] <Notice>: Call source invalidated: <private>
+Jun 26 23:09:31.317336 callservicesd(CallKit)[27380] <Notice>: Asked to remove call source <private>
+Jun 26 23:09:34.472530 App(CallKit)[28476] <Notice>: Requesting calls from host
+Jun 26 23:09:34.473555 callservicesd(CallKit)[27380] <Notice>: Asked to accept new connection from <private>
+Jun 26 23:09:34.474662 callservicesd(CallKit)[27380] <Notice>: Created <private>
+Jun 26 23:09:34.474733 callservicesd(CallKit)[27380] <Notice>: callControllerHostConnection: <private>
+Jun 26 23:09:34.475163 App(CallKit)[28476] <Notice>: Received requested calls from host: <private>
+Jun 26 23:09:34.499305 callservicesd(CallKit)[27380] <Notice>: listener: <private> newConnection: <private>
+Jun 26 23:09:34.499364 App(CallKit)[28476] <Notice>: Registering configuration <private>
+Jun 26 23:09:34.500040 callservicesd(CallKit)[27380] <Notice>: Created CXXPCCallSource with identifier: <private> bundleIdentifier: <private> bundleURL: <private> hasVoIPBackgroundMode: 1 capabilities: <private> connection: <private>
+Jun 26 23:09:34.500053 callservicesd(CallKit)[27380] <Notice>: Asked to add call source <private>
+Jun 26 23:09:34.500074 callservicesd(CallKit)[27380] <Notice>: Received -[CXCallSource registerWithConfiguration:] with configuration: <private>

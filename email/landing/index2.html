@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MailFlow - Private Business Communication Platform</title>
+
+    <!-- SEO Meta Tags -->
+    <meta
+      name="description"
+      content="MailFlow is a private, self-hosted business communication platform — email, files, and workflows — installed and maintained on your own server. Escape SaaS lock-in." />
+    <meta
+      name="keywords"
+      content="self-hosted email, private email server, business communication platform, VPS email, data sovereignty, escape gmail, escape outlook" />
+    <meta name="author" content="MailFlow" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mailflow.app/" />
+    <meta
+      property="og:title"
+      content="MailFlow - Private Business Communication Platform" />
+    <meta
+      property="og:description"
+      content="Own your business communications. Self-hosted email, files, and workflows on your server. Zero Big Tech dependencies." />
+    <meta property="og:image" content="https://mailflow.app/og-image.png" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://mailflow.app/" />
+    <meta
+      name="twitter:title"
+      content="MailFlow - Private Business Communication Platform" />
+    <meta
+      name="twitter:description"
+      content="Own your business communications. Self-hosted email, files, and workflows on your server." />
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "MailFlow",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Linux VPS",
+        "offers": {
+          "@type": "Offer",
+          "price": "599",
+          "priceCurrency": "USD"
+        },
+        "description": "Private, self-hosted business communication platform with email, file storage, tasks, and server management"
+      }
+    </script>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+
+    <!-- Fonts -->
+    <link rel="stylesheet" href="/fonts/outfit/font.css" />
+    <link rel="stylesheet" href="/fonts/jetbrains-mono/font.css" />
+
+    <!-- Google Material Symbols -->
+    <link rel="stylesheet" href="/fonts/material-symbols-outlined/font.css" />
+
+    <!-- Tailwind CSS -->
+    <script src="/js/tailwind.min.js"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Outfit", "sans-serif"],
+              mono: ["JetBrains Mono", "monospace"],
+            },
+            colors: {
+              surface: {
+                50: "#fafafa",
+                100: "#f4f4f5",
+                200: "#e4e4e7",
+                700: "#3f3f46",
+                800: "#27272a",
+                900: "#18181b",
+                950: "#0c0c0d",
+              },
+            },
+            animation: {
+              float: "float 6s ease-in-out infinite",
+              "pulse-slow": "pulse 4s ease-in-out infinite",
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      :root {
+        --brand-50: #f0fdf4;
+        --brand-100: #dcfce7;
+        --brand-200: #bbf7d0;
+        --brand-300: #86efac;
+        --brand-400: #4ade80;
+        --brand-500: #22c55e;
+        --brand-600: #16a34a;
+        --brand-700: #15803d;
+        --brand-800: #166534;
+        --brand-900: #14532d;
+        --brand-rgb: 34, 197, 94;
+      }
+
+      [data-theme="blue"] {
+        --brand-50: #eff6ff;
+        --brand-100: #dbeafe;
+        --brand-200: #bfdbfe;
+        --brand-300: #93c5fd;
+        --brand-400: #60a5fa;
+        --brand-500: #3b82f6;
+        --brand-600: #2563eb;
+        --brand-700: #1d4ed8;
+        --brand-800: #1e40af;
+        --brand-900: #1e3a8a;
+        --brand-rgb: 59, 130, 246;
+      }
+
+      .bg-brand-500 {
+        background-color: var(--brand-500);
+      }
+      .bg-brand-600 {
+        background-color: var(--brand-600);
+      }
+      .text-brand-400 {
+        color: var(--brand-400);
+      }
+      .text-brand-500 {
+        color: var(--brand-500);
+      }
+      .border-brand-500 {
+        border-color: var(--brand-500);
+      }
+      .bg-brand-500\/10 {
+        background-color: rgba(var(--brand-rgb), 0.1);
+      }
+      .bg-brand-500\/20 {
+        background-color: rgba(var(--brand-rgb), 0.2);
+      }
+      .border-brand-500\/20 {
+        border-color: rgba(var(--brand-rgb), 0.2);
+      }
+      .border-brand-500\/30 {
+        border-color: rgba(var(--brand-rgb), 0.3);
+      }
+      .shadow-brand-500\/25 {
+        --tw-shadow-color: rgba(var(--brand-rgb), 0.25);
+      }
+      .shadow-brand-500\/40 {
+        --tw-shadow-color: rgba(var(--brand-rgb), 0.4);
+      }
+      .from-brand-500 {
+        --tw-gradient-from: var(--brand-500);
+      }
+      .to-brand-600 {
+        --tw-gradient-to: var(--brand-600);
+      }
+      .from-brand-600 {
+        --tw-gradient-from: var(--brand-600);
+      }
+      .to-brand-700 {
+        --tw-gradient-to: var(--brand-700);
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-20px);
+        }
+      }
+
+      .material-symbols-outlined {
+        font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+      }
+      .material-symbols-outlined.filled {
+        font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
+      }
+
+      ::-webkit-scrollbar {
+        width: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #18181b;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #3f3f46;
+        border-radius: 5px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #52525b;
+      }
+
+      .gradient-text {
+        background: linear-gradient(
+          135deg,
+          var(--brand-500) 0%,
+          var(--brand-400) 50%,
+          var(--brand-500) 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .glass {
+        background: rgba(24, 24, 27, 0.8);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .reveal {
+        opacity: 0;
+        transform: translateY(40px);
+        transition: all 0.8s ease;
+      }
+      .reveal.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .animated-border {
+        position: relative;
+        background: linear-gradient(#18181b, #18181b) padding-box,
+          linear-gradient(
+              135deg,
+              var(--brand-500),
+              var(--brand-400),
+              var(--brand-500)
+            )
+            border-box;
+        border: 2px solid transparent;
+      }
+
+      .theme-btn {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .theme-btn:hover {
+        transform: scale(1.15);
+      }
+      .theme-btn.active {
+        border-color: white;
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+      }
+      .theme-btn-green {
+        background: linear-gradient(135deg, #22c55e, #4ade80);
+      }
+      .theme-btn-blue {
+        background: linear-gradient(135deg, #3b82f6, #60a5fa);
+      }
+    </style>
+  </head>
+  <body
+    class="bg-surface-950 text-white font-sans antialiased overflow-x-hidden">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass">
+      <div class="max-w-7xl mx-auto px-6 py-4">
+        <div class="flex items-center justify-between">
+          <a href="#" class="flex items-center gap-3 group">
+            <div
+              class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center transition-transform group-hover:scale-110">
+              <span class="material-symbols-outlined filled text-white">
+                mail
+              </span>
+            </div>
+            <span class="text-2xl font-bold">
+              Mail
+              <span class="gradient-text">Flow</span>
+            </span>
+          </a>
+
+          <div class="hidden md:flex items-center gap-8">
+            <a
+              href="#who-its-for"
+              class="text-surface-200 hover:text-white transition-colors">
+              Who It's For
+            </a>
+            <a
+              href="#platform"
+              class="text-surface-200 hover:text-white transition-colors">
+              Platform
+            </a>
+            <a
+              href="#devcon-panel"
+              class="text-surface-200 hover:text-white transition-colors">
+              Server Panel
+            </a>
+            <a
+              href="#pricing"
+              class="text-surface-200 hover:text-white transition-colors">
+              Pricing
+            </a>
+          </div>
+
+          <div class="flex items-center gap-4">
+            <div
+              class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-800/50 border border-surface-700">
+              <button
+                onclick="setTheme('green')"
+                class="theme-btn theme-btn-green active"
+                data-theme-btn="green"
+                title="Green"></button>
+              <button
+                onclick="setTheme('blue')"
+                class="theme-btn theme-btn-blue"
+                data-theme-btn="blue"
+                title="Blue"></button>
+            </div>
+            <a
+              href="#get-started"
+              class="px-6 py-2.5 rounded-full bg-gradient-to-r from-brand-500 to-brand-600 font-medium hover:from-brand-600 hover:to-brand-700 transition-all shadow-lg shadow-brand-500/25">
+              Get Started
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section
+      class="relative min-h-screen flex items-center pt-24 pb-16 overflow-hidden">
+      <div class="absolute inset-0">
+        <div
+          class="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div
+          class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-brand-600/10 rounded-full blur-3xl animate-pulse-slow"
+          style="animation-delay: 2s"></div>
+      </div>
+      <div
+        class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px]"></div>
+
+      <div class="relative z-10 max-w-5xl mx-auto px-6 text-center">
+        <div
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface-800/60 border border-surface-700 text-sm mb-8">
+          <span class="material-symbols-outlined text-brand-400 text-lg">
+            dns
+          </span>
+          <span class="text-surface-300">
+            Self-hosted on your infrastructure
+          </span>
+        </div>
+
+        <h1
+          class="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
+          A Private Business Communication Platform
+        </h1>
+
+        <p
+          class="text-xl md:text-2xl text-surface-300 max-w-3xl mx-auto mb-4 leading-relaxed">
+          Email, files, and workflows — installed and maintained on your own
+          server.
+        </p>
+
+        <p class="text-lg text-surface-400 max-w-2xl mx-auto mb-10">
+          MailFlow replaces SaaS dependency with infrastructure you own. No Big
+          Tech access to your data. No monthly per-seat fees. Complete
+          sovereignty.
+        </p>
+
+        <div class="flex flex-wrap justify-center gap-4 mb-12">
+          <a
+            href="#get-started"
+            class="px-8 py-4 rounded-full bg-gradient-to-r from-brand-500 to-brand-600 font-semibold text-lg hover:from-brand-600 hover:to-brand-700 transition-all shadow-xl shadow-brand-500/25">
+            Deploy on Your Server
+            <span class="material-symbols-outlined align-middle ml-1">
+              arrow_forward
+            </span>
+          </a>
+          <a
+            href="https://email.devcon1.hu"
+            class="px-8 py-4 rounded-full border-2 border-surface-600 font-semibold text-lg hover:bg-surface-800 transition-all">
+            View Live Demo
+          </a>
+        </div>
+
+        <!-- What You Get -->
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
+          <div
+            class="px-4 py-3 rounded-xl bg-surface-800/40 border border-surface-700/50 text-left">
+            <span class="material-symbols-outlined text-brand-400 text-xl mb-1">
+              mail
+            </span>
+            <div class="font-medium">Business Email</div>
+            <div class="text-sm text-surface-400">Full-featured webmail</div>
+          </div>
+          <div
+            class="px-4 py-3 rounded-xl bg-surface-800/40 border border-surface-700/50 text-left">
+            <span
+              class="material-symbols-outlined text-yellow-400 text-xl mb-1">
+              folder
+            </span>
+            <div class="font-medium">File Storage</div>
+            <div class="text-sm text-surface-400">Your own cloud drive</div>
+          </div>
+          <div
+            class="px-4 py-3 rounded-xl bg-surface-800/40 border border-surface-700/50 text-left">
+            <span class="material-symbols-outlined text-teal-400 text-xl mb-1">
+              task_alt
+            </span>
+            <div class="font-medium">Email Tasks</div>
+            <div class="text-sm text-surface-400">Linked to messages</div>
+          </div>
+          <div
+            class="px-4 py-3 rounded-xl bg-surface-800/40 border border-surface-700/50 text-left">
+            <span
+              class="material-symbols-outlined text-purple-400 text-xl mb-1">
+              dashboard
+            </span>
+            <div class="font-medium">Server Panel</div>
+            <div class="text-sm text-surface-400">Full VPS management</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Who It's For / Not For -->
+    <section id="who-its-for" class="py-24 relative">
+      <div
+        class="absolute inset-0 bg-gradient-to-b from-surface-950 via-surface-900 to-surface-950"></div>
+      <div class="relative z-10 max-w-6xl mx-auto px-6">
+        <div class="text-center mb-16 reveal">
+          <h2 class="text-3xl md:text-4xl font-bold mb-4">Who This Is For</h2>
+          <p class="text-lg text-surface-400 max-w-2xl mx-auto">
+            MailFlow is built for teams who want ownership without the overhead
+            of managing infrastructure themselves.
+          </p>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-8 mb-16">
+          <!-- For -->
+          <div
+            class="reveal bg-brand-500/5 rounded-2xl p-8 border border-brand-500/20">
+            <div class="flex items-center gap-3 mb-6">
+              <div
+                class="w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center">
+                <span class="material-symbols-outlined text-brand-400">
+                  check
+                </span>
+              </div>
+              <h3 class="text-xl font-semibold">Good Fit</h3>
+            </div>
+            <ul class="space-y-4">
+              <li class="flex items-start gap-3">
+                <span
+                  class="material-symbols-outlined text-brand-400 mt-0.5 text-lg">
+                  apartment
+                </span>
+                <div>
+                  <div class="font-medium">Web & Marketing Agencies</div>
+                  <div class="text-sm text-surface-400">
+                    Managing multiple client domains and communications
+                  </div>
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <span
+                  class="material-symbols-outlined text-brand-400 mt-0.5 text-lg">
+                  groups
+                </span>
+                <div>
+                  <div class="font-medium">Founder-Led SMBs (5-50 Users)</div>
+                  <div class="text-sm text-surface-400">
+                    Teams who value independence over convenience
+                  </div>
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <span
+                  class="material-symbols-outlined text-brand-400 mt-0.5 text-lg">
+                  gavel
+                </span>
+                <div>
+                  <div class="font-medium">Compliance-Driven Businesses</div>
+                  <div class="text-sm text-surface-400">
+                    Law firms, accountants, healthcare — where data residency
+                    matters
+                  </div>
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <span
+                  class="material-symbols-outlined text-brand-400 mt-0.5 text-lg">
+                  code
+                </span>
+                <div>
+                  <div class="font-medium">Tech-Aware Teams</div>
+                  <div class="text-sm text-surface-400">
+                    Want ownership without hiring sysadmins full-time
+                  </div>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Not For -->
+          <div
+            class="reveal bg-surface-800/30 rounded-2xl p-8 border border-surface-700/50">
+            <div class="flex items-center gap-3 mb-6">
+              <div
+                class="w-10 h-10 rounded-full bg-surface-700/50 flex items-center justify-center">
+                <span class="material-symbols-outlined text-surface-400">
+                  close
+                </span>
+              </div>
+              <h3 class="text-xl font-semibold text-surface-300">
+                Not The Right Fit
+              </h3>
+            </div>
+            <ul class="space-y-4 text-surface-400">
+              <li class="flex items-start gap-3">
+                <span class="material-symbols-outlined mt-0.5 text-lg">
+                  person
+                </span>
+                <div>
+                  <div class="font-medium text-surface-300">
+                    Solo Non-Technical Users
+                  </div>
+                  <div class="text-sm">
+                    If you just need email, Gmail is fine for you
+                  </div>
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="material-symbols-outlined mt-0.5 text-lg">
+                  thumb_up
+                </span>
+                <div>
+                  <div class="font-medium text-surface-300">
+                    Happy SaaS Users
+                  </div>
+                  <div class="text-sm">
+                    If Google Workspace or Microsoft 365 works for you, stay
+                    there
+                  </div>
+                </div>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="material-symbols-outlined mt-0.5 text-lg">
+                  corporate_fare
+                </span>
+                <div>
+                  <div class="font-medium text-surface-300">
+                    Large Enterprises
+                  </div>
+                  <div class="text-sm">
+                    If you need 99.999% SLA or have internal IT, build your own
+                  </div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- The Problem -->
+    <section class="py-24 relative">
+      <div class="relative z-10 max-w-6xl mx-auto px-6">
+        <div class="text-center mb-16 reveal">
+          <h2 class="text-3xl md:text-4xl font-bold mb-4">
+            The Problem with SaaS Email
+          </h2>
+          <p class="text-lg text-surface-400 max-w-2xl mx-auto">
+            When you use Gmail or Outlook for business, you trade control for
+            convenience. Most businesses don't realize the cost until it's too
+            late.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6 mb-16">
+          <div
+            class="reveal bg-surface-800/30 rounded-xl p-6 border border-surface-700/50">
+            <span class="material-symbols-outlined text-3xl text-red-400 mb-4">
+              visibility_off
+            </span>
+            <h3 class="text-lg font-semibold mb-2">Loss of Control</h3>
+            <p class="text-surface-400 text-sm">
+              Your business data sits on servers you don't control, in
+              jurisdictions you didn't choose, under terms that can change
+              without notice.
+            </p>
+          </div>
+          <div
+            class="reveal bg-surface-800/30 rounded-xl p-6 border border-surface-700/50"
+            style="animation-delay: 0.1s">
+            <span class="material-symbols-outlined text-3xl text-red-400 mb-4">
+              visibility
+            </span>
+            <h3 class="text-lg font-semibold mb-2">Surveillance</h3>
+            <p class="text-surface-400 text-sm">
+              Google reads every email to build advertising profiles. Microsoft
+              trains AI on your data. Your communications are their product.
+            </p>
+          </div>
+          <div
+            class="reveal bg-surface-800/30 rounded-xl p-6 border border-surface-700/50"
+            style="animation-delay: 0.2s">
+            <span class="material-symbols-outlined text-3xl text-red-400 mb-4">
+              lock
+            </span>
+            <h3 class="text-lg font-semibold mb-2">Lock-In</h3>
+            <p class="text-surface-400 text-sm">
+              Your email history, contacts, workflows — all trapped in
+              ecosystems designed to make leaving painful and expensive.
+            </p>
+          </div>
+        </div>
+
+        <!-- The Solution -->
+        <div class="reveal animated-border rounded-2xl p-8 md:p-12">
+          <div class="grid md:grid-cols-2 gap-8 items-center">
+            <div>
+              <h3 class="text-2xl md:text-3xl font-bold mb-4">
+                Owned Infrastructure, Zero Third-Party Access
+              </h3>
+              <p class="text-surface-300 mb-6">
+                MailFlow runs on your VPS. We install and configure everything,
+                then hand you the keys. Your data never touches our servers.
+                There is no "our servers."
+              </p>
+              <ul class="space-y-3">
+                <li class="flex items-center gap-3">
+                  <span class="material-symbols-outlined text-brand-400">
+                    check_circle
+                  </span>
+                  <span>You own the server and all data on it</span>
+                </li>
+                <li class="flex items-center gap-3">
+                  <span class="material-symbols-outlined text-brand-400">
+                    check_circle
+                  </span>
+                  <span>Root access — complete control</span>
+                </li>
+                <li class="flex items-center gap-3">
+                  <span class="material-symbols-outlined text-brand-400">
+                    check_circle
+                  </span>
+                  <span>No third-party access to your communications</span>
+                </li>
+                <li class="flex items-center gap-3">
+                  <span class="material-symbols-outlined text-brand-400">
+                    check_circle
+                  </span>
+                  <span>Data stays in your chosen jurisdiction</span>
+                </li>
+              </ul>
+            </div>
+            <div
+              class="bg-surface-900 rounded-xl p-6 border border-surface-700">
+              <div class="flex items-center gap-2 mb-4">
+                <div class="flex gap-1.5">
+                  <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+                  <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                  <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+                </div>
+                <span class="text-sm text-surface-500 font-mono ml-2">
+                  your-server.com
+                </span>
+              </div>
+              <div
+                class="bg-surface-950 rounded-lg p-4 font-mono text-sm space-y-2">
+                <div class="text-surface-400">
+                  $
+                  <span class="text-brand-400">ls /var/mail/</span>
+                </div>
+                <div class="text-surface-300">your-domain.com/</div>
+                <div class="text-surface-400 mt-3">
+                  $
+                  <span class="text-brand-400">
+                    cat /etc/mailflow/config.yml
+                  </span>
+                </div>
+                <div class="text-surface-500">
+                  # Your configuration, your rules
+                </div>
+                <div class="text-surface-300">data_retention: forever</div>
+                <div class="text-surface-300">third_party_access: none</div>
+                <div class="text-surface-300">ai_training: disabled</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Platform Features -->
+    <section id="platform" class="py-24 relative overflow-hidden">
+      <div
+        class="absolute inset-0 bg-gradient-to-b from-surface-950 via-surface-900 to-surface-950"></div>
+      <div class="relative z-10 max-w-7xl mx-auto px-6">
+        <div class="text-center mb-16 reveal">
+          <h2 class="text-3xl md:text-4xl font-bold mb-4">More Than Email</h2>
+          <p class="text-lg text-surface-400 max-w-2xl mx-auto">
+            MailFlow combines the tools distributed teams need into one private
+            platform. No more juggling subscriptions or worrying about which
+            service has access to what.
+          </p>
+        </div>
+
+        <!-- Feature Sections -->
+        <div class="space-y-24">
+          <!-- Business Email -->
+          <div class="reveal grid lg:grid-cols-2 gap-12 items-center">
+            <div class="space-y-6">
+              <div
+                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-500/10 text-brand-400 text-sm">
+                <span class="material-symbols-outlined text-lg">mail</span>
+                Business Email
+              </div>
+              <h3 class="text-2xl md:text-3xl font-bold">
+                Professional Email Without the Surveillance
+              </h3>
+              <p class="text-surface-300">
+                Full-featured webmail with conversation threading, labels, and
+                powerful server-side filters. Connect multiple accounts
+                including Gmail and Outlook via IMAP — unified inbox, your
+                server.
+              </p>
+              <div class="grid sm:grid-cols-2 gap-4">
+                <div class="flex items-start gap-3">
+                  <span class="material-symbols-outlined text-brand-400 mt-0.5">
+                    visibility
+                  </span>
+                  <div>
+                    <div class="font-medium">Read Tracking</div>
+                    <div class="text-sm text-surface-400">
+                      Know when emails are opened
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <span class="material-symbols-outlined text-brand-400 mt-0.5">
+                    filter_alt
+                  </span>
+                  <div>
+                    <div class="font-medium">Server-Side Filters</div>
+                    <div class="text-sm text-surface-400">
+                      Sieve rules that run 24/7
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <span class="material-symbols-outlined text-brand-400 mt-0.5">
+                    account_circle
+                  </span>
+                  <div>
+                    <div class="font-medium">Multi-Account</div>
+                    <div class="text-sm text-surface-400">
+                      All accounts in one inbox
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <span class="material-symbols-outlined text-brand-400 mt-0.5">
+                    add_reaction
+                  </span>
+                  <div>
+                    <div class="font-medium">Reactions</div>
+                    <div class="text-sm text-surface-400">
+                      Gmail/Outlook compatible
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div
+              class="bg-surface-900 rounded-xl border border-surface-700 overflow-hidden">
+              <img
+                src="screenshots/inbox.png"
+                alt="MailFlow Inbox"
+                class="w-full"
+                onerror="this.parentElement.innerHTML='<div class=\'p-8 text-center text-surface-500\'>Inbox Screenshot</div>'" />
+            </div>
+          </div>
+
+          <!-- File Storage -->
+          <div class="reveal grid lg:grid-cols-2 gap-12 items-center">
+            <div
+              class="order-2 lg:order-1 bg-surface-900 rounded-xl border border-surface-700 overflow-hidden">
+              <img
+                src="screenshots/drive.png"
+                alt="MailFlow Drive"
+                class="w-full"
+                onerror="this.parentElement.innerHTML='<div class=\'p-8 text-center text-surface-500\'>Drive Screenshot</div>'" />
+            </div>
+            <div class="order-1 lg:order-2 space-y-6">
+              <div
+                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-yellow-500/10 text-yellow-400 text-sm">
+                <span class="material-symbols-outlined text-lg">folder</span>
+                File Storage
+              </div>
+              <h3 class="text-2xl md:text-3xl font-bold">
+                Your Cloud, On Your Server
+              </h3>
+              <p class="text-surface-300">
+                Built-in file storage with folder organization, public sharing,
+                and quota management. Save email attachments directly to your
+                drive. No Google Drive, no Dropbox — your files on your
+                hardware.
+              </p>
+              <div class="grid sm:grid-cols-2 gap-4">
+                <div class="flex items-start gap-3">
+                  <span
+                    class="material-symbols-outlined text-yellow-400 mt-0.5">
+                    folder_copy
+                  </span>
+                  <div>
+                    <div class="font-medium">Folder Organization</div>
+                    <div class="text-sm text-surface-400">
+                      Nested folders, color coding
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <span
+                    class="material-symbols-outlined text-yellow-400 mt-0.5">
+                    share
+                  </span>
+                  <div>
+                    <div class="font-medium">Public Sharing</div>
+                    <div class="text-sm text-surface-400">
+                      Secure shareable links
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tasks -->
+          <div class="reveal grid lg:grid-cols-2 gap-12 items-center">
+            <div class="space-y-6">
+              <div
+                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-teal-500/10 text-teal-400 text-sm">
+                <span class="material-symbols-outlined text-lg">task_alt</span>
+                Email-Linked Tasks
+              </div>
+              <h3 class="text-2xl md:text-3xl font-bold">
+                Tasks That Stay Connected
+              </h3>
+              <p class="text-surface-300">
+                Create tasks from any email or selected text. Tasks link back to
+                the original message — context is never lost. Priority levels,
+                due dates, and a clean interface to track what needs doing.
+              </p>
+              <div class="grid sm:grid-cols-2 gap-4">
+                <div class="flex items-start gap-3">
+                  <span class="material-symbols-outlined text-teal-400 mt-0.5">
+                    link
+                  </span>
+                  <div>
+                    <div class="font-medium">Email Linking</div>
+                    <div class="text-sm text-surface-400">
+                      One click back to context
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <span class="material-symbols-outlined text-teal-400 mt-0.5">
+                    select_all
+                  </span>
+                  <div>
+                    <div class="font-medium">Text Selection</div>
+                    <div class="text-sm text-surface-400">
+                      Highlight text → create task
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div
+              class="bg-surface-900 rounded-xl border border-surface-700 overflow-hidden">
+              <img
+                src="screenshots/tasks.png"
+                alt="MailFlow Tasks"
+                class="w-full"
+                onerror="this.parentElement.innerHTML='<div class=\'p-8 text-center text-surface-500\'>Tasks Screenshot</div>'" />
+            </div>
+          </div>
+
+          <!-- Analytics -->
+          <div class="reveal grid lg:grid-cols-2 gap-12 items-center">
+            <div
+              class="order-2 lg:order-1 bg-surface-900 rounded-xl border border-surface-700 overflow-hidden">
+              <img
+                src="screenshots/statistics.png"
+                alt="MailFlow Analytics"
+                class="w-full"
+                onerror="this.parentElement.innerHTML='<div class=\'p-8 text-center text-surface-500\'>Analytics Screenshot</div>'" />
+            </div>
+            <div class="order-1 lg:order-2 space-y-6">
+              <div
+                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 text-indigo-400 text-sm">
+                <span class="material-symbols-outlined text-lg">bar_chart</span>
+                Usage Analytics
+              </div>
+              <h3 class="text-2xl md:text-3xl font-bold">
+                Understand Your Communication Patterns
+              </h3>
+              <p class="text-surface-300">
+                Email volume trends, read tracking statistics, top contacts,
+                folder usage, and productivity metrics. Data stays on your
+                server — no third-party analytics services required.
+              </p>
+              <div class="grid sm:grid-cols-2 gap-4">
+                <div class="flex items-start gap-3">
+                  <span
+                    class="material-symbols-outlined text-indigo-400 mt-0.5">
+                    trending_up
+                  </span>
+                  <div>
+                    <div class="font-medium">Volume Trends</div>
+                    <div class="text-sm text-surface-400">
+                      Daily, weekly, monthly views
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <span
+                    class="material-symbols-outlined text-indigo-400 mt-0.5">
+                    contacts
+                  </span>
+                  <div>
+                    <div class="font-medium">Contact Insights</div>
+                    <div class="text-sm text-surface-400">
+                      Who you communicate with most
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DEVCON Panel Section -->
+    <section id="devcon-panel" class="py-24 relative overflow-hidden">
+      <div
+        class="absolute inset-0 bg-gradient-to-b from-surface-950 via-surface-900 to-surface-950"></div>
+      <div class="absolute inset-0">
+        <div
+          class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-purple-500/5 rounded-full blur-3xl"></div>
+      </div>
+
+      <div class="relative z-10 max-w-7xl mx-auto px-6">
+        <div class="text-center mb-16 reveal">
+          <div
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-sm mb-6">
+            <span class="material-symbols-outlined text-lg">dashboard</span>
+            DEVCON Panel
+          </div>
+          <h2 class="text-3xl md:text-4xl font-bold mb-4">
+            Your Private Business Server OS
+          </h2>
+          <p class="text-lg text-surface-400 max-w-3xl mx-auto">
+            MailFlow comes with DEVCON Panel — a complete VPS management system.
+            Host websites, manage databases, configure SSL, monitor security.
+            Everything from one interface you control.
+          </p>
+        </div>
+
+        <!-- Panel Capabilities -->
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+          <div
+            class="reveal bg-surface-800/30 rounded-xl p-5 border border-surface-700/50">
+            <span
+              class="material-symbols-outlined text-2xl text-purple-400 mb-3">
+              language
+            </span>
+            <h4 class="font-semibold mb-1">Multi-Site Hosting</h4>
+            <p class="text-sm text-surface-400">
+              Host unlimited websites on one server
+            </p>
+          </div>
+          <div
+            class="reveal bg-surface-800/30 rounded-xl p-5 border border-surface-700/50"
+            style="animation-delay: 0.05s">
+            <span
+              class="material-symbols-outlined text-2xl text-purple-400 mb-3">
+              bolt
+            </span>
+            <h4 class="font-semibold mb-1">OpenLiteSpeed</h4>
+            <p class="text-sm text-surface-400">
+              10x faster than Apache, included
+            </p>
+          </div>
+          <div
+            class="reveal bg-surface-800/30 rounded-xl p-5 border border-surface-700/50"
+            style="animation-delay: 0.1s">
+            <span
+              class="material-symbols-outlined text-2xl text-purple-400 mb-3">
+              verified_user
+            </span>
+            <h4 class="font-semibold mb-1">SSL Management</h4>
+            <p class="text-sm text-surface-400">
+              Auto-renewal, one-click setup
+            </p>
+          </div>
+          <div
+            class="reveal bg-surface-800/30 rounded-xl p-5 border border-surface-700/50"
+            style="animation-delay: 0.15s">
+            <span
+              class="material-symbols-outlined text-2xl text-purple-400 mb-3">
+              shield
+            </span>
+            <h4 class="font-semibold mb-1">Security Center</h4>
+            <p class="text-sm text-surface-400">Fail2ban, ModSec, firewall</p>
+          </div>
+          <div
+            class="reveal bg-surface-800/30 rounded-xl p-5 border border-surface-700/50"
+            style="animation-delay: 0.2s">
+            <span
+              class="material-symbols-outlined text-2xl text-purple-400 mb-3">
+              storage
+            </span>
+            <h4 class="font-semibold mb-1">Database Admin</h4>
+            <p class="text-sm text-surface-400">MariaDB management built in</p>
+          </div>
+          <div
+            class="reveal bg-surface-800/30 rounded-xl p-5 border border-surface-700/50"
+            style="animation-delay: 0.25s">
+            <span
+              class="material-symbols-outlined text-2xl text-purple-400 mb-3">
+              dns
+            </span>
+            <h4 class="font-semibold mb-1">DNS Management</h4>
+            <p class="text-sm text-surface-400">PowerDNS integration</p>
+          </div>
+          <div
+            class="reveal bg-surface-800/30 rounded-xl p-5 border border-surface-700/50"
+            style="animation-delay: 0.3s">
+            <span
+              class="material-symbols-outlined text-2xl text-purple-400 mb-3">
+              backup
+            </span>
+            <h4 class="font-semibold mb-1">Backups</h4>
+            <p class="text-sm text-surface-400">Automated backup system</p>
+          </div>
+          <div
+            class="reveal bg-surface-800/30 rounded-xl p-5 border border-surface-700/50"
+            style="animation-delay: 0.35s">
+            <span
+              class="material-symbols-outlined text-2xl text-purple-400 mb-3">
+              monitor_heart
+            </span>
+            <h4 class="font-semibold mb-1">Server Monitoring</h4>
+            <p class="text-sm text-surface-400">Real-time resource tracking</p>
+          </div>
+        </div>
+
+        <!-- Panel Screenshot -->
+        <div
+          class="reveal bg-surface-900 rounded-2xl border border-surface-700 overflow-hidden">
+          <img
+            src="screenshots/vps-panel.png"
+            alt="DEVCON Panel"
+            class="w-full"
+            onerror="this.innerHTML='<div class=\'p-12 text-center text-surface-500\'>DEVCON Panel Screenshot</div>'" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Security -->
+    <section class="py-24 relative">
+      <div class="relative z-10 max-w-6xl mx-auto px-6">
+        <div class="text-center mb-16 reveal">
+          <h2 class="text-3xl md:text-4xl font-bold mb-4">
+            Security Through Architecture
+          </h2>
+          <p class="text-lg text-surface-400 max-w-2xl mx-auto">
+            Privacy isn't a feature we bolt on — it's how the system is
+            designed. Your data stays on your server. Period.
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div
+            class="reveal bg-surface-800/30 rounded-xl p-6 border border-surface-700/50">
+            <span
+              class="material-symbols-outlined text-2xl text-brand-400 mb-4">
+              dns
+            </span>
+            <h3 class="font-semibold mb-2">Self-Hosted Architecture</h3>
+            <p class="text-sm text-surface-400">
+              Data never leaves your server. No cloud sync, no third-party
+              storage, no external APIs processing your content.
+            </p>
+          </div>
+          <div
+            class="reveal bg-surface-800/30 rounded-xl p-6 border border-surface-700/50"
+            style="animation-delay: 0.1s">
+            <span
+              class="material-symbols-outlined text-2xl text-brand-400 mb-4">
+              key
+            </span>
+            <h3 class="font-semibold mb-2">JWT Authentication</h3>
+            <p class="text-sm text-surface-400">
+              Industry-standard JSON Web Tokens for secure, stateless
+              authentication across all platform components.
+            </p>
+          </div>
+          <div
+            class="reveal bg-surface-800/30 rounded-xl p-6 border border-surface-700/50"
+            style="animation-delay: 0.2s">
+            <span
+              class="material-symbols-outlined text-2xl text-brand-400 mb-4">
+              phonelink_lock
+            </span>
+            <h3 class="font-semibold mb-2">Two-Factor Auth</h3>
+            <p class="text-sm text-surface-400">
+              TOTP-based 2FA with backup codes. Standard authenticator app
+              support.
+            </p>
+          </div>
+          <div
+            class="reveal bg-surface-800/30 rounded-xl p-6 border border-surface-700/50"
+            style="animation-delay: 0.3s">
+            <span
+              class="material-symbols-outlined text-2xl text-brand-400 mb-4">
+              encrypted
+            </span>
+            <h3 class="font-semibold mb-2">Encrypted Credentials</h3>
+            <p class="text-sm text-surface-400">
+              AES-256 encryption for stored credentials. Nothing sensitive in
+              plain text.
+            </p>
+          </div>
+          <div
+            class="reveal bg-surface-800/30 rounded-xl p-6 border border-surface-700/50"
+            style="animation-delay: 0.4s">
+            <span
+              class="material-symbols-outlined text-2xl text-brand-400 mb-4">
+              shield
+            </span>
+            <h3 class="font-semibold mb-2">Server Hardening</h3>
+            <p class="text-sm text-surface-400">
+              Fail2ban, ModSecurity WAF, firewalld — enterprise-grade server
+              protection included.
+            </p>
+          </div>
+          <div
+            class="reveal bg-surface-800/30 rounded-xl p-6 border border-surface-700/50"
+            style="animation-delay: 0.5s">
+            <span
+              class="material-symbols-outlined text-2xl text-brand-400 mb-4">
+              hide_image
+            </span>
+            <h3 class="font-semibold mb-2">Remote Image Blocking</h3>
+            <p class="text-sm text-surface-400">
+              Block tracking pixels by default. You control when external
+              content loads.
+            </p>
+          </div>
+        </div>
+
+        <!-- Coming Soon -->
+        <div
+          class="reveal mt-12 bg-surface-800/20 rounded-xl p-6 border border-surface-700/30 text-center">
+          <div
+            class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/10 text-yellow-400 text-sm mb-3">
+            <span class="material-symbols-outlined text-sm">construction</span>
+            In Development
+          </div>
+          <h4 class="font-semibold mb-2">Full Server-Wide Encryption</h4>
+          <p class="text-sm text-surface-400 max-w-xl mx-auto">
+            End-to-end encrypted emails at rest and in transit. Zero-knowledge
+            architecture where even server access doesn't expose message
+            content.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing -->
+    <section id="pricing" class="py-24 relative">
+      <div
+        class="absolute inset-0 bg-gradient-to-b from-surface-950 via-surface-900 to-surface-950"></div>
+      <div class="relative z-10 max-w-6xl mx-auto px-6">
+        <div class="text-center mb-12 reveal">
+          <h2 class="text-3xl md:text-4xl font-bold mb-4">
+            Private Infrastructure, Not SaaS Subscriptions
+          </h2>
+          <p class="text-lg text-surface-400 max-w-2xl mx-auto">
+            One-time setup for infrastructure you own. Optional managed service
+            for ongoing maintenance. No per-seat pricing. No usage limits.
+          </p>
+        </div>
+
+        <!-- How It Works -->
+        <div
+          class="reveal mb-16 bg-surface-800/20 rounded-xl p-6 border border-surface-700/30">
+          <h4 class="font-semibold mb-4 text-center">How It Works</h4>
+          <div class="grid sm:grid-cols-4 gap-6 text-center">
+            <div>
+              <div
+                class="w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center mx-auto mb-3">
+                <span class="text-brand-400 font-bold">1</span>
+              </div>
+              <div class="font-medium text-sm">You Provide VPS</div>
+              <div class="text-xs text-surface-400 mt-1">
+                Any provider works
+              </div>
+            </div>
+            <div>
+              <div
+                class="w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center mx-auto mb-3">
+                <span class="text-brand-400 font-bold">2</span>
+              </div>
+              <div class="font-medium text-sm">We Install Everything</div>
+              <div class="text-xs text-surface-400 mt-1">
+                Full stack configuration
+              </div>
+            </div>
+            <div>
+              <div
+                class="w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center mx-auto mb-3">
+                <span class="text-brand-400 font-bold">3</span>
+              </div>
+              <div class="font-medium text-sm">You Get The Keys</div>
+              <div class="text-xs text-surface-400 mt-1">
+                Root access, full control
+              </div>
+            </div>
+            <div>
+              <div
+                class="w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center mx-auto mb-3">
+                <span class="text-brand-400 font-bold">4</span>
+              </div>
+              <div class="font-medium text-sm">Optional: We Maintain</div>
+              <div class="text-xs text-surface-400 mt-1">
+                Updates, patches, support
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+          <!-- Setup Only -->
+          <div
+            class="reveal bg-surface-800/40 rounded-2xl p-8 border border-surface-700/50">
+            <div class="mb-6">
+              <div class="text-sm text-surface-400 mb-2">One-Time Setup</div>
+              <h3 class="text-2xl font-bold">Complete Installation</h3>
+            </div>
+            <div class="mb-6">
+              <span class="text-4xl font-bold">$599</span>
+              <span class="text-surface-400 ml-2">once</span>
+            </div>
+            <ul class="space-y-3 mb-8 text-sm">
+              <li class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-brand-400 text-lg">
+                  check
+                </span>
+                DEVCON Panel (VPS management)
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-brand-400 text-lg">
+                  check
+                </span>
+                MailFlow (email platform)
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-brand-400 text-lg">
+                  check
+                </span>
+                OpenLiteSpeed + PHP 8.3
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-brand-400 text-lg">
+                  check
+                </span>
+                Dovecot + Postfix + Sieve
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-brand-400 text-lg">
+                  check
+                </span>
+                MariaDB + Security stack
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-brand-400 text-lg">
+                  check
+                </span>
+                SSL auto-renewal
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-brand-400 text-lg">
+                  check
+                </span>
+                Full root access handover
+              </li>
+            </ul>
+            <a
+              href="#get-started"
+              class="block w-full py-3 rounded-full border-2 border-surface-600 font-medium text-center hover:bg-surface-700 transition-colors">
+              Get Started
+            </a>
+            <p class="text-xs text-surface-500 text-center mt-4">
+              You manage updates yourself
+            </p>
+          </div>
+
+          <!-- Managed -->
+          <div
+            class="reveal animated-border rounded-2xl p-8 relative scale-105"
+            style="animation-delay: 0.1s">
+            <div
+              class="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-brand-500 to-brand-600 rounded-full text-sm font-medium">
+              Recommended
+            </div>
+            <div class="mb-6">
+              <div class="text-sm text-surface-400 mb-2">
+                Setup + Managed Service
+              </div>
+              <h3 class="text-2xl font-bold">Managed Ownership</h3>
+            </div>
+            <div class="mb-2">
+              <span class="text-4xl font-bold">$599</span>
+              <span class="text-surface-400 ml-2">setup</span>
+            </div>
+            <div class="mb-6 pb-4 border-b border-surface-700">
+              <span class="text-2xl font-bold text-brand-400">+ $49</span>
+              <span class="text-surface-400 ml-2">/ month</span>
+            </div>
+            <ul class="space-y-3 mb-8 text-sm">
+              <li class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-brand-400 text-lg">
+                  check
+                </span>
+                Everything in Complete Setup
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-brand-400 text-lg">
+                  check
+                </span>
+                <span class="font-medium">All platform updates</span>
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-brand-400 text-lg">
+                  check
+                </span>
+                <span class="font-medium">Security patches</span>
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-brand-400 text-lg">
+                  check
+                </span>
+                24/7 server monitoring
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-brand-400 text-lg">
+                  check
+                </span>
+                Daily automated backups
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-brand-400 text-lg">
+                  check
+                </span>
+                Priority support (24h response)
+              </li>
+            </ul>
+            <a
+              href="#get-started"
+              class="block w-full py-3 rounded-full bg-gradient-to-r from-brand-500 to-brand-600 font-medium text-center hover:from-brand-600 hover:to-brand-700 transition-all">
+              Get Started
+            </a>
+            <p class="text-xs text-surface-500 text-center mt-4">
+              Hands-off maintenance for you
+            </p>
+          </div>
+
+          <!-- Enterprise -->
+          <div
+            class="reveal bg-surface-800/40 rounded-2xl p-8 border border-surface-700/50"
+            style="animation-delay: 0.2s">
+            <div class="mb-6">
+              <div class="text-sm text-surface-400 mb-2">
+                Custom Requirements
+              </div>
+              <h3 class="text-2xl font-bold">Enterprise</h3>
+            </div>
+            <div class="mb-6">
+              <span class="text-4xl font-bold">Custom</span>
+            </div>
+            <ul class="space-y-3 mb-8 text-sm">
+              <li class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-brand-400 text-lg">
+                  check
+                </span>
+                Everything in Managed
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-brand-400 text-lg">
+                  check
+                </span>
+                Multi-server / cluster setup
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-brand-400 text-lg">
+                  check
+                </span>
+                High-availability config
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-brand-400 text-lg">
+                  check
+                </span>
+                Custom integrations
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-brand-400 text-lg">
+                  check
+                </span>
+                White-label both systems
+              </li>
+              <li class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-brand-400 text-lg">
+                  check
+                </span>
+                SLA with uptime guarantee
+              </li>
+            </ul>
+            <a
+              href="#contact"
+              class="block w-full py-3 rounded-full border-2 border-surface-600 font-medium text-center hover:bg-surface-700 transition-colors">
+              Contact Us
+            </a>
+          </div>
+        </div>
+
+        <div class="reveal mt-8 text-center">
+          <p class="text-sm text-surface-500">
+            VPS costs not included. We recommend DigitalOcean, Hetzner, or Vultr
+            (~$6-24/month depending on needs).
+            <br />
+            No per-user fees. Add as many mailboxes and users as your server can
+            handle.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI Note - Small, Optional -->
+    <section class="py-12 relative">
+      <div class="max-w-4xl mx-auto px-6">
+        <div
+          class="reveal bg-surface-800/20 rounded-xl p-6 border border-surface-700/30">
+          <div class="flex items-start gap-4">
+            <span class="material-symbols-outlined text-surface-500 mt-0.5">
+              auto_awesome
+            </span>
+            <div>
+              <h4 class="font-medium text-surface-300 mb-1">
+                Optional AI Features
+              </h4>
+              <p class="text-sm text-surface-500">
+                MailFlow includes optional AI capabilities (email summarization,
+                draft assistance) that are
+                <strong class="text-surface-400">disabled by default</strong>
+                and require your own API key to enable. Your data is never sent
+                anywhere unless you explicitly turn this on. Most users don't
+                need it — the platform is fully functional without it.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section id="get-started" class="py-24 relative overflow-hidden">
+      <div class="absolute inset-0">
+        <div
+          class="absolute inset-0 bg-gradient-to-r from-brand-600/10 via-brand-500/5 to-brand-600/10"></div>
+        <div
+          class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-500/10 rounded-full blur-3xl"></div>
+      </div>
+
+      <div class="relative z-10 max-w-3xl mx-auto px-6 text-center">
+        <div class="reveal">
+          <h2 class="text-3xl md:text-4xl font-bold mb-6">
+            Ready to Own Your Communications?
+          </h2>
+          <p class="text-lg text-surface-300 mb-10 max-w-2xl mx-auto">
+            Stop renting your business infrastructure from companies that
+            monetize your data. Deploy MailFlow on your server and take control.
+          </p>
+
+          <div class="flex flex-wrap justify-center gap-4">
+            <a
+              href="mailto:hello@mailflow.app?subject=MailFlow Setup Inquiry"
+              class="px-8 py-4 rounded-full bg-gradient-to-r from-brand-500 to-brand-600 font-semibold text-lg hover:from-brand-600 hover:to-brand-700 transition-all shadow-xl shadow-brand-500/25 flex items-center gap-2">
+              <span class="material-symbols-outlined">mail</span>
+              Request Setup
+            </a>
+            <a
+              href="https://email.devcon1.hu"
+              class="px-8 py-4 rounded-full border-2 border-white/20 font-semibold text-lg hover:bg-white/10 transition-all flex items-center gap-2">
+              <span class="material-symbols-outlined">open_in_new</span>
+              View Demo
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-surface-800">
+      <div class="max-w-7xl mx-auto px-6">
+        <div
+          class="flex flex-col md:flex-row justify-between items-center gap-6">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center">
+              <span class="material-symbols-outlined filled text-white text-sm">
+                mail
+              </span>
+            </div>
+            <span class="text-lg font-bold">
+              Mail
+              <span class="gradient-text">Flow</span>
+            </span>
+          </div>
+
+          <div class="flex items-center gap-8 text-sm text-surface-400">
+            <a href="#platform" class="hover:text-white transition-colors">
+              Platform
+            </a>
+            <a href="#pricing" class="hover:text-white transition-colors">
+              Pricing
+            </a>
+            <a href="#" class="hover:text-white transition-colors">
+              Documentation
+            </a>
+            <a href="#" class="hover:text-white transition-colors">Contact</a>
+          </div>
+
+          <p class="text-surface-500 text-sm">2025 MailFlow</p>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Intersection Observer for reveal animations
+      const revealElements = document.querySelectorAll(".reveal");
+      const revealObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("visible");
+            }
+          });
+        },
+        { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
+      );
+      revealElements.forEach((el) => revealObserver.observe(el));
+
+      // Smooth scrolling
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        });
+      });
+
+      // Theme Switching
+      function setTheme(theme) {
+        if (theme === "green") {
+          document.documentElement.removeAttribute("data-theme");
+        } else {
+          document.documentElement.setAttribute("data-theme", theme);
+        }
+        document
+          .querySelectorAll(".theme-btn")
+          .forEach((btn) => btn.classList.remove("active"));
+        const activeBtn = document.querySelector(`[data-theme-btn="${theme}"]`);
+        if (activeBtn) activeBtn.classList.add("active");
+        localStorage.setItem("mailflow-theme", theme);
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        const savedTheme = localStorage.getItem("mailflow-theme") || "green";
+        setTheme(savedTheme);
+      });
+    </script>
+  </body>
+</html>

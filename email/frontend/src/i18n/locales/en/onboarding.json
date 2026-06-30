@@ -1,0 +1,413 @@
+{
+  "onboarding": {
+    "buttons": {
+      "next": "Next",
+      "previous": "Previous",
+      "getStarted": "Get Started",
+      "close": "Close",
+      "skipTour": "Skip Tour",
+      "startQuiz": "Take the Quiz",
+      "skipQuiz": "Skip",
+      "submitAnswer": "Submit",
+      "nextQuestion": "Next Question",
+      "finishQuiz": "See Results",
+      "retakeQuiz": "Retake Quiz",
+      "closeQuiz": "Done",
+      "backToTiers": "Back to Levels",
+      "moreTiers": "More Levels"
+    },
+    "tierSelect": {
+      "title": "Intelligence Layers Tour",
+      "subtitle": "Explore FlowOne.Pro through its intelligence layers. Each tour covers a different dimension of the platform with interactive animations.",
+      "duration": "{minutes} min",
+      "more": "+{count} more",
+      "completed": "Completed",
+      "start": "Start Tour",
+      "retake": "Retake",
+      "beginner": {
+        "title": "Operations Intelligence",
+        "description": "Your agency nervous system: email, calendar, search, contacts, tasks, and security. The foundation that keeps everything connected.",
+        "features": ["Email", "Calendar", "Search", "Contacts", "Tasks", "Security"]
+      },
+      "intermediate": {
+        "title": "Delivery Intelligence",
+        "description": "Margin protection tools: project boards, team chat, cloud drive, video calls, moodboards, time tracking, and workload management.",
+        "features": ["Boards", "Chat", "Drive", "Video", "Moodboards", "Tracking"]
+      },
+      "advanced": {
+        "title": "Revenue & Client Intelligence",
+        "description": "Financial command and retention control: CRM pipeline, client portal, invoicing, forecasting, automations, sequences, and campaigns.",
+        "features": ["Pipeline", "Invoicing", "Forecasting", "Automations", "Campaigns", "Portal"]
+      }
+    },
+    "beginner": {
+      "nodes": {
+        "email": "Inbox",
+        "compose": "Compose",
+        "threads": "Conversations",
+        "labels": "Labels",
+        "filters": "Filters",
+        "accounts": "Multi-Account",
+        "contacts": "Contacts",
+        "tasks": "Quick Tasks",
+        "search": "Super Search",
+        "calendar": "Calendar",
+        "security": "Security"
+      },
+      "tooltips": {
+        "email": {
+          "title": "Your Inbox",
+          "detail": "All your emails in one place. Unread messages are highlighted with a blue indicator. Click any email to read, reply, or forward it. Star important messages to find them later.",
+          "connects": "Connects to: Compose, Labels"
+        },
+        "compose": {
+          "title": "Compose & Reply",
+          "detail": "Write new emails with a rich text editor. Attach files from your computer or Drive. Use templates for common messages. Schedule emails to send later.",
+          "connects": "Connects to: Conversations"
+        },
+        "threads": {
+          "title": "Conversation Threads",
+          "detail": "Replies are grouped into threads automatically so you can follow the full discussion. See who said what and when, all in one view.",
+          "connects": "Connects to: Tasks"
+        },
+        "labels": {
+          "title": "Color Labels",
+          "detail": "Organize emails with colored labels like Work, Personal, or Important. Apply multiple labels to one email. Click a label in the sidebar to see all matching messages.",
+          "connects": "Connects to: Filters"
+        },
+        "filters": {
+          "title": "Smart Filters",
+          "detail": "Create rules that automatically sort incoming email. For example: emails from {'@'}company.com automatically get the Work label. Set up once, works forever.",
+          "connects": "Connects to: Security"
+        },
+        "accounts": {
+          "title": "Multiple Accounts",
+          "detail": "Connect Gmail, Outlook, or any IMAP account. Switch between accounts with one click, or see everything in a unified inbox.",
+          "connects": "Connects to: Contacts"
+        },
+        "contacts": {
+          "title": "Contact Book",
+          "detail": "People you email are automatically saved as contacts. View their email history, add notes, and organize them into groups.",
+          "connects": "Connects to: Security"
+        },
+        "tasks": {
+          "title": "Quick Tasks from Email",
+          "detail": "Select any text in an email and turn it into a task with one click. Tasks appear in your task panel with the email linked. Set due dates and reminders.",
+          "connects": "Connects to: Search"
+        },
+        "search": {
+          "title": "Universal Search",
+          "detail": "Search across everything: emails, files, tasks, contacts, and calendar events. Type a keyword and results from every part of the platform appear instantly.",
+          "connects": "Connects to: Calendar"
+        },
+        "calendar": {
+          "title": "Calendar",
+          "detail": "Integrated calendar with Google and Outlook sync. Create events, set reminders, and invite people. Dates in emails are auto-detected and suggested as events.",
+          "connects": "Connects to: Security"
+        },
+        "security": {
+          "title": "Account Security",
+          "detail": "Protect your account with Two-Factor Authentication (2FA). Use an authenticator app for extra security. Manage trusted devices and active sessions.",
+          "connects": "Your account is protected"
+        }
+      },
+      "steps": {
+        "welcome": {
+          "title": "Getting Started with Email",
+          "description": "This tour walks you through the email platform basics. You will learn how to receive, send, and organize emails, plus powerful features that save you time every day."
+        },
+        "email": {
+          "title": "Your Inbox",
+          "description": "What: This is where all your emails arrive. New messages appear at the top with a blue indicator. Why: A clean, organized inbox helps you stay on top of communication. Where: Open the Inbox from the sidebar to see all incoming mail."
+        },
+        "compose": {
+          "title": "Writing & Sending Email",
+          "description": "What: Click the compose button to write a new email. Add recipients, a subject, your message, and attach files. Why: Fast, reliable email composition is the core of daily work. Where: The compose button is always available in the top-left corner."
+        },
+        "threads": {
+          "title": "Conversation Threads",
+          "description": "What: Replies to the same email are grouped into a single thread. Why: You can follow the full discussion without searching for individual messages. Where: Click any email in the inbox to expand its thread."
+        },
+        "organize": {
+          "title": "Labels & Filters",
+          "description": "What: Colored labels categorize your emails; filter rules auto-sort incoming mail. Why: Stay organized without manual effort -- emails from your team can auto-label as Work. Where: Manage labels and filters from the sidebar and Settings."
+        },
+        "accounts": {
+          "title": "Multiple Email Accounts",
+          "description": "What: Connect Gmail, Outlook, or any IMAP account to manage all email in one place. Why: No more switching between apps -- everything lives in a single unified inbox. Where: Add accounts in Settings > Accounts."
+        },
+        "contacts": {
+          "title": "Your Contacts",
+          "description": "What: People you email are automatically saved as contacts with their history. Why: Quickly find anyone you have communicated with and see past conversations. Where: Open the Contacts panel from the sidebar."
+        },
+        "tasks": {
+          "title": "Quick Tasks from Email",
+          "description": "What: Select text in an email and create a task instantly with one click. Why: Turn action items into trackable tasks without leaving the email. Where: Highlight text, then click the task icon in the selection toolbar."
+        },
+        "search": {
+          "title": "Find Anything Instantly",
+          "description": "What: The universal search finds emails, files, tasks, contacts, and calendar events. Why: One search bar replaces browsing through folders and tabs. Where: Press Ctrl+K or click the search bar at the top of the screen."
+        },
+        "calendar": {
+          "title": "Integrated Calendar",
+          "description": "What: A full calendar that syncs with Google Calendar and Outlook. Why: Dates mentioned in emails are auto-detected and suggested as events. Where: Open Calendar from the sidebar or click a detected date in an email."
+        },
+        "security": {
+          "title": "Keeping Your Account Safe",
+          "description": "What: Two-Factor Authentication adds an extra security layer using an authenticator app. Why: Even if someone learns your password, they cannot access your account. Where: Enable 2FA in Settings > Security."
+        },
+        "summary": {
+          "title": "You Know the Basics!",
+          "description": "You have learned how to receive, send, and organize email, manage contacts, create tasks, search across everything, use the calendar, and secure your account. Ready to test your knowledge?"
+        }
+      },
+      "quiz": {
+        "questions": {
+          "q1": { "question": "What does the blue indicator on an email mean?", "options": ["The email has attachments", "The email is unread", "The email is starred", "The email is spam"], "correct": 1 },
+          "q2": { "question": "How do you start writing a new email?", "options": ["Double-click any email", "Click the Compose button", "Right-click the inbox", "Press the Enter key"], "correct": 1 },
+          "q3": { "question": "What happens when someone replies to your email?", "options": ["A new separate email appears", "It becomes a conversation thread grouped together", "You receive a phone notification only", "The original email is deleted"], "correct": 1 },
+          "q4": { "question": "Which of these is NOT a way to organize your emails?", "options": ["Color labels", "Automatic filter rules", "Conversation threads", "Deleting your account"], "correct": 3 },
+          "q5": { "question": "What do email filters do?", "options": ["Block all incoming emails", "Automatically sort incoming mail based on rules you set", "Delete old emails after 30 days", "Compress large attachments"], "correct": 1 },
+          "q6": { "question": "You have a Gmail and an Outlook account. Can you use both in this platform?", "options": ["No, only one account is allowed", "Yes, but only Gmail works", "Yes, connect multiple IMAP accounts and switch with one click", "Yes, but you need separate logins for each"], "correct": 2 },
+          "q7": { "question": "Where do your contacts come from?", "options": ["You must import them from a CSV file", "They are automatically saved from people you email", "They are downloaded from social media", "You must type each one manually"], "correct": 1 },
+          "q8": { "question": "How do you turn an email into a task?", "options": ["Forward it to a special email address", "Print the email and write it on a note", "Select text in the email and click to create a task", "Tasks cannot be created from emails"], "correct": 2 },
+          "q9": { "question": "What can the universal search bar find?", "options": ["Only emails", "Only contacts and calendar events", "Emails, files, tasks, contacts, and calendar events", "Only files stored in Drive"], "correct": 2 },
+          "q10": { "question": "Your calendar can sync with which services?", "options": ["Only Apple Calendar", "Google Calendar and Outlook", "No external calendars are supported", "Only internal platform events"], "correct": 1 },
+          "q11": { "question": "What is Two-Factor Authentication (2FA)?", "options": ["Having two email accounts", "An extra security step using an authenticator app", "A backup password stored on paper", "Logging in twice with the same password"], "correct": 1 },
+          "q12": { "question": "What happens when you star an email?", "options": ["It gets permanently deleted", "It is forwarded to your manager", "It is marked as important for easy access later", "It moves to the spam folder"], "correct": 2 }
+        }
+      },
+      "topics": {
+        "inbox": "Inbox",
+        "compose": "Compose",
+        "threads": "Threads",
+        "organization": "Organization",
+        "accounts": "Multi-Account",
+        "contacts": "Contacts",
+        "tasks": "Tasks",
+        "search": "Search",
+        "calendar": "Calendar",
+        "security": "Security"
+      }
+    },
+    "intermediate": {
+      "tooltips": {
+        "boards": { "title": "Kanban Boards", "detail": "Drag-and-drop project boards with columns, cards, checklists, milestones, deadlines, labels, and attachments. Assign tasks to team members and track progress visually.", "connects": "Connects to: Chat, Moodboards" },
+        "chat": { "title": "Team Chat", "detail": "Real-time messaging with channels for teams, direct messages, threads for focused discussions, emoji reactions, and file sharing.", "connects": "Connects to: Drive, Colleagues, Reactions" },
+        "drive": { "title": "Cloud Drive & Docs", "detail": "Store, share, and collaborate on files with version history. Built-in document editor. Every file can be linked to projects and clients.", "connects": "Connects to: Video, Tracking" },
+        "video": { "title": "Video Calls", "detail": "Start video calls with screen sharing directly from chat or client profiles. Record meetings, toggle camera, and invite multiple participants.", "connects": "Connects to: Huddles" },
+        "huddles": { "title": "Quick Huddles", "detail": "Start instant audio calls from any chat channel. No scheduling needed -- just click huddle for a quick voice conversation with your team.", "connects": "Audio-only quick calls" },
+        "moodboards": { "title": "Visual Moodboards", "detail": "Infinite canvas for creative projects. Add images, text, shapes, and connections with animated lines. Present ideas to clients with built-in presenter mode.", "connects": "Part of creative suite" },
+        "colleagues": { "title": "Team Directory", "detail": "Browse your organization's team members. See departments, roles, contact info, and availability. Quickly start conversations or calls from any profile.", "connects": "Connects to: AI" },
+        "tracking": { "title": "Email Tracking", "detail": "Know when your emails are opened. Read receipts show exactly when recipients view your messages. Track link clicks in sent emails.", "connects": "Connects to: Templates" },
+        "reactions": { "title": "Email Reactions", "detail": "React to emails with emoji -- like thumbs up or heart. Quick acknowledgment without writing a full reply. Compatible with Gmail and Outlook.", "connects": "Quick feedback on emails" },
+        "ai": { "title": "AI Assistant", "detail": "Get AI-powered email summaries, smart compose suggestions, and automated categorization. Save time with intelligent writing assistance.", "connects": "Connects to: Templates" },
+        "templates": { "title": "Email Templates", "detail": "Create reusable email templates for common messages. Insert with one click when composing. Share templates with your entire team.", "connects": "End of workflow" }
+      },
+      "steps": {
+        "welcome": {
+          "title": "Team Collaboration Tools",
+          "description": "This tour covers the tools your team uses to collaborate: project boards, real-time chat, shared files, video calls, and creative moodboards -- all built into your email platform."
+        },
+        "boards": { "title": "Kanban Boards", "description": "What: Drag-and-drop boards with columns, cards, checklists, and deadlines. Why: Visualize project progress and keep your team aligned on priorities. Where: Create a new board from the sidebar under Projects." },
+        "chat": { "title": "Team Chat", "description": "What: Real-time channels, direct messages, threads, reactions, and file sharing. Why: Keep conversations in context without switching to a separate app. Where: Open Chat from the sidebar to see your channels." },
+        "drive": { "title": "Cloud Drive & Docs", "description": "What: File storage with a built-in document editor and version history. Why: Collaborate on files without emailing attachments back and forth. Where: Access Drive from the sidebar; link files to projects and clients." },
+        "video": { "title": "Video Calls", "description": "What: Video calls with screen sharing, recording, and multi-participant support. Why: Face-to-face meetings without leaving the platform. Where: Start a call from any chat channel or client profile." },
+        "huddles": { "title": "Quick Huddles", "description": "What: Instant audio calls from any chat channel -- no scheduling required. Why: Sometimes a quick voice chat resolves things faster than typing. Where: Click the headphone icon in any chat channel header." },
+        "moodboards": { "title": "Visual Moodboards", "description": "What: An infinite canvas for images, text, shapes, and animated connections. Why: Present creative ideas visually to your team or clients. Where: Create a Moodboard from the sidebar under Projects." },
+        "colleagues": { "title": "Team Directory", "description": "What: Browse team members with their roles, departments, and availability. Why: Quickly find the right person and start a conversation or call. Where: Open Colleagues from the sidebar." },
+        "tracking": { "title": "Email Tracking", "description": "What: Read receipts and link-click tracking for sent emails. Why: Know exactly when recipients open your email so you can follow up at the right time. Where: Tracking info appears automatically on sent emails." },
+        "reactions": { "title": "Email Reactions", "description": "What: React to emails with emoji like thumbs up or heart. Why: Acknowledge messages quickly without writing a full reply. Where: Hover over any email and click the reaction icon." },
+        "ai": { "title": "AI Assistant", "description": "What: AI-powered email summaries, smart compose, and auto-categorization. Why: Save time on repetitive writing and quickly understand long threads. Where: The AI panel appears in the compose window and email view." },
+        "templates": { "title": "Email Templates", "description": "What: Reusable message templates you insert with one click. Why: Stop rewriting the same email over and over. Where: Access templates from the compose toolbar or Settings." },
+        "summary": { "title": "Team Ready!", "description": "You now know how to collaborate with your team using boards, chat, drive, video, and more. Ready for a quick knowledge check?" }
+      },
+      "quiz": {
+        "questions": {
+          "q1": { "question": "What is a Kanban board used for?", "options": ["Sending mass emails to clients", "Visually organizing projects with drag-and-drop columns and cards", "Recording video meetings", "Tracking email open rates"], "correct": 1 },
+          "q2": { "question": "How do you start a quick voice call without scheduling?", "options": ["Send a calendar invite first", "Click the Huddle button in any chat channel", "Call through an external phone app", "Write an email requesting a call"], "correct": 1 },
+          "q3": { "question": "Which of these can you do in Team Chat?", "options": ["Only send text messages", "Send messages, share files, react with emoji, and use threads", "Only see online status of colleagues", "Only view shared documents"], "correct": 1 },
+          "q4": { "question": "What makes the Drive different from a basic file storage?", "options": ["It only stores email attachments", "It includes a document editor, version history, and links files to projects", "It only works with PDF files", "It has no sharing features"], "correct": 1 },
+          "q5": { "question": "During a video call, which of these is NOT possible?", "options": ["Share your screen", "Record the meeting", "Invite multiple participants", "Automatically generate an invoice"], "correct": 3 },
+          "q6": { "question": "What are Moodboards best suited for?", "options": ["Managing sales pipeline stages", "Creative visual projects with images, text, and shapes on an infinite canvas", "Tracking employee work hours", "Sending automated email sequences"], "correct": 1 },
+          "q7": { "question": "Where can you find information about your team members' roles and departments?", "options": ["In the email spam folder", "In the Team Directory / Colleagues section", "Only in external HR software", "In the calendar settings"], "correct": 1 },
+          "q8": { "question": "What does email tracking tell you?", "options": ["How many words are in your email", "When recipients open your email and click links", "The spam score of your email", "How fast your internet connection is"], "correct": 1 },
+          "q9": { "question": "You want to quickly acknowledge an email without writing a full reply. What do you use?", "options": ["Forward it to someone else", "Delete the email", "React with an emoji (like thumbs up)", "Mark it as spam"], "correct": 2 },
+          "q10": { "question": "What can the AI Assistant help you with?", "options": ["Only translating emails to other languages", "Email summaries, smart compose suggestions, and auto-categorization", "Managing your personal finances", "Ordering office supplies"], "correct": 1 },
+          "q11": { "question": "How do email templates save you time?", "options": ["They automatically reply to every email", "They provide reusable message formats you insert with one click", "They block spam emails", "They schedule all your meetings"], "correct": 1 },
+          "q12": { "question": "A client asks for a project update. Which tools could you combine?", "options": ["Spam filter and calendar only", "Board progress, Drive files, and a Moodboard presentation", "Only the time tracker", "Only email search results"], "correct": 1 }
+        }
+      },
+      "topics": {
+        "boards": "Boards",
+        "huddles": "Huddles",
+        "chat": "Chat",
+        "drive": "Drive",
+        "video": "Video",
+        "moodboards": "Moodboards",
+        "colleagues": "Colleagues",
+        "tracking": "Tracking",
+        "reactions": "Reactions",
+        "ai": "AI Assistant",
+        "templates": "Templates",
+        "collaboration": "Collaboration"
+      }
+    },
+    "advanced": {
+      "tooltips": {
+        "crmClient": { "title": "Automatic CRM Clients", "detail": "New contacts are auto-created as CRM client profiles from incoming emails. Tracks email history, financials, time spent, linked boards, and files per client.", "connects": "Connects to: Portal, Pipelines, Time Tracking, Campaigns" },
+        "portal": { "title": "Client Portal", "detail": "Give clients their own portal to view project progress, approve deliverables, sign documents, and communicate. White-label branding available.", "connects": "Client-facing view" },
+        "pipelines": { "title": "Sales Pipelines", "detail": "Track deals from lead to close with visual pipeline stages. Set deal values, assign owners, forecast revenue, and link everything to CRM clients.", "connects": "Connects to: Automations" },
+        "automations": { "title": "CRM Automations", "detail": "Trigger actions automatically: when a deal moves stage, a client is created, or custom conditions are met. Send emails, create tasks, update fields.", "connects": "Connects to: Board Automations, Sequences" },
+        "boardAuto": { "title": "Board Automations", "detail": "Automate your project boards: auto-move cards, assign members, set due dates, and send notifications based on triggers like status changes.", "connects": "Part of automation suite" },
+        "sequences": { "title": "Email Sequences", "detail": "Schedule multi-step email follow-ups with delays, stop conditions, and personalization tokens. Perfect for sales outreach and client nurturing.", "connects": "Connects to: Invoice" },
+        "timeTracking": { "title": "Time Tracking", "detail": "Built-in timer that records hours per task, board, and client. Start/stop with one click or log manually. Feeds directly into reports and invoices.", "connects": "Connects to: Client Report" },
+        "clientReport": { "title": "Client Reports", "detail": "Auto-generated reports per client: tasks completed, time spent, milestones reached, project progress. Share via client portal or export as PDF.", "connects": "Connects to: Invoice" },
+        "invoice": { "title": "Invoicing", "detail": "Turn tracked time into invoices. Integrates with Billingo and Szamlazz.hu for PDF generation, automated sending, and payment tracking.", "connects": "Connects to: Dashboard" },
+        "campaigns": { "title": "Email Campaigns", "detail": "Design and send mass campaigns with templates. Track opens, clicks, bounces. Build mailing lists, segment audiences, and A/B test subject lines.", "connects": "Connects to: Dashboard" },
+        "dashboard": { "title": "Executive Dashboard", "detail": "Bird's-eye view of your business: revenue, pipeline value, team utilization, project progress, and financial forecasts all in one place.", "connects": "Overview of everything" }
+      },
+      "steps": {
+        "welcome": {
+          "title": "Business & CRM Power Tools",
+          "description": "This tour covers the business features: automatic client management, sales pipelines, invoicing, automations, email campaigns, and executive dashboards -- everything you need to run your business."
+        },
+        "crmClient": { "title": "Automatic CRM Clients", "description": "What: New contacts are auto-created as CRM profiles from incoming emails. Why: Every client interaction is tracked without manual data entry. Where: Open the CRM panel from the sidebar to browse all clients." },
+        "portal": { "title": "Client Portal", "description": "What: A dedicated portal where clients view progress, approve deliverables, and sign documents. Why: Professional client communication without extra tools. Where: Enable the portal per client from their CRM profile." },
+        "pipelines": { "title": "Sales Pipelines", "description": "What: Visual deal tracking with stages from lead to close, deal values, and owners. Why: Forecast revenue and never lose track of a deal. Where: Open Pipelines from the sidebar under CRM." },
+        "automations": { "title": "CRM Automations", "description": "What: Rules that fire automatically when a deal changes stage or a client is created. Why: Eliminate repetitive tasks like sending welcome emails or creating boards. Where: Set up automations in CRM > Automations." },
+        "boardAuto": { "title": "Board Automations", "description": "What: Auto-move cards, assign members, set dates, and notify on triggers. Why: Keep project boards up to date without manual card shuffling. Where: Configure rules in Board Settings > Automations." },
+        "sequences": { "title": "Email Sequences", "description": "What: Multi-step scheduled follow-ups with delays, stop conditions, and personalization. Why: Consistent outreach without remembering to send each email manually. Where: Create sequences in CRM > Sequences." },
+        "timeTracking": { "title": "Time Tracking", "description": "What: A built-in timer that records hours per task, board, and client. Why: Accurate time data feeds directly into reports and invoices. Where: Click the timer icon on any task or board card." },
+        "clientReport": { "title": "Client Reports", "description": "What: Auto-generated reports showing tasks completed, time spent, and milestones. Why: Keep clients informed with zero manual reporting effort. Where: Generate reports from a client's CRM profile." },
+        "invoice": { "title": "Invoicing", "description": "What: Turn tracked time into invoices with Billingo and Szamlazz.hu integration. Why: Bill clients accurately and get paid faster. Where: Create invoices from CRM > Invoices or from a client report." },
+        "campaigns": { "title": "Email Campaigns", "description": "What: Mass email campaigns with templates, audience segments, and A/B testing. Why: Reach your audience at scale with tracked engagement. Where: Open Campaigns from the sidebar." },
+        "dashboard": { "title": "Executive Dashboard", "description": "What: A bird's-eye view of revenue, pipeline, utilization, and project health. Why: Make informed decisions with real-time business metrics. Where: The Dashboard is the default CRM landing page." },
+        "summary": { "title": "Business Master!", "description": "You have explored the complete business toolkit: CRM, pipelines, invoicing, automations, and campaigns. Ready for the advanced quiz?" }
+      },
+      "quiz": {
+        "questions": {
+          "q1": { "question": "How are CRM client profiles created in the platform?", "options": ["You must create each client manually", "Automatically from incoming emails with new contacts", "By importing a spreadsheet once a month", "They are synced from social media profiles"], "correct": 1 },
+          "q2": { "question": "What can a client do through their Client Portal?", "options": ["Access the admin settings of the platform", "View project progress, approve deliverables, and sign documents", "Edit other clients' profiles", "Send mass email campaigns"], "correct": 1 },
+          "q3": { "question": "A deal moves from 'Qualified Lead' to 'Proposal Sent'. Where does this happen?", "options": ["In the email compose window", "In the Sales Pipeline with visual drag-and-drop stages", "In the calendar as a scheduled event", "In the chat channel"], "correct": 1 },
+          "q4": { "question": "Which scenario would trigger a CRM automation?", "options": ["Opening the platform settings page", "A deal moving to a new stage, a new client being created, or a custom condition", "Clicking the logout button", "Changing your profile picture"], "correct": 1 },
+          "q5": { "question": "What is the difference between CRM Automations and Board Automations?", "options": ["There is no difference, they are the same thing", "CRM automations handle deals and clients; Board automations handle project cards and tasks", "Board automations only send emails", "CRM automations only track time"], "correct": 1 },
+          "q6": { "question": "What are Email Sequences best used for?", "options": ["Deleting old emails automatically", "Multi-step scheduled follow-up emails with delays and stop conditions", "Recording video meetings", "Backing up your Drive files"], "correct": 1 },
+          "q7": { "question": "You tracked 12 hours on a client project this week. What can you do next?", "options": ["Nothing, the hours are just for your records", "Generate an invoice directly from the tracked time", "Only export as a text file", "Send the hours via chat message"], "correct": 1 },
+          "q8": { "question": "What does a Client Report include?", "options": ["Only the number of emails exchanged", "Tasks completed, time spent, milestones reached, and project progress", "Chat conversation history only", "A list of all platform users"], "correct": 1 },
+          "q9": { "question": "Which invoicing providers does the platform integrate with?", "options": ["PayPal and Stripe", "QuickBooks and FreshBooks", "Billingo and Szamlazz.hu", "No external integrations are available"], "correct": 2 },
+          "q10": { "question": "You want to see your business health at a glance -- revenue, pipeline value, and team utilization. Where do you go?", "options": ["The email inbox", "The Executive Dashboard", "The contact book", "The calendar view"], "correct": 1 },
+          "q11": { "question": "What can you track in an Email Campaign?", "options": ["Only the number of emails sent", "Opens, clicks, bounces, and you can A/B test subject lines", "Only unsubscribe rates", "Nothing, campaigns have no analytics"], "correct": 1 },
+          "q12": { "question": "What is the complete business workflow starting from a new email?", "options": ["Email > Calendar > Logout", "Email > CRM Client > Tasks > Time Tracking > Report > Invoice", "Email > Moodboard > Video Call > Chat", "Email > Spam Filter > Delete"], "correct": 1 }
+        }
+      },
+      "topics": {
+        "crmClient": "CRM Clients",
+        "portal": "Client Portal",
+        "pipelines": "Pipelines",
+        "automations": "Automations",
+        "boardAuto": "Board Auto",
+        "sequences": "Sequences",
+        "timeTracking": "Time Tracking",
+        "clientReport": "Reports",
+        "invoice": "Invoicing",
+        "dashboard": "Dashboard",
+        "campaigns": "Campaigns",
+        "workflow": "Workflow"
+      }
+    },
+    "nodes": {
+      "email": "Email",
+      "conversations": "Conversations",
+      "notifications": "Notifications",
+      "crmClient": "CRM Client",
+      "tasksBoards": "Tasks / Boards",
+      "timeTracking": "Time Tracking",
+      "clientReport": "Client Report",
+      "invoice": "Invoice",
+      "pipelines": "Pipelines",
+      "automations": "Automations",
+      "boardAutomations": "Board Automations",
+      "sequences": "Sequences",
+      "teamLists": "Team Lists",
+      "emailingLists": "Emailing Lists",
+      "emailCampaigns": "Email Campaigns",
+      "drive": "Drive / Docs",
+      "chat": "Chat",
+      "video": "Video / Screenshare",
+      "moodboards": "Moodboards"
+    },
+    "tooltips": {
+      "email": { "title": "Email Inbox", "detail": "Full IMAP client with multi-account support, smart filters, labels, threaded conversations, and powerful universal search. Supports Gmail, Outlook, and any IMAP server.", "connects": "Connects to: Conversations, Team Lists" },
+      "conversations": { "title": "Conversations & Notifications", "detail": "Emails are auto-grouped into threads. Real-time push notifications for new messages, replies, mentions, and platform events.", "connects": "Connects to: CRM Client, Video, Moodboards" },
+      "crmClient": { "title": "Automatic CRM Clients", "detail": "New contacts are auto-created as CRM client profiles from incoming emails. Tracks email history, financials, time spent, linked boards, and files per client.", "connects": "Connects to: Tasks/Boards, Pipelines" },
+      "tasksBoards": { "title": "Kanban Boards & Tasks", "detail": "Visual project boards with drag-and-drop cards, checklists, milestones, deadlines, labels, and attachments. Create tasks directly from emails.", "connects": "Connects to: Time Tracking, Drive, Chat" },
+      "timeTracking": { "title": "Time Tracker", "detail": "Built-in timer that records hours per task, board, and client. Start/stop with one click or log manually.", "connects": "Connects to: Client Reports" },
+      "clientReport": { "title": "Client Reports", "detail": "Auto-generated reports per client: tasks completed, time spent, milestones reached, project progress.", "connects": "Connects to: Invoice" },
+      "invoice": { "title": "Invoicing", "detail": "Create invoices from tracked time and completed work. Integrates with Billingo and Szamlazz.hu.", "connects": "End of workflow chain" },
+      "pipelines": { "title": "Sales Pipelines", "detail": "Visual deal tracking from lead to close. Drag deals between stages, set values, assign owners, and forecast revenue.", "connects": "Connects to: Automations" },
+      "automations": { "title": "CRM Automations", "detail": "Trigger actions automatically on CRM events: when a deal moves stage, when a client is created, or on custom conditions.", "connects": "Connects to: Board Automations" },
+      "boardAutomations": { "title": "Board Automations", "detail": "Automate board workflows: move cards between lists, assign members, set due dates, and send notifications based on triggers.", "connects": "Connects to: Sequences" },
+      "sequences": { "title": "Email Sequences", "detail": "Schedule multi-step email follow-ups. Set delays between steps, conditions to stop, and personalization tokens.", "connects": "Connects to: Invoice" },
+      "teamLists": { "title": "Team Mailing Lists", "detail": "Create internal team distribution lists. Send to an entire department or project team with one address.", "connects": "Connects to: Emailing Lists" },
+      "emailingLists": { "title": "Emailing Lists", "detail": "Build targeted contact lists for marketing outreach. Import contacts, segment by tags or client data.", "connects": "Connects to: Email Campaigns" },
+      "emailCampaigns": { "title": "Email Campaigns", "detail": "Design and send mass email campaigns with a template editor. Track opens, clicks, and bounces.", "connects": "End of marketing branch" },
+      "drive": { "title": "Cloud Drive & Docs", "detail": "File storage with folder structure, sharing, and document versioning. Built-in document editor for collaborative writing.", "connects": "Part of collaboration suite" },
+      "chat": { "title": "Team Chat", "detail": "Real-time messaging with channels, direct messages, threads, reactions, and file sharing.", "connects": "Part of collaboration suite" },
+      "video": { "title": "Video & Screen Share", "detail": "Video calls with screen sharing, camera toggle, and recording. Start calls from chat or client profiles.", "connects": "Part of collaboration suite" },
+      "moodboards": { "title": "Visual Moodboards", "detail": "Infinite canvas for creative projects. Add images, text, shapes, and connections with animated lines.", "connects": "Part of collaboration suite" }
+    },
+    "steps": {
+      "welcome": { "title": "Welcome to FlowOne.Pro", "description": "Your all-in-one business platform that connects email, clients, projects, and collaboration into a single seamless workflow." },
+      "email": { "title": "Email - Your Starting Point", "description": "A full-featured IMAP email client with multi-account support, smart filters, labels, and powerful search." },
+      "conversations": { "title": "Conversations & Notifications", "description": "Emails are automatically grouped into threaded conversations. Real-time notifications keep you informed." },
+      "crmClient": { "title": "Automatic Client Creation", "description": "When you receive an email from a new contact, a CRM client profile is automatically created." },
+      "tasksBoards": { "title": "Tasks & Boards", "description": "Organize your work with Kanban-style boards, task lists, milestones, and checklists." },
+      "timeTracking": { "title": "Time Tracking", "description": "Track time spent on tasks, boards, and client work with a built-in timer." },
+      "clientReport": { "title": "Client Reports", "description": "Generate detailed reports per client showing completed tasks, time spent, and project progress." },
+      "invoice": { "title": "Invoicing", "description": "Turn tracked time into professional invoices with Billingo and Szamlazz.hu integration." },
+      "pipelines": { "title": "Sales Pipelines", "description": "Manage your sales process with visual pipelines from lead to close." },
+      "automations": { "title": "Automations & Sequences", "description": "Automate repetitive workflows with CRM automations, board automations, and email sequences." },
+      "marketing": { "title": "Team Lists & Email Campaigns", "description": "Build mailing lists and send email campaigns with templates, tracking, and analytics." },
+      "collaboration": { "title": "Collaboration Suite", "description": "Work together with cloud Drive, team Chat, Video calls, and visual Moodboards." },
+      "summary": { "title": "You're All Set!", "description": "Explore the platform and make it yours." }
+    },
+    "quiz": {
+      "title": "Knowledge Check",
+      "subtitle": "Let's see how well you understood. Answer {total} quick questions.",
+      "questionOf": "Question {current} of {total}",
+      "correct": "Correct!",
+      "incorrect": "Not quite.",
+      "correctAnswer": "The correct answer is: {answer}",
+      "resultsTitle": "Quiz Complete!",
+      "yourScore": "Your Score",
+      "scoreText": "{score} out of {total}",
+      "scorePerfect": "Perfect score! You really know the platform inside and out.",
+      "scoreGreat": "Great job! You have a solid understanding.",
+      "scoreGood": "Good start! You can always revisit the tour to learn more.",
+      "scoreNeedsWork": "No worries! The tour is always available from the header.",
+      "topicBreakdown": "Topic Breakdown",
+      "questions": {
+        "q1": { "question": "What happens when you receive an email from a new contact?", "options": ["Nothing, you must add them manually", "A CRM client profile is automatically created", "They are added to spam", "A task is created on your board"], "correct": 1 },
+        "q2": { "question": "Which feature lets you turn tracked time into professional invoices?", "options": ["Email Campaigns", "Moodboards", "Invoicing with Billingo/Szamlazz.hu", "Team Lists"], "correct": 2 },
+        "q3": { "question": "How are emails organized in the platform?", "options": ["Only by date", "Into threaded conversations automatically", "By sender only", "Manually by the user"], "correct": 1 },
+        "q4": { "question": "What can you create directly from an email?", "options": ["Only a reply", "A Kanban board task", "An invoice", "A moodboard"], "correct": 1 },
+        "q5": { "question": "What does the Time Tracker record?", "options": ["Only login duration", "Hours per task, board, and client", "Screen time only", "Email read time"], "correct": 1 },
+        "q6": { "question": "What is the purpose of Sales Pipelines?", "options": ["Sending mass emails", "Tracking deals from lead to close", "Managing file storage", "Creating moodboards"], "correct": 1 },
+        "q7": { "question": "What do Board Automations do?", "options": ["Send email campaigns", "Auto-move cards, assign members, set dates based on triggers", "Track time automatically", "Generate invoices"], "correct": 1 },
+        "q8": { "question": "What are Email Sequences used for?", "options": ["Organizing inbox folders", "Multi-step scheduled email follow-ups", "Video conferencing", "File versioning"], "correct": 1 },
+        "q9": { "question": "Which tool would you use for creative visual projects?", "options": ["Pipelines", "Email Campaigns", "Moodboards", "Time Tracker"], "correct": 2 },
+        "q10": { "question": "What does the Drive feature include?", "options": ["Only email attachments", "File storage, document editor, and versioning", "Calendar events", "Chat messages"], "correct": 1 },
+        "q11": { "question": "How can you share a progress report with a client?", "options": ["Only by phone", "Through the client portal or as PDF", "Via moodboard only", "It cannot be shared"], "correct": 1 },
+        "q12": { "question": "What is the main flow starting from an email?", "options": ["Email > Drive > Chat", "Email > Conversations > CRM Client > Tasks > Time > Report > Invoice", "Email > Pipeline > Campaign", "Email > Moodboard > Video"], "correct": 1 },
+        "q13": { "question": "Where do Team Mailing Lists get their members from?", "options": ["External contacts only", "The colleague directory", "Email campaigns", "Client profiles"], "correct": 1 },
+        "q14": { "question": "What can CRM Automations trigger?", "options": ["Only email notifications", "Actions when deals move, clients are created, or custom conditions", "Video calls", "File uploads"], "correct": 1 },
+        "q15": { "question": "Which features are part of the Collaboration Suite?", "options": ["Only Chat", "Drive, Chat, Video, and Moodboards", "Pipelines and Invoices", "Email and Calendar only"], "correct": 1 },
+        "q16": { "question": "What billing providers does the invoicing system integrate with?", "options": ["PayPal and Stripe", "Billingo and Szamlazz.hu", "QuickBooks only", "No external integrations"], "correct": 1 },
+        "q17": { "question": "What does the Client Report show?", "options": ["Only email count", "Tasks completed, time spent, milestones, and project progress", "Chat message history", "Login statistics"], "correct": 1 },
+        "q18": { "question": "How do you start a video call?", "options": ["External app only", "From chat or client profiles within the platform", "From the email compose window", "From the calendar only"], "correct": 1 }
+      }
+    },
+    "stepOf": "Step {current} of {total}"
+  }
+}

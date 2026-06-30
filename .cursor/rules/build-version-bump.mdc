@@ -1,0 +1,23 @@
+# Build Version Auto-Increment
+
+## When This Applies
+
+Every time the user asks to **build** one of these apps:
+- **FlowOne Drive** (`email/FlowOneDrive/package.json`)
+- **FlowOne Chat** (if/when added)
+- **FlowOne Email** (`email/frontend/package.json`)
+
+## What To Do
+
+1. Before running the build command, read the app's `package.json`
+2. Parse the current `version` field (semver: `MAJOR.MINOR.PATCH`)
+3. Increment the **PATCH** number by 1 (e.g. `2.0.1` -> `2.0.2`)
+4. Update `package.json` with the new version
+5. Then run the build
+
+## Rules
+
+- Only bump PATCH automatically. Never change MAJOR or MINOR unless the user explicitly says so.
+- If the user specifies a version (e.g. "bump to 3.0.0"), use that exact version instead.
+- Report the version change in the response (e.g. "Version bumped: 2.0.1 -> 2.0.2").
+- This applies to every build request, no exceptions.

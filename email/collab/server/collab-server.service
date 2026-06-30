@@ -1,0 +1,56 @@
+# Collab Server Systemd Service
+# =============================================================================
+# 
+# This service runs the Hocuspocus WebSocket server for real-time collaboration.
+# 
+# Installation:
+#   1. Copy this file to /etc/systemd/system/collab-server.service
+#   2. sudo systemctl daemon-reload
+#   3. sudo systemctl enable collab-server
+#   4. sudo systemctl start collab-server
+#
+# Logs:
+#   journalctl -u collab-server -f
+#
+# =============================================================================
+
+[Unit]
+Description=FlowOne Collab WebSocket Server (Hocuspocus)
+Documentation=https://tiptap.dev/hocuspocus
+After=network.target mariadb.service
+
+[Service]
+Type=simple
+User=root
+Group=root
+
+# Working directory
+WorkingDirectory=/opt/collab-server
+
+# Node.js executable path
+# Now runs plain JavaScript directly - no TypeScript compilation needed
+ExecStart=/usr/bin/node src/index.js
+
+# Environment variables - these MUST match your PHP backend config
+# Load from environment file for security (don't put secrets in service file)
+EnvironmentFile=/opt/collab-server/.env
+
+# Restart policy
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=collab-server
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Resource limits
+LimitNOFILE=65535
+LimitNPROC=4096
+
+[Install]
+WantedBy=multi-user.target

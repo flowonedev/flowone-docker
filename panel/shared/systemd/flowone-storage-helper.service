@@ -1,0 +1,86 @@
+[Unit]
+Description=FlowOne Storage Privileged Helper (NAS mount/umount/systemctl/nft)
+Documentation=file:///var/www/shared/docs/INVARIANTS.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Helper MUST run as root to invoke mount/umount/systemctl. The systemd
+# sandbox below shrinks the effective attack surface to a minimum.
+User=root
+Group=root
+ExecStart=/usr/local/lsws/lsphp83/bin/php /var/www/shared/bin/storage-helper.php
+Restart=on-failure
+RestartSec=5
+
+# Make the socket directory exist on each start. The directory itself is
+# 0755 root:root (helper runs as root) so any user can *traverse* it; the
+# real access control is on the socket file inside, which the helper
+# script chgrp's to the configured peer group (flowone-storage) and
+# chmod's to 0660. SO_PEERCRED then gates by UID.
+RuntimeDirectory=flowone
+RuntimeDirectoryMode=0755
+
+# ─── Sandbox (defence-in-depth on top of the script's own checks) ───
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectProc=invisible
+ProcSubset=pid
+LockPersonality=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+# NOTE: MemoryDenyWriteExecute=yes is intentionally OFF.
+# PHP's Zend Engine maps W+X memory pages for opcode handling, so enabling
+# this option causes PHP to be killed by the kernel with SIGSYS on startup.
+# We retain the rest of the sandbox; the application also enforces HMAC and
+# SO_PEERCRED checks at the socket layer.
+SystemCallArchitectures=native
+
+# The helper needs to write the journal, the mount lock, the socket, and
+# state files; everything else is read-only.
+ReadWritePaths=/var/log/flowone /var/lock /run/flowone /var/lib/flowone /mnt/nas-drive
+
+# Networking: AF_UNIX only.
+RestrictAddressFamilies=AF_UNIX
+
+# Seccomp allowlist — kept intentionally broad. PHP CLI exercises a long
+# tail of syscalls (clone3, rseq, getrandom, statx, prlimit64, etc.) that
+# vary by glibc/PHP build; the standard @system-service set is the only
+# allowlist that reliably works across PHP versions. mount/umount need
+# @mount on top. Defence-in-depth lives in the application layer:
+#   * HMAC-signed RPC payloads
+#   * SO_PEERCRED checks (only flowone-storage UID can connect)
+#   * Allowlisted RPC actions (mount, umount, systemctl restart of a fixed
+#     list of units, nft set add/remove for one named set)
+# The deny list below blocks the syscalls a compromised helper would need
+# to escalate beyond its declared purpose without breaking normal PHP.
+SystemCallFilter=@system-service
+SystemCallFilter=@mount
+SystemCallFilter=~@debug @cpu-emulation @keyring @obsolete @raw-io @reboot @swap @module
+
+# Capabilities: drop everything, then add back only what mount requires.
+CapabilityBoundingSet=CAP_SYS_ADMIN CAP_DAC_OVERRIDE CAP_CHOWN CAP_FOWNER CAP_NET_ADMIN
+AmbientCapabilities=
+
+# Limits.
+LimitNOFILE=4096
+LimitNPROC=128
+
+# Logging.
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=flowone-storage-helper
+
+[Install]
+WantedBy=multi-user.target

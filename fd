@@ -1,0 +1,56 @@
+warning: in the working copy of 'email/backend/cron/index-attachments.php', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'email/backend/cron/process-automation-hub.php', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'email/backend/cron/process-boardpro-automation.php', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'email/backend/cron/process-crm-automation.php', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'email/backend/cron/process-scope-radar.php', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'email/backend/cron/sync-sieve-ooo.php', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'email/backend/scripts/backfill_attachments.php', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'email/backend/scripts/debug_attachment_index.php', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'email/backend/scripts/diagnose_encoding.php', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'email/backend/scripts/normalize_snippets.php', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'email/backend/src/Addons/NewsReader/Services/NewsReaderService.php', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'email/backend/src/Addons/Tasks/Controllers/TodoController.php', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'email/backend/src/Controllers/BootstrapController.php', CRLF will be replaced by LF the next time Git touches it
+ email/backend/composer.json                        |   4 [32m+[m[31m-[m
+ email/backend/cron/dual-write-readiness.php        | 151 [32m++[m[31m--[m
+ email/backend/cron/index-attachments.php           | 158 [32m+++[m[31m-[m
+ email/backend/cron/process-automation-hub.php      |   4 [32m+[m[31m-[m
+ email/backend/cron/process-boardpro-automation.php |   6 [32m+[m[31m-[m
+ email/backend/cron/process-crm-automation.php      |   2 [32m+[m[31m-[m
+ email/backend/cron/process-scope-radar.php         |   2 [32m+[m[31m-[m
+ email/backend/cron/reconcile-mailboxes.php         |  37 [32m+[m[31m-[m
+ email/backend/cron/sync-sieve-ooo.php              |   4 [32m+[m[31m-[m
+ email/backend/public/index.php                     |  13 [32m+[m[31m-[m
+ email/backend/routes.php                           | 118 [32m++[m[31m-[m
+ email/backend/scripts/backfill_attachments.php     |  85 [32m+[m[31m-[m
+ email/backend/scripts/debug_attachment_index.php   |   5 [32m+[m[31m-[m
+ email/backend/scripts/diagnose_encoding.php        |   2 [32m+[m[31m-[m
+ email/backend/scripts/normalize_snippets.php       |  10 [32m+[m[31m-[m
+ .../Controllers/TrackingController.php             |  23 [32m+[m[31m-[m
+ .../EmailTracking/Services/TrackingService.php     |  48 [32m+[m[31m-[m
+ .../NewsReader/Services/NewsReaderService.php      | 137 [32m++[m[31m-[m
+ .../Addons/Tasks/Controllers/TodoController.php    |  48 [32m+[m[31m-[m
+ .../src/Addons/Tasks/Services/TodoService.php      |  74 [32m++[m
+ .../backend/src/Controllers/AccountController.php  | 126 [32m+[m[31m--[m
+ email/backend/src/Controllers/AuthController.php   |  15 [32m+[m[31m-[m
+ email/backend/src/Controllers/BaseController.php   | 128 [32m+++[m
+ .../src/Controllers/BootstrapController.php        |  43 [32m+[m[31m-[m
+ email/backend/src/Controllers/DriveController.php  | 115 [32m++[m[31m-[m
+ .../backend/src/Controllers/MailboxController.php  | 729 [32m+++++++++++++[m[31m---[m
+ .../backend/src/Controllers/MessageController.php  |  30 [32m+[m
+ .../backend/src/Controllers/SettingsController.php |   9 [32m+[m
+ .../src/Controllers/UniversalSearchController.php  |  17 [32m+[m[31m-[m
+ email/backend/src/Core/Response.php                |  26 [32m+[m
+ email/backend/src/Services/ClientService.php       |  34 [32m+[m[31m-[m
+ email/backend/src/Services/ConversationService.php | 922 [32m+++++++++++[m[31m----------[m
+ email/backend/src/Services/DriveService.php        | 593 [32m++++++++++++[m[31m-[m
+ email/backend/src/Services/FolderIndexService.php  | 594 [32m++++++++++++[m[31m-[m
+ email/backend/src/Services/GoogleOAuthService.php  |  61 [32m+[m[31m-[m
+ email/backend/src/Services/ImapService.php         | 261 [32m+++++[m[31m-[m
+ email/backend/src/Services/NasHealthCheck.php      | 231 [32m++++[m[31m--[m
+ email/backend/src/Services/RedisCacheService.php   |  15 [32m+[m
+ .../backend/src/Services/SearchIndexerService.php  | 388 [32m++++++++[m[31m-[m
+ email/backend/src/Services/StructuredLog.php       |  53 [32m+[m[31m-[m
+ email/backend/src/config.php                       |  41 [32m+[m[31m-[m
+ email/backend/tests/email-tracking-test.php        | 126 [32m++[m[31m-[m
+ 42 files changed, 4322 insertions(+), 1166 deletions(-)

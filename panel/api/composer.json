@@ -1,0 +1,22 @@
+{
+    "name": "vpsadmin/api",
+    "description": "VPS Admin Panel API",
+    "type": "project",
+    "require": {
+        "php": ">=8.1",
+        "firebase/php-jwt": "^6.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "VpsAdmin\\Api\\": "src/",
+            "FlowOne\\Storage\\": "../../shared/src/Storage/"
+        },
+        "files": [
+            "src/Helpers/debug.php"
+        ]
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}
+

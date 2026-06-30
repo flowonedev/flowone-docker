@@ -1,0 +1,16 @@
+# Postfix Virtual Domains MySQL Configuration
+# Template for Fleet Manager deployment
+# Variables: {{MAIL_DB_USER}}, {{MAIL_DB_PASS}}, {{MAIL_DB_NAME}}
+#
+# This file tells Postfix which domains to accept mail for.
+# Place at: /etc/postfix/mysql-virtual-domains.cf
+
+user = {{MAIL_DB_USER}}
+password = {{MAIL_DB_PASS}}
+hosts = 127.0.0.1
+dbname = {{MAIL_DB_NAME}}
+
+# Query to check if a domain is hosted on this server
+# Returns the domain name if it exists and is active
+query = SELECT domain FROM mail_domains WHERE domain='%s' AND status='active'
+

@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlowOne ROI Calculator</title>
+<link rel="icon" type="image/png" href="flowone-logo.png">
+<link rel="apple-touch-icon" href="flowone-logo.png">
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<script>
+tailwind.config = {
+    theme: {
+        extend: {
+            fontFamily: {
+                sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+            },
+            colors: {
+                slate: {
+                    850: '#172033',
+                    950: '#0a0f1a',
+                }
+            }
+        }
+    }
+}
+</script>
+<style>
+.material-symbols-rounded {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+.material-symbols-rounded.filled {
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    width: 52px;
+    height: 28px;
+    flex-shrink: 0;
+}
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background: #1e293b;
+    border-radius: 9999px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid #334155;
+}
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background: #64748b;
+    border-radius: 50%;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+input:checked + .toggle-slider {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-color: #10b981;
+}
+input:checked + .toggle-slider:before {
+    transform: translateX(24px);
+    background: white;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+input:focus + .toggle-slider {
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+/* Small Toggle Switch */
+.toggle-switch-sm {
+    position: relative;
+    width: 40px;
+    height: 22px;
+    flex-shrink: 0;
+}
+.toggle-switch-sm input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.toggle-switch-sm .toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background: #1e293b;
+    border-radius: 9999px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid #334155;
+}
+.toggle-switch-sm .toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background: #64748b;
+    border-radius: 50%;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.toggle-switch-sm input:checked + .toggle-slider {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-color: #10b981;
+}
+.toggle-switch-sm input:checked + .toggle-slider:before {
+    transform: translateX(18px);
+    background: white;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+}
+
+/* Number Input */
+.number-input {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border: 1px solid #334155;
+    transition: all 0.3s ease;
+}
+.number-input:hover {
+    border-color: #475569;
+}
+.number-input:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+    outline: none;
+}
+
+/* Animated gradient border */
+.gradient-border {
+    position: relative;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+.gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, #10b981, #0ea5e9, #8b5cf6);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.gradient-border-cyan {
+    position: relative;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+.gradient-border-cyan::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, #0ea5e9, #06b6d4, #8b5cf6);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Savings animation */
+@keyframes pulse-green {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+    50% { box-shadow: 0 0 20px 5px rgba(16, 185, 129, 0.2); }
+}
+.savings-highlight {
+    animation: pulse-green 2s infinite;
+}
+
+/* Language selector */
+.lang-btn {
+    transition: all 0.2s ease;
+    color: #94a3b8;
+}
+.lang-btn.active {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+.lang-btn:not(.active):hover {
+    color: white;
+}
+
+/* Consultative sales tool UI */
+.step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.kpi-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.size-btn, .chip {
+    cursor: pointer;
+    user-select: none;
+    border: 1px solid #334155;
+    background: #0f172a;
+    color: #cbd5e1;
+    transition: all 0.15s ease;
+}
+.size-btn:hover, .chip:hover {
+    border-color: #10b981;
+    color: #fff;
+}
+.size-btn.on, .chip.on {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-color: #10b981;
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.25);
+}
+.stack-select {
+    background: #0f172a;
+    border: 1px solid #334155;
+    color: #fff;
+    transition: all 0.15s ease;
+}
+.stack-select:hover { border-color: #475569; }
+.stack-select:focus { outline: none; border-color: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15); }
+.stack-select option { background: #0f172a; color: #fff; }
+/* Step 2 business packages (one decision each) */
+.pkg-card {
+    cursor: pointer;
+    user-select: none;
+    border: 1px solid rgba(71, 85, 105, 0.45);
+    background: rgba(15, 23, 42, 0.55);
+    transition: all 0.15s ease;
+}
+.pkg-card:hover { border-color: rgba(16, 185, 129, 0.45); background: rgba(16, 185, 129, 0.06); }
+.pkg-card .pkg-check { color: #475569; }
+.pkg-card.on {
+    border-color: rgba(16, 185, 129, 0.55);
+    background: rgba(16, 185, 129, 0.12);
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.12);
+}
+.pkg-card.on .pkg-check { color: #10b981; }
+.pkg-card.core {
+    cursor: default;
+    border-color: rgba(16, 185, 129, 0.35);
+    background: rgba(16, 185, 129, 0.08);
+}
+.pkg-card.core .pkg-check { color: #10b981; }
+
+/* ============================================================
+   Sales Assistant panel (Microsoft 365 / Exchange playbook)
+   ============================================================ */
+/* Docked side panel - toggle tab on the right edge */
+.sa-tab {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+    padding: 16px 10px;
+    border-radius: 14px 0 0 14px;
+    box-shadow: -6px 0 24px rgba(16, 185, 129, 0.35);
+    transform: translateY(-50%);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.sa-tab:hover {
+    transform: translateY(-50%) translateX(-2px);
+    box-shadow: -6px 0 30px rgba(16, 185, 129, 0.55);
+}
+.sa-tab-label {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+/* Slide-in drawer + backdrop */
+.sa-drawer {
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.sa-drawer.open { transform: translateX(0); }
+.sa-backdrop {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+}
+.sa-backdrop.open { opacity: 1; pointer-events: auto; }
+
+/* Section 2 - clickable discovery questions */
+.sa-question {
+    cursor: pointer;
+    user-select: none;
+    border: 1px solid rgba(71, 85, 105, 0.45);
+    background: rgba(15, 23, 42, 0.55);
+    transition: all 0.15s ease;
+}
+.sa-question:hover {
+    border-color: rgba(16, 185, 129, 0.5);
+    background: rgba(16, 185, 129, 0.07);
+    transform: translateY(-1px);
+}
+.sa-question.asked {
+    border-color: rgba(16, 185, 129, 0.6);
+    background: rgba(16, 185, 129, 0.12);
+}
+.sa-question.asked .sa-question-icon { color: #10b981; }
+
+/* Section 3 - objection accordion */
+.sa-objection-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.sa-objection.open .sa-objection-body { grid-template-rows: 1fr; }
+.sa-objection-body > div { overflow: hidden; min-height: 0; }
+.sa-objection-icon { transition: transform 0.3s ease; }
+.sa-objection.open .sa-objection-icon { transform: rotate(180deg); }
+.sa-objection.open .sa-objection-head { background: rgba(16, 185, 129, 0.06); }
+
+/* Section 4 - strong closing question */
+.sa-closing {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.18) 0%, rgba(5, 150, 105, 0.05) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+/* ============================================================
+   Responsive shell
+   Tall desktops keep the locked single-screen layout (via lg: utilities).
+   On short viewports (most laptops, split-screen, zoom) we release the lock
+   so the whole page scrolls naturally and nothing is ever cut off.
+   ============================================================ */
+@media (min-width: 1024px) and (max-height: 950px) {
+    .fo-app { height: auto !important; overflow: visible !important; }
+    .fo-fill { height: auto !important; }
+    .fo-scroll { overflow: visible !important; }
+}
+</style>
+</head>
+<body class="fo-app font-sans bg-slate-950 text-slate-100 min-h-screen lg:h-screen lg:overflow-hidden">
+
+<!-- Background Pattern -->
+<div class="fixed inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl"></div>
+    <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
+    <div class="absolute top-1/2 right-0 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl"></div>
+</div>
+
+<div class="fo-fill relative z-10 px-4 sm:px-6 py-3 lg:h-full flex flex-col">
+    <div class="max-w-[1920px] w-full mx-auto flex-1 flex flex-col min-h-0">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+                <img src="flowone-logo.png" alt="FlowOne" class="w-10 h-10 rounded-xl object-contain" />
+                <div class="leading-tight">
+                    <h1 class="text-xl font-bold text-white" data-i18n="appTitle">FlowOne</h1>
+                    <p class="text-xs text-slate-400" data-i18n="appSubtitle">ROI Calculator</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="flex gap-1 p-0.5 rounded-full bg-slate-800/70 border border-slate-700">
+                    <button id="langEn" class="lang-btn px-2.5 py-1 rounded-full text-xs font-bold" onclick="setLang('en')">EN</button>
+                    <button id="langHu" class="lang-btn px-2.5 py-1 rounded-full text-xs font-bold" onclick="setLang('hu')">HU</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SALES CALCULATOR ==================== -->
+        <div id="businessCalc" class="flex-1 min-h-0">
+            <div class="fo-fill rounded-2xl bg-slate-900/30 border border-slate-800 p-3 sm:p-5 lg:h-full min-h-0">
+                <div class="fo-fill flex flex-col lg:flex-row gap-4 lg:gap-5 lg:h-full min-h-0">
+
+                    <!-- LEFT: 3-step consultative inputs -->
+                    <div class="fo-fill fo-scroll w-full lg:w-5/12 flex flex-col gap-3 lg:overflow-y-auto lg:pr-1 min-h-0 lg:h-full">
+
+                        <!-- STEP 1: Company size -->
+                        <div class="p-3 rounded-xl bg-slate-800/40 border border-slate-700/50">
+                            <div class="flex items-center gap-2 mb-2.5">
+                                <span class="step-num">1</span>
+                                <span class="text-sm font-semibold text-white" data-i18n="step1">Company size</span>
+                            </div>
+                            <div id="sizeBtns" class="grid grid-cols-3 gap-1.5"></div>
+                        </div>
+
+                        <!-- STEP 2: Business needs -->
+                        <div class="p-3 rounded-xl bg-slate-800/40 border border-slate-700/50">
+                            <div class="flex items-center gap-2 mb-2.5">
+                                <span class="step-num">2</span>
+                                <span class="text-sm font-semibold text-white" data-i18n="step2">Business needs</span>
+                            </div>
+                            <div id="needsGrid" class="space-y-2.5"></div>
+                        </div>
+
+                        <!-- STEP 3: Current software -->
+                        <div class="p-3 rounded-xl bg-slate-800/40 border border-slate-700/50">
+                            <div class="flex items-center gap-2 mb-2.5">
+                                <span class="step-num">3</span>
+                                <span class="text-sm font-semibold text-white" data-i18n="step3">Current software</span>
+                            </div>
+                            <div id="stackGrid" class="grid grid-cols-2 gap-2"></div>
+                            <div class="mt-3 pt-2.5 border-t border-slate-700/60 space-y-2">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-xs text-slate-300" data-i18n="adminLabel">Dedicated System Administrator</span>
+                                    <label class="toggle-switch-sm flex-shrink-0">
+                                        <input type="checkbox" id="admin">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-xs text-slate-300" data-i18n="migrationLabel">Migration Project</span>
+                                    <label class="toggle-switch-sm flex-shrink-0">
+                                        <input type="checkbox" id="migration" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: Results (primary focus) -->
+                    <div class="fo-scroll w-full lg:w-7/12 flex flex-col gap-3 min-h-0 lg:overflow-y-auto lg:pr-1">
+
+                        <!-- 1) THE HEADLINE: annual savings (sell the saving, not the cost) -->
+                        <div class="p-4 sm:p-5 rounded-xl bg-emerald-500/15 border border-emerald-500/50 savings-highlight text-center">
+                            <div class="kpi-label text-emerald-300 mb-2" data-i18n="annualSavings">Annual Savings</div>
+                            <div class="leading-none">
+                                <span class="text-3xl font-extrabold text-emerald-400" id="annualSavings">0 Ft</span>
+                                <span class="text-lg sm:text-xl font-bold text-emerald-300/70" data-i18n="perYearShort">/ yr</span>
+                            </div>
+                        </div>
+
+                        <!-- 2) Break-even -->
+                        <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-3">
+                            <div>
+                                <div class="kpi-label text-emerald-300 mb-1" data-i18n="paysForItself">Pays for itself in</div>
+                                <div class="text-3xl font-extrabold text-emerald-400 leading-none" id="breakEven">&mdash;</div>
+                            </div>
+                            <div id="fastBadge"></div>
+                        </div>
+
+                        <!-- 3) Proof: current vs FlowOne (one-time / monthly / per year) -->
+                        <div class="rounded-xl bg-slate-800/40 border border-slate-700 overflow-hidden">
+                            <div class="grid grid-cols-[1.1fr_1fr_1fr]">
+                                <div class="px-4 py-3"></div>
+                                <div class="px-3 py-3 text-center text-sm font-bold text-rose-300 bg-rose-500/10" data-i18n="colToday">Today</div>
+                                <div class="px-3 py-3 text-center text-sm font-bold text-emerald-300 bg-emerald-500/10 flex items-center justify-center gap-1.5">
+                                    <img src="flowone-logo.png" alt="FlowOne" class="w-4 h-4 object-contain" /> FlowOne
+                                </div>
+
+                                <div class="px-4 py-3.5 border-t border-slate-700/50 flex items-center text-sm font-medium text-slate-300" data-i18n="rowOneTime">One-time</div>
+                                <div class="px-3 py-3.5 border-t border-slate-700/50 text-center text-slate-600 text-xl">&mdash;</div>
+                                <div class="px-3 py-3.5 border-t border-slate-700/50 text-center text-lg font-extrabold text-white bg-emerald-500/5" id="tblOneTime">0 Ft</div>
+
+                                <div class="px-4 py-3.5 border-t border-slate-700/50 text-sm font-medium text-slate-300">
+                                    <div data-i18n="rowMonthly">Monthly</div>
+                                    <div class="text-[11px] text-slate-500 font-normal" id="monthlyNote"></div>
+                                </div>
+                                <div class="px-3 py-3.5 border-t border-slate-700/50 text-center text-base font-bold text-rose-200" id="tblTodayMonthly">0 Ft</div>
+                                <div class="px-3 py-3.5 border-t border-slate-700/50 text-center text-lg font-extrabold text-white bg-emerald-500/5" id="tblMonthly">0 Ft</div>
+
+                                <div class="px-4 py-3.5 border-t border-slate-600 flex items-center text-sm font-bold text-slate-100" data-i18n="rowYearly">Per year</div>
+                                <div class="px-3 py-3.5 border-t border-slate-600 text-center text-xl font-extrabold text-rose-400" id="tblTodayYear">0 Ft</div>
+                                <div class="px-3 py-3.5 border-t border-slate-600 text-center text-xl font-extrabold text-emerald-400 bg-emerald-500/10" id="tblYear">0 Ft</div>
+                            </div>
+                        </div>
+
+                        <!-- 4) Savings over time -->
+                        <div class="p-4 rounded-xl bg-slate-800/50 border border-slate-700">
+                            <div class="flex items-baseline justify-between mb-3 gap-2">
+                                <span class="kpi-label text-slate-300" data-i18n="roiSummary">Savings Over Time</span>
+                                <span class="text-[11px] text-slate-500" data-i18n="cumulativeNote">Net, after the one-time investment</span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-3">
+                                <div class="text-center p-2.5 rounded-lg bg-slate-900/40">
+                                    <div class="text-xs text-slate-400 mb-1" data-i18n="after3">After 3 years</div>
+                                    <div class="text-lg font-extrabold text-emerald-400" id="savings3">0 Ft</div>
+                                </div>
+                                <div class="text-center p-2.5 rounded-lg bg-slate-900/40">
+                                    <div class="text-xs text-slate-400 mb-1" data-i18n="after5">After 5 years</div>
+                                    <div class="text-lg font-extrabold text-emerald-400" id="savings5">0 Ft</div>
+                                </div>
+                                <div class="text-center p-2.5 rounded-lg bg-slate-900/40">
+                                    <div class="text-xs text-slate-400 mb-1" data-i18n="after10">After 10 years</div>
+                                    <div class="text-lg font-extrabold text-emerald-400" id="savings10">0 Ft</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Summary block: many tools -> one platform (hero) -->
+                        <div class="p-4 sm:p-6 rounded-xl bg-slate-800/40 border border-slate-700 flex-1 flex flex-col">
+                            <div class="flex-1 flex items-center">
+                                <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-4 sm:gap-6 items-center w-full">
+                                    <div class="min-w-0">
+                                        <div class="kpi-label text-slate-400 mb-3" data-i18n="currentlyUses">Customer currently uses</div>
+                                        <div class="flex flex-wrap gap-2" id="summaryStack"></div>
+                                    </div>
+                                    <div class="flex items-center justify-center text-emerald-500/70">
+                                        <span class="material-symbols-rounded text-5xl rotate-90 sm:rotate-0">trending_flat</span>
+                                    </div>
+                                    <div class="text-center pt-4 border-t sm:pt-0 sm:pl-6 sm:border-t-0 sm:border-l border-slate-700/60 self-stretch flex flex-col justify-center items-center">
+                                        <div class="inline-flex items-center gap-2 mb-4 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+                                            <img src="flowone-logo.png" alt="FlowOne" class="w-8 h-8 rounded-lg object-contain" />
+                                            <span class="text-2xl font-bold text-white">FlowOne</span>
+                                        </div>
+                                        <div class="flex items-end gap-3">
+                                            <div class="text-center">
+                                                <div class="text-6xl font-extrabold text-slate-200 leading-none" id="replaceCount">0</div>
+                                                <div class="text-xs text-slate-400 mt-1.5" data-i18n="systemsLabel">tools today</div>
+                                            </div>
+                                            <span class="material-symbols-rounded text-3xl text-emerald-500/70 mb-4">arrow_forward</span>
+                                            <div class="text-center">
+                                                <div class="text-6xl font-extrabold text-emerald-400 leading-none">1</div>
+                                                <div class="text-xs text-slate-400 mt-1.5" data-i18n="platformLabel">platform</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 pt-3 border-t border-slate-700/50">
+                                <button id="detailsToggle" type="button" class="text-xs text-slate-500 hover:text-emerald-400 transition-colors">Show price breakdown</button>
+                                <div id="detailsBox" class="hidden mt-2 pt-2 border-t border-slate-700/60"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ==================== SALES ASSISTANT (docked side panel) ==================== -->
+<button id="salesAssistantToggle" type="button" aria-expanded="false" aria-controls="salesAssistantDrawer"
+    class="sa-tab fixed right-0 top-1/2 z-40 flex flex-col items-center gap-2">
+    <span class="material-symbols-rounded text-2xl">support_agent</span>
+    <span class="sa-tab-label" data-i18n="saTitle">Sales Assistant</span>
+</button>
+
+<div id="salesAssistantBackdrop" class="sa-backdrop fixed inset-0 z-40 bg-slate-950/60"></div>
+
+<aside id="salesAssistantDrawer" role="dialog" aria-modal="true" aria-labelledby="salesAssistantTitle"
+    class="sa-drawer fixed top-0 right-0 h-full w-[440px] max-w-[92vw] z-50 bg-slate-900 border-l border-slate-700 flex flex-col shadow-2xl">
+    <header class="flex items-center gap-3 p-4 border-b border-slate-700 flex-shrink-0">
+        <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex-shrink-0">
+            <span class="material-symbols-rounded text-emerald-400 text-2xl">support_agent</span>
+        </span>
+        <span class="flex-1 min-w-0">
+            <span id="salesAssistantTitle" class="block text-sm font-bold text-white" data-i18n="saTitle">Sales Assistant</span>
+            <span class="block text-[11px] text-slate-400" data-i18n="saSubtitle">For Microsoft 365 / Exchange customers</span>
+        </span>
+        <button id="salesAssistantClose" type="button" aria-label="Close"
+            class="flex items-center justify-center w-9 h-9 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors flex-shrink-0">
+            <span class="material-symbols-rounded">close</span>
+        </button>
+    </header>
+    <div id="salesAssistantContent" class="flex-1 overflow-y-auto min-h-0"></div>
+</aside>
+
+<script>
+// ===== Sales tool element refs =====
+const sizeBtns = document.getElementById("sizeBtns");
+const needsGrid = document.getElementById("needsGrid");
+const stackGrid = document.getElementById("stackGrid");
+const adminToggle = document.getElementById("admin");
+const migrationToggle = document.getElementById("migration");
+// Results - cost comparison table
+const tblTodayYearEl = document.getElementById("tblTodayYear");
+const tblTodayMonthlyEl = document.getElementById("tblTodayMonthly");
+const tblOneTimeEl = document.getElementById("tblOneTime");
+const tblMonthlyEl = document.getElementById("tblMonthly");
+const tblYearEl = document.getElementById("tblYear");
+const monthlyNoteEl = document.getElementById("monthlyNote");
+const annualSavingsEl = document.getElementById("annualSavings");
+const breakEvenEl = document.getElementById("breakEven");
+const fastBadgeEl = document.getElementById("fastBadge");
+const savings3El = document.getElementById("savings3");
+const savings5El = document.getElementById("savings5");
+const savings10El = document.getElementById("savings10");
+const summaryStackEl = document.getElementById("summaryStack");
+const replaceCountEl = document.getElementById("replaceCount");
+const detailsToggle = document.getElementById("detailsToggle");
+const detailsBox = document.getElementById("detailsBox");
+// Sales Assistant docked side panel
+const salesAssistantToggle = document.getElementById("salesAssistantToggle");
+const salesAssistantDrawer = document.getElementById("salesAssistantDrawer");
+const salesAssistantBackdrop = document.getElementById("salesAssistantBackdrop");
+const salesAssistantClose = document.getElementById("salesAssistantClose");
+const salesAssistantContent = document.getElementById("salesAssistantContent");
+
+// Language Elements
+const langEn = document.getElementById("langEn");
+const langHu = document.getElementById("langHu");
+
+/* ============================================================
+   INTERNAL CONFIG - FlowOne Business License
+   Sales staff never see these values, multipliers or formulas.
+   Adjust here only.
+   ============================================================ */
+const EUR_TO_HUF = 400;                                   // conversion rate (configurable)
+const VPS_COST_YEARLY_EUR = 800;                          // VPS hosting per year (configurable)
+const VPS_COST_YEARLY_HUF = VPS_COST_YEARLY_EUR * EUR_TO_HUF; // shown only baked into ROI, never exposed
+const INTERNAL_MULTIPLIER = 1;                            // hidden internal margin multiplier (never displayed)
+
+const BASE_PLATFORM = 4000000;                            // Base platform value (Ft)
+
+// Optional services (Ft)
+// Dedicated System Administrator is a managed service that scales with the
+// deployment size, so it stays proportional (a flat fee would dwarf a small
+// company's spend and wreck ROI). When ON it counts as a FlowOne running cost.
+const ADMIN_PER_USER_MONTH = 5000;                        // Ft / user / month (configurable)
+const MIGRATION_COST       = 500000;                      // One-time migration project (added to license)
+
+/* FlowOne systems (mirrors the in-app per-user addon list).
+   price = one-time license amount (Ft), banded by the real SaaS tier it replaces:
+           Light 200k / Standard 400k / Heavy 800k-1.2M
+   saas  = real SaaS Ft the customer pays today (per user/mo, or per company/mo for scope 'flat')
+   scope = 'allstaff' (x all users) | 'seat' (x chosen seats) | 'flat' (per company) */
+const ADDONS = [
+    { id: "ai",          i18nKey: "aiLabel",         icon: "auto_awesome",    color: "text-violet-400",  price: 1000000, saas: 8000,  scope: "allstaff" },
+    { id: "automation",  i18nKey: "automationLabel", icon: "bolt",            color: "text-amber-400",   price: 1200000, saas: 8000,  scope: "flat" },
+    { id: "boardpro",    i18nKey: "boardProLabel",   icon: "dashboard",       color: "text-indigo-400",  price: 400000,  saas: 4000,  scope: "seat" },
+    { id: "calendar",    i18nKey: "calendarLabel",   icon: "calendar_month",  color: "text-sky-400",     price: 0,       saas: 0,     scope: "allstaff" },
+    { id: "drive",       i18nKey: "driveLabel",      icon: "cloud",           color: "text-sky-300",     price: 0,       saas: 0,     scope: "allstaff" },
+    { id: "chat",        i18nKey: "chatLabel",       icon: "forum",           color: "text-emerald-400", price: 800000,  saas: 13200, scope: "allstaff" },
+    { id: "crm",         i18nKey: "crmLabel",        icon: "contacts",        color: "text-blue-400",    price: 1000000, saas: 8000,  scope: "seat" },
+    { id: "emailmkt",    i18nKey: "emailMktLabel",   icon: "campaign",        color: "text-pink-400",    price: 600000,  saas: 8000,  scope: "flat" },
+    { id: "tracking",    i18nKey: "trackingLabel",   icon: "mark_email_read", color: "text-rose-400",    price: 400000,  saas: 6000,  scope: "seat" },
+    { id: "kanban",      i18nKey: "kanbanLabel",     icon: "view_kanban",     color: "text-teal-400",    price: 200000,  saas: 2800,  scope: "seat" },
+    { id: "moodboards",  i18nKey: "moodBoardsLabel", icon: "palette",         color: "text-fuchsia-400", price: 400000,  saas: 5200,  scope: "seat" },
+    { id: "tasks",       i18nKey: "tasksLabel",      icon: "task_alt",        color: "text-green-400",   price: 200000,  saas: 2000,  scope: "allstaff" },
+    { id: "news",        i18nKey: "newsLabel",       icon: "feed",            color: "text-orange-400",  price: 200000,  saas: 2400,  scope: "allstaff" },
+    { id: "projects",    i18nKey: "projectsLabel",   icon: "hub",             color: "text-cyan-400",    price: 800000,  saas: 8000,  scope: "seat" },
+    { id: "reactions",   i18nKey: "reactionsLabel",  icon: "mood",            color: "text-yellow-400",  price: 0,       saas: 0,     scope: "allstaff" },
+    { id: "team",        i18nKey: "teamLabel",       icon: "groups",          color: "text-blue-300",    price: 400000,  saas: 3600,  scope: "allstaff" },
+    { id: "timetracker", i18nKey: "timeTrackerLabel",icon: "timer",           color: "text-lime-400",    price: 400000,  saas: 3600,  scope: "seat" },
+    { id: "search",      i18nKey: "searchLabel",     icon: "search",          color: "text-violet-300",  price: 1200000, saas: 8000,  scope: "allstaff" },
+];
+
+// User scaling - marginal brackets (tax-style, no cliffs). Returns { value, custom }.
+function userScaling(users) {
+    if (users > 500) return { value: null, custom: true };
+    const brackets = [
+        { upTo: 10,  rate: 0 },
+        { upTo: 50,  rate: 50000 },
+        { upTo: 100, rate: 45000 },
+        { upTo: 250, rate: 40000 },
+        { upTo: 500, rate: 35000 },
+    ];
+    let total = 0, lower = 0;
+    for (const b of brackets) {
+        if (users > lower) total += (Math.min(users, b.upTo) - lower) * b.rate;
+        lower = b.upTo;
+    }
+    return { value: total, custom: false };
+}
+
+// Hungarian HUF formatting: "5 600 000 Ft"
+function formatHUF(value) {
+    return new Intl.NumberFormat('hu-HU').format(Math.round(value)) + ' Ft';
+}
+
+// Plain Hungarian-grouped number (no currency suffix): "29 000"
+function formatNumber(value) {
+    return new Intl.NumberFormat('hu-HU').format(Math.round(value));
+}
+
+/* ============================================================
+   SALES TOOL CONFIG (internal - salesperson never sees these)
+   ============================================================ */
+
+// STEP 1 - Company size bands. The salesperson picks a band; we use a
+// representative head-count internally for all the existing formulas.
+const SIZE_BANDS = [
+    { id: "s1", i18nKey: "size1", users: 10,  custom: false },
+    { id: "s2", i18nKey: "size2", users: 30,  custom: false },
+    { id: "s3", i18nKey: "size3", users: 75,  custom: false },
+    { id: "s4", i18nKey: "size4", users: 175, custom: false },
+    { id: "s5", i18nKey: "size5", users: 375, custom: false },
+    { id: "s6", i18nKey: "size6", users: 750, custom: true  },
+];
+
+// STEP 2 - High-level business packages. The salesperson makes ONE decision
+// per package; each package silently activates the relevant FlowOne modules
+// (matched to ADDONS ids). No more "do I click CRM only or all 3?".
+const PACKAGES = [
+    { id: "pkg_core", i18nKey: "pkgCore", descKey: "pkgCoreDesc", icon: "mail",     color: "text-sky-400",     core: true, modules: ["calendar", "drive"] },
+    { id: "pkg_comm", i18nKey: "pkgComm", descKey: "pkgCommDesc", icon: "forum",    color: "text-emerald-400", modules: ["chat", "news", "team", "reactions"] },
+    { id: "pkg_crm",  i18nKey: "pkgCrm",  descKey: "pkgCrmDesc",  icon: "contacts", color: "text-blue-400",    modules: ["crm"] },
+    { id: "pkg_pm",   i18nKey: "pkgPm",   descKey: "pkgPmDesc",   icon: "hub",      color: "text-cyan-400",    modules: ["projects", "tasks", "kanban", "boardpro", "timetracker"] },
+    { id: "pkg_mkt",  i18nKey: "pkgMkt",  descKey: "pkgMktDesc",  icon: "campaign", color: "text-pink-400",    modules: ["emailmkt", "tracking"] },
+    { id: "pkg_auto", i18nKey: "pkgAuto", descKey: "pkgAutoDesc", icon: "bolt",     color: "text-amber-400",   modules: ["ai", "automation", "search"] },
+];
+
+// STEP 3 - Customer's current software. Average market prices (Ft/user/mo)
+// used to estimate current annual spend - salesperson never types a price.
+const STACK = {
+    email: { i18nKey: "stackEmail", scope: "all",  def: "m365", options: [
+        { id: "m365",      i18nKey: "optM365",      perUser: 6400 },
+        { id: "gws",       i18nKey: "optGws",       perUser: 5600 },
+        { id: "other",     i18nKey: "optOther",     perUser: 5200 },
+    ]},
+    crm: { i18nKey: "stackCrm", scope: "seat", def: "salesforce", options: [
+        { id: "salesforce",i18nKey: "optSalesforce",perUser: 28000 },
+        { id: "hubspot",   i18nKey: "optHubspot",   perUser: 12000 },
+        { id: "pipedrive", i18nKey: "optPipedrive", perUser: 6000 },
+        { id: "none",      i18nKey: "optNone",      perUser: 0 },
+    ]},
+    pm: { i18nKey: "stackPm", scope: "seat", def: "clickup", options: [
+        { id: "monday",    i18nKey: "optMonday",    perUser: 6000 },
+        { id: "asana",     i18nKey: "optAsana",     perUser: 5200 },
+        { id: "jira",      i18nKey: "optJira",      perUser: 3200 },
+        { id: "clickup",   i18nKey: "optClickup",   perUser: 3200 },
+        { id: "none",      i18nKey: "optNone",      perUser: 0 },
+    ]},
+    comm: { i18nKey: "stackComm", scope: "all", def: "slack", options: [
+        { id: "slack",     i18nKey: "optSlack",     perUser: 6000 },
+        { id: "teams",     i18nKey: "optTeams",     perUser: 1600 },
+        { id: "discord",   i18nKey: "optDiscord",   perUser: 800 },
+        { id: "none",      i18nKey: "optNone",      perUser: 0 },
+    ]},
+};
+
+// Realistic share of staff that actually use role-based tools (CRM / PM).
+const SEAT_RATIO = { crm: 0.4, pm: 0.6 };
+
+// Map module id -> price for fast license lookups.
+const MODULE_PRICE = {};
+ADDONS.forEach(a => { MODULE_PRICE[a.id] = a.price; });
+
+// Live sales-tool state
+let selectedSize = "s2";
+const selectedNeeds = new Set(["pkg_core"]);                                   // core package (Email, Calendar & Drive) on by default
+const selectedStack = { email: "m365", crm: "salesforce", pm: "clickup", comm: "slack" };
+
+/* ============================================================
+   SALES ASSISTANT CONTENT (Microsoft 365 / Exchange playbook)
+   Content is i18n-key driven so EN/HU stay in sync with applyStaticTranslations.
+   ============================================================ */
+const SALES_REASONS   = ["saReason1", "saReason2", "saReason3", "saReason4", "saReason5", "saReason6", "saReason7"];
+const SALES_QUESTIONS = ["saQ1", "saQ2", "saQ3", "saQ4", "saQ5", "saQ6"];
+const SALES_OBJECTIONS = [
+    { q: "saObj1Q", a: "saObj1A" },
+    { q: "saObj2Q", a: "saObj2A" },
+    { q: "saObj3Q", a: "saObj3A" },
+    { q: "saObj4Q", a: "saObj4A" },
+];
+
+/* ============================================================
+   i18n - English / Hungarian
+   ============================================================ */
+const I18N = {
+    en: {
+        appTitle: "FlowOne",
+        appSubtitle: "ROI Calculator",
+        // Steps
+        step1: "Company size",
+        step2: "Business needs",
+        step3: "Current software",
+        // Step 1 - sizes
+        size1: "1\u201310 Users",
+        size2: "11\u201350 Users",
+        size3: "51\u2013100 Users",
+        size4: "101\u2013250 Users",
+        size5: "251\u2013500 Users",
+        size6: "500+ (Custom)",
+        // Step 2 - high-level business packages (one decision each)
+        pkgCore: "Email, Calendar & Drive",
+        pkgCoreDesc: "Core \u00b7 included for everyone",
+        pkgComm: "Communication",
+        pkgCommDesc: "Chat, calls, company news & directory",
+        pkgCrm: "Customer Management",
+        pkgCrmDesc: "CRM, client portal & sales pipeline",
+        pkgPm: "Project Management",
+        pkgPmDesc: "Projects, tasks, boards & time tracking",
+        pkgMkt: "Marketing",
+        pkgMktDesc: "Email marketing & lead tracking",
+        pkgAuto: "Automation & AI",
+        pkgAutoDesc: "AI assistant, automations & search",
+        // Step 3 - current software
+        stackEmail: "Email Platform",
+        stackCrm: "CRM",
+        stackPm: "Project Management",
+        stackComm: "Communication",
+        optM365: "Microsoft 365",
+        optGws: "Google Workspace",
+        optOther: "Other",
+        optSalesforce: "Salesforce",
+        optHubspot: "HubSpot",
+        optPipedrive: "Pipedrive",
+        optMonday: "Monday",
+        optAsana: "Asana",
+        optJira: "Jira",
+        optClickup: "ClickUp",
+        optSlack: "Slack",
+        optTeams: "Teams",
+        optDiscord: "Discord",
+        optNone: "None",
+        // Internal module labels (only shown in optional breakdown)
+        aiLabel: "AI Assistant",
+        automationLabel: "Automation Hub",
+        boardProLabel: "Board Pro",
+        calendarLabel: "Calendar",
+        driveLabel: "Drive",
+        chatLabel: "Chat & Calls",
+        crmLabel: "CRM Pro & Client Portal",
+        emailMktLabel: "Email Marketing",
+        trackingLabel: "Lead Tracking",
+        kanbanLabel: "Kanban Boards",
+        moodBoardsLabel: "Mood Boards",
+        tasksLabel: "Tasks",
+        newsLabel: "Company News",
+        projectsLabel: "Project Hub",
+        reactionsLabel: "Reactions",
+        teamLabel: "Team Management",
+        timeTrackerLabel: "Time Tracker",
+        searchLabel: "Universal Search",
+        // Results
+        currentAnnualCost: "Current Annual Software Cost",
+        flowoneInvestment: "FlowOne Investment",
+        annualSavings: "Annual Savings",
+        perYear: "per year",
+        oneTime: "one-time",
+        breakEven: "Break-even",
+        roiSummary: "Savings Over Time",
+        // Guidance captions
+        capToday: "What they pay today",
+        capOneTime: "One-time setup",
+        capEverySave: "Saved every year",
+        runYearNote: "/ yr to run",
+        runIncludesBase: "hosting",
+        runIncludesAdmin: "hosting + administrator",
+        plusMonthly: "then monthly",
+        perYearShort: "/ yr",
+        paysForItself: "Pays for itself in",
+        colToday: "Today",
+        rowOneTime: "One-time",
+        rowMonthly: "Monthly",
+        rowYearly: "Per year",
+        comparisonTitle: "Yearly cost: today vs FlowOne",
+        todayLabel: "Today",
+        flowoneRunLabel: "FlowOne (running)",
+        cumulativeNote: "Net, after the one-time investment",
+        after3: "After 3 years",
+        after5: "After 5 years",
+        after10: "After 10 years",
+        noBreakEven: "No Break-even",
+        years: "years",
+        months: "months",
+        // Summary block
+        currentlyUses: "Customer currently uses",
+        flowoneReplaces: "FlowOne replaces",
+        systemsLabel: "tools today",
+        platformLabel: "platform",
+        none: "No paid tools selected",
+        showBreakdown: "Show price breakdown",
+        hideBreakdown: "Hide price breakdown",
+        // License breakdown (optional)
+        basePlatform: "Base Platform",
+        totalLicense: "Total License",
+        flowoneLicense: "FlowOne License",
+        usersCountLabel: "Users",
+        recurringTitle: "Recurring service",
+        optionalWord: "optional",
+        monthlySuffix: "/ month",
+        yearlySuffix: "/ year",
+        // Misc
+        custom: "Custom",
+        customQuote: "500+ users \u2014 contact sales for a custom quote",
+        adminLabel: "Dedicated System Administrator",
+        migrationLabel: "Migration Project",
+        badgeQuick: "Strong ROI",
+        badge12: "Fast payback",
+        // Sales Assistant panel
+        saTitle: "Sales Assistant",
+        saSubtitle: "For Microsoft 365 / Exchange customers",
+        saSection1Title: "Why FlowOne instead of Microsoft 365?",
+        saSection2Title: "Discovery questions",
+        saSection3Title: "Common objections",
+        saSection4Title: "Strong closing question",
+        saReason1: "No recurring per-user monthly license fees",
+        saReason2: "No exposure to Microsoft price increases",
+        saReason3: "A system you fully own",
+        saReason4: "Your own infrastructure and data",
+        saReason5: "One platform instead of many separate systems",
+        saReason6: "Lower total cost of ownership long term",
+        saReason7: "Replace endless subscriptions with a one-time investment",
+        saQ1: "How much do you pay for Microsoft licenses per year today?",
+        saQ2: "How many users are on the system?",
+        saQ3: "Do you use other subscription systems besides Microsoft?",
+        saQ4: "Is keeping company data under your own control important?",
+        saQ5: "What would happen if Microsoft raised prices by 20% next year?",
+        saQ6: "How many separate systems do you pay for today besides email?",
+        saObj1Q: "Microsoft is more reliable.",
+        saObj1A: "The question isn't reliability. The question is who owns the system, the data, and the future costs.",
+        saObj2Q: "We already have a Microsoft 365 subscription.",
+        saObj2A: "Most companies only use a fraction of the services. FlowOne can consolidate the cost of several separate systems into a single platform.",
+        saObj3Q: "Migration is too complicated.",
+        saObj3A: "Migration is a supported process. Emails, folders, contacts and other data can be moved over.",
+        saObj4Q: "Microsoft is cheaper.",
+        saObj4A: "It can be in the short term. Long term, recurring subscription fees typically result in a significantly higher total cost.",
+        saClosing: "In 5 years, would you rather still be paying for a Microsoft subscription, or using a system you own?",
+    },
+    hu: {
+        appTitle: "FlowOne",
+        appSubtitle: "ROI Kalkul\u00e1tor",
+        // Steps
+        step1: "C\u00e9gm\u00e9ret",
+        step2: "\u00dczleti ig\u00e9nyek",
+        step3: "Jelenlegi szoftverek",
+        // Step 1 - sizes
+        size1: "1\u201310 felhaszn\u00e1l\u00f3",
+        size2: "11\u201350 felhaszn\u00e1l\u00f3",
+        size3: "51\u2013100 felhaszn\u00e1l\u00f3",
+        size4: "101\u2013250 felhaszn\u00e1l\u00f3",
+        size5: "251\u2013500 felhaszn\u00e1l\u00f3",
+        size6: "500+ (Egyedi)",
+        // Step 2 - magas szint\u0171 \u00fczleti csomagok (egy d\u00f6nt\u00e9s csomagonk\u00e9nt)
+        pkgCore: "E-mail, Napt\u00e1r \u00e9s Drive",
+        pkgCoreDesc: "Alapcsomag \u00b7 mindenkinek j\u00e1r",
+        pkgComm: "Kommunik\u00e1ci\u00f3",
+        pkgCommDesc: "Chat, h\u00edv\u00e1sok, c\u00e9ges h\u00edrek \u00e9s n\u00e9vjegyz\u00e9k",
+        pkgCrm: "\u00dcgyf\u00e9lkezel\u00e9s",
+        pkgCrmDesc: "CRM, \u00fcgyf\u00e9lport\u00e1l \u00e9s \u00e9rt\u00e9kes\u00edt\u00e9si pipeline",
+        pkgPm: "Projektmenedzsment",
+        pkgPmDesc: "Projektek, feladatok, t\u00e1bl\u00e1k \u00e9s id\u0151k\u00f6vet\u00e9s",
+        pkgMkt: "Marketing",
+        pkgMktDesc: "E-mail marketing \u00e9s lead k\u00f6vet\u00e9s",
+        pkgAuto: "Automatiz\u00e1l\u00e1s \u00e9s AI",
+        pkgAutoDesc: "AI asszisztens, automatiz\u00e1l\u00e1sok \u00e9s keres\u00e9s",
+        // Step 3 - current software
+        stackEmail: "E-mail platform",
+        stackCrm: "CRM",
+        stackPm: "Projektmenedzsment",
+        stackComm: "Kommunik\u00e1ci\u00f3",
+        optM365: "Microsoft 365",
+        optGws: "Google Workspace",
+        optOther: "Egy\u00e9b",
+        optSalesforce: "Salesforce",
+        optHubspot: "HubSpot",
+        optPipedrive: "Pipedrive",
+        optMonday: "Monday",
+        optAsana: "Asana",
+        optJira: "Jira",
+        optClickup: "ClickUp",
+        optSlack: "Slack",
+        optTeams: "Teams",
+        optDiscord: "Discord",
+        optNone: "Nincs",
+        // Internal module labels
+        aiLabel: "AI Asszisztens",
+        automationLabel: "Automatiz\u00e1l\u00e1si K\u00f6zpont",
+        boardProLabel: "T\u00e1bla Pro",
+        calendarLabel: "Napt\u00e1r",
+        driveLabel: "Drive",
+        chatLabel: "Cseveg\u00e9s \u00e9s H\u00edv\u00e1sok",
+        crmLabel: "CRM Pro \u00e9s \u00dcgyf\u00e9lport\u00e1l",
+        emailMktLabel: "E-mail Marketing",
+        trackingLabel: "Lead k\u00f6vet\u00e9s",
+        kanbanLabel: "Kanban T\u00e1bl\u00e1k",
+        moodBoardsLabel: "Hangulatt\u00e1bl\u00e1k",
+        tasksLabel: "Feladatok",
+        newsLabel: "C\u00e9ges h\u00edrek",
+        projectsLabel: "Projekt K\u00f6zpont",
+        reactionsLabel: "Reakci\u00f3k",
+        teamLabel: "Csapatkezel\u00e9s",
+        timeTrackerLabel: "Id\u0151k\u00f6vet\u0151",
+        searchLabel: "Univerz\u00e1lis Keres\u00e9s",
+        // Results
+        currentAnnualCost: "Jelenlegi \u00e9ves szoftverk\u00f6lts\u00e9g",
+        flowoneInvestment: "FlowOne beruh\u00e1z\u00e1s",
+        annualSavings: "\u00c9ves megtakar\u00edt\u00e1s",
+        perYear: "\u00e9vente",
+        oneTime: "egyszeri",
+        breakEven: "Megt\u00e9r\u00fcl\u00e9s",
+        roiSummary: "Megtakar\u00edt\u00e1s id\u0151vel",
+        // Guidance captions
+        capToday: "Amit ma fizetnek",
+        capOneTime: "Egyszeri bevezet\u00e9s",
+        capEverySave: "\u00c9vente megtakar\u00edtva",
+        runYearNote: "/ \u00e9v \u00fczemeltet\u00e9s",
+        runIncludesBase: "\u00fczemeltet\u00e9s",
+        runIncludesAdmin: "\u00fczemeltet\u00e9s + rendszergazda",
+        plusMonthly: "majd havonta",
+        perYearShort: "/ \u00e9v",
+        paysForItself: "Megt\u00e9r\u00fcl\u00e9s ideje",
+        colToday: "Ma",
+        rowOneTime: "Egyszeri",
+        rowMonthly: "Havi d\u00edj",
+        rowYearly: "\u00c9ves k\u00f6lts\u00e9g",
+        comparisonTitle: "\u00c9ves k\u00f6lts\u00e9g: ma vs FlowOne",
+        todayLabel: "Ma",
+        flowoneRunLabel: "FlowOne (\u00fczemeltet\u00e9s)",
+        cumulativeNote: "Nett\u00f3, az egyszeri beruh\u00e1z\u00e1s ut\u00e1n",
+        after3: "3 \u00e9v ut\u00e1n",
+        after5: "5 \u00e9v ut\u00e1n",
+        after10: "10 \u00e9v ut\u00e1n",
+        noBreakEven: "Nincs megt\u00e9r\u00fcl\u00e9s",
+        years: "\u00e9v",
+        months: "h\u00f3nap",
+        // Summary block
+        currentlyUses: "Az \u00fcgyf\u00e9l jelenleg ezt haszn\u00e1lja",
+        flowoneReplaces: "A FlowOne kiv\u00e1ltja",
+        systemsLabel: "rendszer ma",
+        platformLabel: "platform",
+        none: "Nincs fizet\u0151s eszk\u00f6z kiv\u00e1lasztva",
+        showBreakdown: "\u00c1rr\u00e9szletez\u00e9s mutat\u00e1sa",
+        hideBreakdown: "\u00c1rr\u00e9szletez\u00e9s elrejt\u00e9se",
+        // License breakdown (optional)
+        basePlatform: "Alap platform",
+        totalLicense: "Teljes licenc",
+        flowoneLicense: "FlowOne licenc",
+        usersCountLabel: "Felhaszn\u00e1l\u00f3",
+        recurringTitle: "Folyamatos szolg\u00e1ltat\u00e1s",
+        optionalWord: "opcion\u00e1lis",
+        monthlySuffix: "/ h\u00f3",
+        yearlySuffix: "/ \u00e9v",
+        // Misc
+        custom: "Egyedi",
+        customQuote: "500+ felhaszn\u00e1l\u00f3 \u2014 egyedi aj\u00e1nlat\u00e9rt keresse az \u00e9rt\u00e9kes\u00edt\u00e9st",
+        adminLabel: "Dedik\u00e1lt rendszergazda",
+        migrationLabel: "Migr\u00e1ci\u00f3s Projekt",
+        badgeQuick: "Kedvez\u0151 megt\u00e9r\u00fcl\u00e9s",
+        badge12: "Gyors megt\u00e9r\u00fcl\u00e9s",
+        // Sales Assistant panel
+        saTitle: "\u00c9rt\u00e9kes\u00edt\u00e9si Seg\u00e9dlet",
+        saSubtitle: "Microsoft 365 / Exchange \u00fcgyfelekhez",
+        saSection1Title: "Mi\u00e9rt FlowOne a Microsoft 365 helyett?",
+        saSection2Title: "Felder\u00edt\u0151 k\u00e9rd\u00e9sek",
+        saSection3Title: "Gyakori kifog\u00e1sok",
+        saSection4Title: "Er\u0151s z\u00e1r\u00f3 k\u00e9rd\u00e9s",
+        saReason1: "Nincs folyamatos felhaszn\u00e1l\u00f3nk\u00e9nti havi licencd\u00edj",
+        saReason2: "Nincs kiszolg\u00e1ltatotts\u00e1g Microsoft \u00e1remel\u00e9seknek",
+        saReason3: "Saj\u00e1t tulajdon\u00fa rendszer",
+        saReason4: "Saj\u00e1t infrastrukt\u00fara \u00e9s adatok",
+        saReason5: "Egy platform t\u00f6bb k\u00fcl\u00f6n\u00e1ll\u00f3 rendszer helyett",
+        saReason6: "Alacsonyabb teljes beker\u00fcl\u00e9si k\u00f6lts\u00e9g hossz\u00fa t\u00e1von",
+        saReason7: "Egyszeri beruh\u00e1z\u00e1s helyett v\u00e9gtelen el\u0151fizet\u00e9sek kiv\u00e1lt\u00e1sa",
+        saQ1: "Mennyit fizetnek jelenleg Microsoft licencekre \u00e9vente?",
+        saQ2: "H\u00e1ny felhaszn\u00e1l\u00f3 haszn\u00e1lja a rendszert?",
+        saQ3: "Haszn\u00e1lnak a Microsofton k\u00edv\u00fcl m\u00e1s el\u0151fizet\u00e9ses rendszereket is?",
+        saQ4: "Fontos, hogy a v\u00e1llalati adatok saj\u00e1t kezel\u00e9sben maradjanak?",
+        saQ5: "Mi t\u00f6rt\u00e9nne, ha a Microsoft j\u00f6v\u0151re 20%-kal emeln\u00e9 az \u00e1rakat?",
+        saQ6: "H\u00e1ny k\u00fcl\u00f6n rendszer\u00e9rt fizetnek jelenleg az emailen k\u00edv\u00fcl?",
+        saObj1Q: "Microsoft megb\u00edzhat\u00f3bb.",
+        saObj1A: "A k\u00e9rd\u00e9s nem a megb\u00edzhat\u00f3s\u00e1g. A k\u00e9rd\u00e9s az, hogy ki birtokolja a rendszert, az adatokat \u00e9s a j\u00f6v\u0151beni k\u00f6lts\u00e9geket.",
+        saObj2Q: "M\u00e1r van Microsoft 365 el\u0151fizet\u00e9s\u00fcnk.",
+        saObj2A: "A legt\u00f6bb v\u00e1llalat csak a szolg\u00e1ltat\u00e1sok egy r\u00e9sz\u00e9t haszn\u00e1lja ki. A FlowOne t\u00f6bb k\u00fcl\u00f6n\u00e1ll\u00f3 rendszer k\u00f6lts\u00e9g\u00e9t tudja egyetlen platformba \u00f6sszevonni.",
+        saObj3Q: "A migr\u00e1ci\u00f3 t\u00fal bonyolult.",
+        saObj3A: "A migr\u00e1ci\u00f3 t\u00e1mogatott folyamat. Az emailek, mapp\u00e1k, n\u00e9vjegyek \u00e9s egy\u00e9b adatok \u00e1tk\u00f6lt\u00f6ztethet\u0151k.",
+        saObj4Q: "A Microsoft olcs\u00f3bb.",
+        saObj4A: "R\u00f6vid t\u00e1von el\u0151fordulhat. Hossz\u00fa t\u00e1von a folyamatos el\u0151fizet\u00e9si d\u00edjak jellemz\u0151en jelent\u0151sen magasabb \u00f6sszk\u00f6lts\u00e9get eredm\u00e9nyeznek.",
+        saClosing: "5 \u00e9v m\u00falva ink\u00e1bb m\u00e9g mindig Microsoft el\u0151fizet\u00e9st szeretn\u00e9nek fizetni, vagy egy saj\u00e1t tulajdon\u00fa rendszert haszn\u00e1lni?",
+    },
+};
+
+let currentLang = (() => {
+    try { return localStorage.getItem('flowone_lang') || 'en'; } catch (e) { return 'en'; }
+})();
+let T = I18N[currentLang] || I18N.en;
+
+function applyStaticTranslations() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (T[key] !== undefined) el.textContent = T[key];
+    });
+}
+
+function setLang(lang) {
+    if (!I18N[lang]) return;
+    currentLang = lang;
+    T = I18N[lang];
+    try { localStorage.setItem('flowone_lang', lang); } catch (e) {}
+    document.documentElement.lang = lang;
+    langEn.classList.toggle('active', lang === 'en');
+    langHu.classList.toggle('active', lang === 'hu');
+    applyStaticTranslations();
+    detailsToggle.textContent = detailsBox.classList.contains('hidden') ? T.showBreakdown : T.hideBreakdown;
+    calculate();
+}
+
+/* ============================================================
+   RENDER - Step 1 / 2 / 3 controls (consultative, business-language)
+   ============================================================ */
+function renderSizeButtons() {
+    sizeBtns.innerHTML = SIZE_BANDS.map(b => `
+        <button type="button" data-size="${b.id}"
+            class="size-btn px-2 py-2 rounded-lg text-xs font-semibold text-center ${b.id === selectedSize ? 'on' : ''}">
+            <span data-i18n="${b.i18nKey}">${b.i18nKey}</span>
+        </button>`).join('');
+    sizeBtns.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            selectedSize = btn.getAttribute('data-size');
+            sizeBtns.querySelectorAll('button').forEach(b =>
+                b.classList.toggle('on', b.getAttribute('data-size') === selectedSize));
+            calculate();
+        });
+    });
+}
+
+function renderNeeds() {
+    needsGrid.innerHTML = PACKAGES.map(p => {
+        const on = p.core || selectedNeeds.has(p.id);
+        return `
+        <button type="button" data-need="${p.id}" ${p.core ? 'data-core="1"' : ''}
+            class="pkg-card w-full flex items-center gap-2.5 p-2.5 rounded-lg text-left ${p.core ? 'core' : (on ? 'on' : '')}">
+            <span class="material-symbols-rounded text-xl ${p.color}">${p.icon}</span>
+            <span class="flex-1 min-w-0">
+                <span class="block text-xs font-semibold text-white leading-tight" data-i18n="${p.i18nKey}">${p.i18nKey}</span>
+                <span class="block text-[10px] text-slate-400 leading-snug" data-i18n="${p.descKey}">${p.descKey}</span>
+            </span>
+            <span class="pkg-check material-symbols-rounded text-lg flex-shrink-0">${on ? 'check_circle' : 'radio_button_unchecked'}</span>
+        </button>`;
+    }).join('');
+    needsGrid.querySelectorAll('button').forEach(btn => {
+        if (btn.getAttribute('data-core')) return;  // core package is always on
+        btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-need');
+            const on = !selectedNeeds.has(id);
+            if (on) selectedNeeds.add(id); else selectedNeeds.delete(id);
+            btn.classList.toggle('on', on);
+            btn.querySelector('.pkg-check').textContent = on ? 'check_circle' : 'radio_button_unchecked';
+            calculate();
+        });
+    });
+}
+
+function renderStack() {
+    stackGrid.innerHTML = Object.keys(STACK).map(key => {
+        const grp = STACK[key];
+        const opts = grp.options.map(o => `<option value="${o.id}" data-i18n="${o.i18nKey}">${o.i18nKey}</option>`).join('');
+        return `
+        <div>
+            <label class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1 block" data-i18n="${grp.i18nKey}">${grp.i18nKey}</label>
+            <select data-stack="${key}" class="stack-select w-full px-2 py-1.5 rounded-lg text-xs font-semibold">${opts}</select>
+        </div>`;
+    }).join('');
+    stackGrid.querySelectorAll('select').forEach(sel => {
+        const key = sel.getAttribute('data-stack');
+        sel.value = selectedStack[key];
+        sel.addEventListener('change', () => { selectedStack[key] = sel.value; calculate(); });
+    });
+}
+
+/* ============================================================
+   RENDER - Sales Assistant playbook (built once; text via i18n)
+   Section headers + items carry data-i18n so applyStaticTranslations
+   keeps EN/HU in sync without re-rendering (preserves open/asked state).
+   ============================================================ */
+function sectionHeader(icon, key) {
+    return `
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <span class="material-symbols-rounded text-emerald-400 text-lg">${icon}</span>
+            <span data-i18n="${key}">${key}</span>
+        </h3>`;
+}
+
+function renderSalesAssistant() {
+    // SECTION 1 - checklist of reasons
+    const reasonsHtml = SALES_REASONS.map(k => `
+        <li class="flex items-start gap-2.5">
+            <span class="material-symbols-rounded filled text-emerald-400 text-lg flex-shrink-0 mt-0.5">check_circle</span>
+            <span class="text-sm text-slate-200 leading-snug" data-i18n="${k}">${k}</span>
+        </li>`).join('');
+
+    // SECTION 2 - clickable discovery question cards
+    const questionsHtml = SALES_QUESTIONS.map(k => `
+        <button type="button" class="sa-question flex items-start gap-2.5 p-3 rounded-lg text-left">
+            <span class="sa-question-icon material-symbols-rounded text-emerald-400/80 text-lg flex-shrink-0 mt-0.5">help</span>
+            <span class="text-sm text-slate-200 leading-snug" data-i18n="${k}">${k}</span>
+        </button>`).join('');
+
+    // SECTION 3 - objection accordion
+    const objectionsHtml = SALES_OBJECTIONS.map(o => `
+        <div class="sa-objection rounded-lg border border-slate-700/60 bg-slate-900/40 overflow-hidden">
+            <button type="button" class="sa-objection-head w-full flex items-center gap-2.5 p-3 text-left transition-colors">
+                <span class="material-symbols-rounded text-rose-400/80 text-lg flex-shrink-0">chat_bubble</span>
+                <span class="flex-1 text-sm font-semibold text-slate-100" data-i18n="${o.q}">${o.q}</span>
+                <span class="sa-objection-icon material-symbols-rounded text-slate-500 flex-shrink-0">expand_more</span>
+            </button>
+            <div class="sa-objection-body">
+                <div>
+                    <div class="px-3 pb-3 pl-10">
+                        <div class="flex items-start gap-2.5 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/25">
+                            <span class="material-symbols-rounded text-emerald-400 text-lg flex-shrink-0 mt-0.5">lightbulb</span>
+                            <span class="text-sm text-slate-200 leading-relaxed" data-i18n="${o.a}">${o.a}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>`).join('');
+
+    salesAssistantContent.innerHTML = `
+        <div class="p-4 space-y-5">
+            <section>
+                ${sectionHeader('verified', 'saSection1Title')}
+                <ul class="space-y-2">${reasonsHtml}</ul>
+            </section>
+            <section>
+                ${sectionHeader('quiz', 'saSection2Title')}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">${questionsHtml}</div>
+            </section>
+            <section>
+                ${sectionHeader('forum', 'saSection3Title')}
+                <div class="space-y-2">${objectionsHtml}</div>
+            </section>
+            <section>
+                ${sectionHeader('flag', 'saSection4Title')}
+                <div class="sa-closing relative p-5 rounded-xl">
+                    <span class="material-symbols-rounded filled text-emerald-400/30 text-4xl absolute top-2 left-2 leading-none">format_quote</span>
+                    <p class="relative text-base font-semibold text-white leading-relaxed pl-3 pt-3" data-i18n="saClosing">saClosing</p>
+                </div>
+            </section>
+        </div>`;
+
+    // Discovery questions toggle a "asked" highlight (rep ticks them off in the meeting)
+    salesAssistantContent.querySelectorAll('.sa-question').forEach(btn => {
+        btn.addEventListener('click', () => btn.classList.toggle('asked'));
+    });
+    // Objection accordion - one row open/closed independently
+    salesAssistantContent.querySelectorAll('.sa-objection-head').forEach(head => {
+        head.addEventListener('click', () => head.closest('.sa-objection').classList.toggle('open'));
+    });
+}
+
+/* ============================================================
+   CALCULATE - same pricing/ROI engine, driven by the 3 simple steps
+   ============================================================ */
+function calculate() {
+    const band = SIZE_BANDS.find(b => b.id === selectedSize) || SIZE_BANDS[0];
+    const users = band.users;          // representative head-count for the band (internal)
+    const custom = band.custom;        // 500+ -> custom quote
+    const m = INTERNAL_MULTIPLIER;
+
+    // Business packages -> internal FlowOne modules (deduped). Salesperson never sees these.
+    const activated = new Set();
+    PACKAGES.forEach(p => {
+        if (p.core || selectedNeeds.has(p.id)) p.modules.forEach(id => activated.add(id));
+    });
+
+    // ---------- FlowOne license (one-time, unchanged formula) ----------
+    const lineItems = [{ label: T.basePlatform, amount: Math.round(BASE_PLATFORM * m) }];
+    ADDONS.forEach(a => {
+        if (activated.has(a.id) && a.price > 0) {
+            lineItems.push({ label: T[a.i18nKey], amount: Math.round(a.price * m) });
+        }
+    });
+    const scaling = userScaling(users);
+    if (!custom && scaling.value > 0) {
+        lineItems.push({ label: `${users} ${T.usersCountLabel}`, amount: Math.round(scaling.value * m) });
+    }
+    if (migrationToggle.checked) {
+        lineItems.push({ label: T.migrationLabel, amount: Math.round(MIGRATION_COST * m) });
+    }
+    const licenseTotal = lineItems.reduce((s, i) => s + i.amount, 0);
+
+    // ---------- Current annual software cost (from the customer's real stack) ----------
+    let currentMonthly = 0;
+    const usedTools = [];
+    Object.keys(STACK).forEach(key => {
+        const grp = STACK[key];
+        const opt = grp.options.find(o => o.id === selectedStack[key]);
+        if (!opt || opt.perUser <= 0) return;
+        usedTools.push(T[opt.i18nKey]);
+        const ratio = grp.scope === 'seat' ? (SEAT_RATIO[key] || 1) : 1; // role-based tools = subset of staff
+        currentMonthly += opt.perUser * users * ratio;
+    });
+    const currentAnnualCost = currentMonthly * 12;
+
+    // ---------- ROI ----------
+    // FlowOne's ongoing cost = hosting + (optional) the dedicated admin managed
+    // service. Admin scales per seat so it stays proportional to company size.
+    const adminMonthly = adminToggle.checked ? ADMIN_PER_USER_MONTH * users : 0;
+    const adminAnnual = adminMonthly * 12;
+    const annualFlowOneCost = VPS_COST_YEARLY_HUF + adminAnnual;
+    const annualSavingsRate = currentAnnualCost - annualFlowOneCost;
+    const netSavings = (y) => (currentAnnualCost * y) - (licenseTotal + annualFlowOneCost * y);
+
+    // ---------- Summary block ----------
+    summaryStackEl.innerHTML = usedTools.length
+        ? usedTools.map(t => `<span class="inline-flex items-center px-3.5 py-1.5 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-100 text-sm font-semibold">${t}</span>`).join('')
+        : `<span class="text-sm text-slate-500 italic">${T.none}</span>`;
+    // "X systems -> 1 platform" reflects the customer's actual current tools.
+    replaceCountEl.textContent = String(usedTools.length);
+
+    // ---------- Optional price breakdown (explainability on demand) ----------
+    const breakdownRows = lineItems.map(i => `
+        <div class="flex justify-between items-center py-1 text-xs">
+            <span class="text-slate-400">${i.label}</span>
+            <span class="text-slate-200 font-semibold">${formatHUF(i.amount)}</span>
+        </div>`).join('');
+    const recurringHtml = adminToggle.checked ? `
+        <div class="flex justify-between items-center py-1 text-xs border-t border-slate-700/60 mt-1 pt-1.5">
+            <span class="text-slate-400">${T.adminLabel} <span class="text-slate-600">(${T.optionalWord} \u00b7 ${T.recurringTitle})</span></span>
+            <span class="text-slate-200 font-semibold">${formatNumber(adminMonthly)} Ft ${T.monthlySuffix}</span>
+        </div>` : '';
+    detailsBox.innerHTML = breakdownRows + recurringHtml + `
+        <div class="flex justify-between items-center pt-1.5 mt-1 border-t border-slate-600">
+            <span class="text-white font-semibold text-xs">${custom ? T.flowoneLicense : T.totalLicense}</span>
+            <span class="text-emerald-400 font-extrabold text-sm">${custom ? T.custom : formatHUF(licenseTotal)}</span>
+        </div>`;
+
+    // ---------- Cost comparison table (today vs FlowOne) ----------
+    // Today/running costs are always real, even for a 500+ custom quote.
+    tblTodayYearEl.textContent = formatHUF(currentAnnualCost);
+    tblTodayMonthlyEl.textContent = formatHUF(currentAnnualCost / 12);
+    tblMonthlyEl.textContent = formatHUF(annualFlowOneCost / 12);
+    tblYearEl.textContent = formatHUF(annualFlowOneCost);
+    monthlyNoteEl.textContent = adminToggle.checked ? T.runIncludesAdmin : T.runIncludesBase;
+
+    const oneTimeBase = 'px-3 py-3.5 border-t border-slate-700/50 text-center text-lg font-extrabold bg-emerald-500/5';
+
+    // ---------- Custom (500+) quote ----------
+    if (custom) {
+        tblOneTimeEl.textContent = T.custom;
+        tblOneTimeEl.className = oneTimeBase + ' text-amber-400';
+        annualSavingsEl.textContent = T.custom;
+        annualSavingsEl.className = 'text-3xl font-extrabold text-amber-400';
+        breakEvenEl.textContent = T.custom;
+        breakEvenEl.className = 'text-2xl font-extrabold text-amber-400 leading-none';
+        fastBadgeEl.innerHTML = `<span class="text-[11px] text-amber-400">${T.customQuote}</span>`;
+        [savings3El, savings5El, savings10El].forEach(el => {
+            el.textContent = T.custom;
+            el.className = 'text-lg font-extrabold text-amber-400';
+        });
+        return;
+    }
+
+    // ---------- Results ----------
+    tblOneTimeEl.textContent = formatHUF(licenseTotal);
+    tblOneTimeEl.className = oneTimeBase + ' text-white';
+
+    annualSavingsEl.textContent = formatHUF(Math.max(0, annualSavingsRate));
+    annualSavingsEl.className = annualSavingsRate >= 0
+        ? 'text-3xl font-extrabold text-emerald-400'
+        : 'text-3xl font-extrabold text-rose-400';
+
+    // Break-even (months, or years + months from 24 months)
+    if (annualSavingsRate <= 0) {
+        breakEvenEl.textContent = T.noBreakEven;
+        breakEvenEl.className = 'text-2xl font-extrabold text-rose-400 leading-none';
+        fastBadgeEl.innerHTML = '';
+    } else {
+        const months = Math.ceil(licenseTotal / annualSavingsRate * 12);
+        if (months < 24) {
+            breakEvenEl.textContent = `${months} ${T.months}`;
+            breakEvenEl.className = 'text-3xl font-extrabold text-emerald-400 leading-none';
+        } else {
+            const y = Math.floor(months / 12), mo = months % 12;
+            breakEvenEl.textContent = mo === 0 ? `${y} ${T.years}` : `${y} ${T.years} ${mo} ${T.months}`;
+            breakEvenEl.className = 'text-2xl font-extrabold text-emerald-400 leading-none';
+        }
+        if (months <= 12) {
+            fastBadgeEl.innerHTML = `<span class="inline-block px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500 text-white">${T.badge12}</span>`;
+        } else if (months <= 18) {
+            fastBadgeEl.innerHTML = `<span class="inline-block px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">${T.badgeQuick}</span>`;
+        } else {
+            fastBadgeEl.innerHTML = '';
+        }
+    }
+
+    [[savings3El, 3], [savings5El, 5], [savings10El, 10]].forEach(([el, y]) => {
+        const v = netSavings(y);
+        el.textContent = formatHUF(v);
+        el.className = v >= 0 ? 'text-lg font-extrabold text-emerald-400' : 'text-lg font-extrabold text-rose-400';
+    });
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+renderSizeButtons();
+renderNeeds();
+renderStack();
+renderSalesAssistant();
+
+adminToggle.addEventListener('change', calculate);
+migrationToggle.addEventListener('change', calculate);
+detailsToggle.addEventListener('click', () => {
+    const hidden = detailsBox.classList.toggle('hidden');
+    detailsToggle.textContent = hidden ? T.showBreakdown : T.hideBreakdown;
+});
+
+// Sales Assistant docked side panel - slide in/out from the right (default closed)
+function setSalesAssistant(open) {
+    salesAssistantDrawer.classList.toggle('open', open);
+    salesAssistantBackdrop.classList.toggle('open', open);
+    salesAssistantToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+salesAssistantToggle.addEventListener('click', () => setSalesAssistant(true));
+salesAssistantClose.addEventListener('click', () => setSalesAssistant(false));
+salesAssistantBackdrop.addEventListener('click', () => setSalesAssistant(false));
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setSalesAssistant(false); });
+
+// Apply saved/default language, translate labels, then calculate
+setLang(currentLang);
+</script>
+
+</body>
+</html>

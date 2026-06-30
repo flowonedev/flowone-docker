@@ -1,0 +1,267 @@
+{
+  "meta": {
+    "title": "MailFlow - Platformă Privată de Comunicare pentru Afaceri",
+    "description": "MailFlow este o platformă privată de comunicare pentru afaceri, găzduită pe propriul server. Email, stocare fișiere și fluxuri de lucru — instalate pe serverul tău. Tu deții infrastructura. Zero dependență de Big Tech."
+  },
+  "nav": {
+    "why_switch": "De Ce Să Schimbi",
+    "features": "Funcții",
+    "security": "Securitate",
+    "pricing": "Prețuri",
+    "compare": "Comparație",
+    "log_in": "Autentificare",
+    "get_started": "Începe Acum"
+  },
+  "hero": {
+    "badge_self_hosted": "Self-Hosted",
+    "badge_tagline": "Serverul Tău. Datele Tale. Cheile Tale.",
+    "headline": "Email-ul Clientului Devine Muncă.",
+    "subheadline": "Când sosește un email, MailFlow îl transformă în sarcini, fișiere, termene limită și rapoarte — pe infrastructura pe care o deții.",
+    "subheadline_2": "Clienții îți trimit email normal. Tu execuți sistematic.",
+    "cta_get_started": "Începe Acum",
+    "cta_watch_demo": "Vezi Demo",
+    "feature_projects": "Email-urile devin proiecte",
+    "feature_calendar": "Termenele se sincronizează cu calendarul",
+    "feature_files": "Fișierele rămân cu munca",
+    "feature_server": "Serverul tău, datele tale"
+  },
+  "problems": {
+    "section_title": "Problema cu Email-ul SaaS",
+    "section_intro": "Munca începe din email — dar email-ul SaaS nu a fost niciodată conceput să execute munca.",
+    "section_subtitle": "Gmail și Outlook sunt platforme SaaS. Închiriezi acces. Ei dețin infrastructura, datele și termenii. Când schimbă prețurile sau politicile, nu ai altă opțiune decât să te conformezi.",
+    "vendor_lockin_title": "Blocare la Furnizor",
+    "vendor_lockin_desc": "Email-urile, contactele și fișierele tale sunt captive. Migrarea înseamnă pierderea anilor de date și fluxuri de lucru.",
+    "per_seat_title": "Prețuri Per Utilizator",
+    "per_seat_desc": "$6-25 per utilizator, pe lună, pentru totdeauna. Pentru o echipă de 20, asta înseamnă $1,500-6,000/an — și crește.",
+    "third_party_title": "Acces Terță Parte",
+    "third_party_desc": "Email-urile tale de afaceri stau pe serverele lor. Supuse politicilor lor, breșelor lor, eșecurilor lor de conformitate.",
+    "sovereignty_title": "Fără Suveranitate a Datelor",
+    "sovereignty_desc": "Date stocate în jurisdicții necunoscute. Nu poți controla unde se află sau cine le poate accesa legal."
+  },
+  "solution": {
+    "section_title": "Alternativa Infrastructurii Deținute",
+    "section_subtitle": "MailFlow se instalează pe VPS-ul tău. Tu deții serverul și datele. Fără acces terță parte. Niciodată.",
+    "own_keys_title": "Tu Deții Cheile",
+    "own_keys_desc": "Acces root. Control total. Noi instalăm, configurăm, apoi îți predăm cheile. Este al tău.",
+    "flat_cost_title": "Cost Fix de Infrastructură",
+    "flat_cost_desc": "Plătești o dată pentru VPS. Adaugi utilizatori nelimitați. Fără taxe per utilizator, fără surprize de scalare.",
+    "jurisdiction_title": "Alege Jurisdicția",
+    "jurisdiction_desc": "Alege un furnizor VPS în țara ta. Datele UE rămân în UE. Control GDPR complet.",
+    "zero_access_title": "Zero Acces Terță Parte",
+    "zero_access_desc": "Datele nu părăsesc niciodată serverul tău. Fără dependențe cloud. Fără furnizor care să-ți citească mailul."
+  },
+  "workflow": {
+    "section_title": "De la Email la Execuție",
+    "section_subtitle": "Comunicarea reală cu clientul devine muncă structurată — sarcini, fișiere, termene limită și raportare — fără instrumente separate, sincronizare manuală sau dependențe SaaS. Proiectele trăiesc unde a început conversația.",
+    "step_1_title": "Email-ul Clientului Sosește",
+    "step_1_desc": "Mesaj real în inbox",
+    "step_2_title": "Devine Proiect",
+    "step_2_desc": "Sarcini, timeline, fișiere atașate",
+    "step_3_title": "Raport către Client",
+    "step_3_desc": "Generat din statusul real al proiectului",
+    "outcome_1": "Munca începe din email-uri reale",
+    "outcome_2": "Proiectele rămân legate de inbox",
+    "outcome_3": "Termenele se sincronizează cu calendarul",
+    "outcome_4": "Rapoarte din status real",
+    "caption": "De la email la execuție — totul pe serverul tău."
+  },
+  "tracking": {
+    "section_title": "Inteligență Email",
+    "section_subtitle": "Știi când sunt deschise email-urile, când se dă click pe linkuri, când se descarcă atașamentele. Toate datele stocate pe serverul tău.",
+    "opens_title": "Confirmare de Citire",
+    "opens_desc": "Știi exact când a fost deschis email-ul",
+    "clicks_title": "Urmărire Linkuri",
+    "clicks_desc": "Vezi pe ce linkuri au dat click destinatarii",
+    "analytics_title": "Analiză",
+    "analytics_desc": "Modele de engagement și timpi de răspuns"
+  },
+  "multi_account": {
+    "section_title": "Inbox Unificat",
+    "section_subtitle": "Conectează conturile Gmail sau Outlook existente în timp ce faci tranziția. Gestionează toate conturile dintr-o singură interfață, apoi renunță treptat la dependențele SaaS — sau păstrează-le conectate dacă e nevoie.",
+    "feature_1": "Conectează conturi externe nelimitate",
+    "feature_2": "Vedere unificată a tuturor căsuțelor",
+    "feature_3": "Migrare treptată în ritmul tău"
+  },
+  "filters": {
+    "section_title": "Filtre Avansate",
+    "section_subtitle": "Reguli server-side care funcționează în timp ce dormi. Auto-organizare, auto-răspuns, auto-redirecționare bazate pe condițiile pe care le definești.",
+    "feature_1": "Reguli de filtrare nelimitate",
+    "feature_2": "Condiții complexe",
+    "feature_3": "Acțiuni automatizate"
+  },
+  "tasks": {
+    "section_title": "Sarcini Email",
+    "section_subtitle": "Transformă orice email într-o sarcină cu un click. Termene limită, priorități și urmărire status — toate legate de conversația originală.",
+    "feature_1": "Creare sarcină cu un click",
+    "feature_2": "Legat de firul de email",
+    "feature_3": "Integrare calendar"
+  },
+  "analytics": {
+    "section_title": "Analiză Comunicare",
+    "section_subtitle": "Înțelege-ți modelele de email. Timpi de răspuns, ore de vârf, rate de engagement — vizibilitate în comunicarea reală stocată pe serverul tău.",
+    "feature_1": "Urmărire timp de răspuns",
+    "feature_2": "Ore de activitate maximă",
+    "feature_3": "Metrici performanță echipă"
+  },
+  "drive": {
+    "section_title": "Drive Personal",
+    "section_subtitle": "Stocare privată de fișiere pe serverul tău. Atașamente email, fișiere proiect, documente — organizate și căutabile.",
+    "feature_1": "Stocare nelimitată (limite VPS)",
+    "feature_2": "Versionare fișiere",
+    "feature_3": "Căutare și organizare"
+  },
+  "infrastructure": {
+    "layer_title": "Stratul de Infrastructură",
+    "layer_subtitle": "Tot ce este mai sus rulează pe sisteme pe care le deții",
+    "server_title": "Serverul Tău. Afacerea Ta.",
+    "server_subtitle": "MailFlow rulează pe un VPS pe care îl controlezi. Noi instalăm stack-ul complet — server web, server mail, bază de date, securitate. Apoi îți predăm accesul root. Este infrastructura ta.",
+    "install_title": "Noi Instalăm și Configurăm Totul",
+    "install_desc": "Setup complet pe VPS-ul tău. OpenLiteSpeed, Dovecot, Postfix, MariaDB — toate configurate și optimizate.",
+    "keys_title": "Tu Deții Cheile",
+    "keys_desc": "Acces root, control total. Îți dăm cheile și ne retragem. Este serverul TĂU.",
+    "zero_access_title": "Zero Acces Terță Parte",
+    "zero_access_desc": "Datele nu părăsesc niciodată serverul tău. Fără dependență cloud. Suveranitate completă a datelor."
+  },
+  "panel": {
+    "section_title": "Sistemul de Operare Privat pentru Server de Afaceri",
+    "section_subtitle": "DEVCON Panel este centrul de comandă pentru infrastructura ta de afaceri. Gestionează email, website-uri, baze de date, DNS, SSL, securitate — tot ce are nevoie afacerea ta, pe un singur server pe care îl deții.",
+    "feature_hosting": "Găzduire Multi-Site",
+    "feature_hosting_desc": "Găzduiește website-uri nelimitate pe un server",
+    "feature_speed": "OpenLiteSpeed",
+    "feature_speed_desc": "De 10x mai rapid decât Apache, gratuit pentru totdeauna",
+    "feature_email": "Server Email",
+    "feature_email_desc": "Postfix + Dovecot complet configurate",
+    "feature_security": "Securitate Enterprise",
+    "feature_security_desc": "Fail2ban, ModSec, CPGuard WAF"
+  },
+  "security": {
+    "section_title": "Stack de Securitate pe Care Îl Gestionezi",
+    "section_subtitle": "Fail2ban, ModSecurity WAF, CPGuard malware scanner, firewalld — toate configurate pe serverul tău. Tu controlezi politicile de securitate. Vizibilitate completă audit.",
+    "fail2ban_title": "Fail2ban Jails",
+    "fail2ban_desc": "Protecție SSH, Postfix, Dovecot, LiteSpeed, FTP",
+    "modsec_title": "ModSecurity WAF",
+    "modsec_desc": "Reguli OWASP, prevenție SQL injection și XSS",
+    "cpguard_title": "CPGuard Scanner",
+    "cpguard_desc": "Detectare malware, brute force, CAPTCHA",
+    "firewall_title": "Firewalld",
+    "firewall_desc": "Firewall bazat pe zone cu reguli avansate"
+  },
+  "ai": {
+    "section_title": "Diagnosticare Config Server",
+    "section_subtitle": "Activează opțional analiza config asistată de AI. Dezactivată implicit. Când e activată cu propria ta cheie API, verifică configurările Postfix, Dovecot și altele pentru erori.",
+    "feature_1": "Dezactivată implicit — activează doar dacă e nevoie",
+    "feature_2": "Folosește propria ta cheie API OpenAI — noi nu vedem niciodată datele tale",
+    "feature_3": "Analizează configurările server pentru probleme de securitate",
+    "feature_4": "Explicații pe înțelesul tuturor pentru setări complexe"
+  },
+  "backups": {
+    "section_title": "Backup-urile Tale. Controlul Tău.",
+    "section_subtitle": "Sistem de backup încorporat pentru configurări, site-uri și baze de date. Stochează local sau sincronizează către propria ta destinație S3/SFTP. Urmă de audit completă pentru fiecare acțiune de server.",
+    "config_title": "Backup-uri Config",
+    "config_desc": "Server web, gazde virtuale, configurări PHP — toate versionate",
+    "remote_title": "Stocare la Distanță",
+    "remote_desc": "Sincronizează backup-uri către S3, SFTP sau orice destinație remote",
+    "audit_title": "Urmă de Audit Completă",
+    "audit_desc": "Fiecare acțiune logată — cine, ce, când, succes/eșec"
+  },
+  "security_privacy": {
+    "section_title": "Securitate pe Care O Controlezi",
+    "section_subtitle": "Stack de securitate enterprise, configurat pe serverul tău. Tu gestionezi accesul, tu setezi politicile, tu deții urma de audit."
+  },
+  "who_for": {
+    "section_title": "Pentru Cine Este MailFlow",
+    "section_subtitle": "Construit pentru afaceri care vor proprietate, nu contracte de închiriere.",
+    "good_1": "Agenții care gestionează comunicarea cu clienții",
+    "good_2": "Consultanți cu date sensibile ale clienților",
+    "good_3": "Afaceri care necesită conformitate GDPR",
+    "good_4": "Echipe sătule de prețuri per utilizator",
+    "good_5": "Organizații care vor suveranitatea datelor",
+    "bad_1": "Utilizatori care vor email gratuit",
+    "bad_2": "Cei care au nevoie de suport gestionat 24/7",
+    "bad_3": "Echipe fără cunoștințe tech de bază"
+  },
+  "comparison": {
+    "section_title": "Deținut vs. Închiriat",
+    "section_subtitle": "Ce plătești pe 3 ani pentru o echipă de 20 de persoane",
+    "google": "Google Workspace",
+    "microsoft": "Microsoft 365",
+    "msp": "MSP / Consultant",
+    "mailflow": "MailFlow",
+    "year_1": "Anul 1",
+    "year_2": "Anul 2",
+    "year_3": "Anul 3",
+    "total": "Total 3 Ani",
+    "per_user": "per utilizator/lună",
+    "one_time": "o singură dată",
+    "vps_cost": "+ ~€15-25/lună VPS",
+    "conclusion": "Majoritatea echipelor recuperează costul infrastructurii în 12-18 luni. După aceea, operează pe sisteme deținute cu cost marginal aproape de zero."
+  },
+  "pricing": {
+    "section_title": "Predare Infrastructură Deținută",
+    "section_subtitle": "Predare infrastructură o singură dată. Primești proprietate completă asupra platformei tale de comunicare pentru afaceri. Supraveghere gestionată opțională dacă preferi întreținere hands-off.",
+    "owned_title": "Predare Infrastructură Deținută",
+    "owned_price": "€3,490",
+    "owned_period": "o singură dată",
+    "owned_feature_1": "Platforma MailFlow",
+    "owned_feature_2": "Panou server DEVCON",
+    "owned_feature_3": "Instalare și hardening complete",
+    "owned_feature_4": "Predare acces root",
+    "owned_feature_5": "Utilizatori nelimitați",
+    "owned_feature_6": "Fără blocare",
+    "managed_title": "Opțional: Supraveghere Gestionată",
+    "managed_price": "€149",
+    "managed_period": "/ lună",
+    "managed_feature_1": "Monitorizare securitate",
+    "managed_feature_2": "Actualizări și patch-uri",
+    "managed_feature_3": "Backup-uri",
+    "managed_feature_4": "Răspuns la incidente",
+    "managed_note": "Anulezi oricând. Păstrezi totul.",
+    "vps_note": "Cost VPS tipic: €15-25/lună. Recomandăm Hetzner, Contabo sau OVH pentru găzduire europeană."
+  },
+  "handover": {
+    "section_title": "Cum Funcționează Predarea",
+    "step_1_title": "Consultație",
+    "step_1_desc": "Discutăm cerințele tale și alegem furnizorul VPS potrivit.",
+    "step_2_title": "Instalare",
+    "step_2_desc": "Configurăm totul pe serverul tău.",
+    "step_3_title": "Testare",
+    "step_3_desc": "Verificăm că totul funcționează corect.",
+    "step_4_title": "Predare",
+    "step_4_desc": "Îți predăm cheile. Acum este infrastructura ta."
+  },
+  "cta": {
+    "title": "Ești Pregătit să Deții Infrastructura Ta?",
+    "subtitle": "Nu mai închiria. Începe să deții.",
+    "button": "Începe Acum"
+  },
+  "footer": {
+    "product": "Produs",
+    "features": "Funcții",
+    "pricing": "Prețuri",
+    "compare": "Comparație",
+    "documentation": "Documentație",
+    "changelog": "Jurnal Modificări",
+    "resources": "Resurse",
+    "api_reference": "Referință API",
+    "server_requirements": "Cerințe Server",
+    "community": "Comunitate",
+    "blog": "Blog",
+    "legal": "Legal",
+    "privacy_policy": "Politica de Confidențialitate",
+    "terms_of_service": "Termeni și Condiții",
+    "contact": "Contact",
+    "copyright": "2026 MailFlow. Construit pentru afaceri care își dețin infrastructura."
+  },
+  "common": {
+    "unlimited_users": "Utilizatori nelimitați",
+    "root_access": "Acces root complet",
+    "you_own_everything": "Tu deții totul",
+    "get_started": "Începe Acum",
+    "learn_more": "Află Mai Multe",
+    "contact_us": "Contactează-ne",
+    "running": "Rulează",
+    "active": "Activ",
+    "enabled": "Activat"
+  }
+}
+

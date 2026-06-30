@@ -1,0 +1,39 @@
+---
+description: Core project info, domains, server details, and credentials
+alwaysApply: true
+---
+
+# Project Info
+
+## Domain
+- Production domain: `flowone.pro`
+- Never ask for the domain. It is `flowone.pro`.
+
+## Server Stack
+- Web server: OpenLiteSpeed
+- PHP: 8.3 (lsphp83 at `/usr/local/lsws/lsphp83/bin/php`)
+- Database: MariaDB
+- Mail: Dovecot + Postfix
+- Security: Fail2Ban, ModSec, CPGuard, FirewallD
+- Cache: Redis
+- Search: Meilisearch
+
+## Paths on Server
+- Email backend: `/var/www/vps-email/backend/`
+- Email frontend: `/var/www/vps-email/frontend/`
+- PHP error logs: `/var/www/vps-email/backend/logs/php_errors.log`
+- Drive storage (local): `/var/www/vps-email/storage/drive/`
+- Mood board cache: `/var/www/vps-email/storage/mood-uploads/`
+- NAS mount: `/mnt/nas-drive` (NFS via OpenVPN to Synology at `192.168.1.106`)
+- Backups NAS mount: `/mnt/vps-backup`
+
+## NAS / VPN
+- Synology NAS accessed via OpenVPN tunnel (`openvpn-client@synology`)
+- Synology DDNS: `pixelranger.synology.me` (port 1194, public IP resolved dynamically)
+- NFS mount options: `rw,soft,timeo=10,retrans=3,_netdev,nofail,x-systemd.automount`
+- NAS healthcheck file: `/mnt/nas-drive/.healthcheck`
+- NasHealthCheck PHP class guards all NAS filesystem access
+
+## Deployment
+- Code lives locally on Windows, uploaded to server manually
+- No automated CI/CD pipeline

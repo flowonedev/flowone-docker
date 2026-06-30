@@ -1,0 +1,2628 @@
+@import "../../collab/styles/print.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-size: 16px; /* Bumped from default 16px to match 125% zoom readability */
+  }
+
+  :root {
+    --color-bg: 250 250 250;
+    --color-surface: 255 255 255;
+    --color-surface-elevated: 255 255 255;
+    --color-surface-hover: 244 244 245;
+    --color-text: 24 24 27;
+    --color-text-muted: 113 113 122;
+    --color-border: 228 228 231;
+    --color-border-strong: 212 212 216;
+    /* Default green theme - light mode */
+    --color-primary-50: 240 253 244;
+    --color-primary-100: 220 252 231;
+    --color-primary-200: 187 247 208;
+    --color-primary-300: 134 239 172;
+    --color-primary-400: 74 222 128;
+    --color-primary-500: 34 197 94;
+    --color-primary-600: 22 163 74;
+    --color-primary-700: 21 128 61;
+    --color-primary-800: 22 101 52;
+    --color-primary-900: 20 83 45;
+    --color-primary: 34 197 94;
+    --color-primary-hover: 22 163 74;
+    --color-primary-text: 20 83 45;
+    --color-glow: 34 197 94;
+  }
+
+  .dark {
+    --color-bg: 18 18 22;
+    --color-surface: 28 28 34;
+    --color-surface-elevated: 38 38 46;
+    --color-surface-hover: 48 48 58;
+    --color-text: 240 240 245;
+    --color-text-muted: 145 145 158;
+    --color-border: 50 50 62;
+    --color-border-strong: 70 70 85;
+    /* Default green theme - dark mode */
+    --color-primary-50: 240 253 244;
+    --color-primary-100: 220 252 231;
+    --color-primary-200: 187 247 208;
+    --color-primary-300: 134 239 172;
+    --color-primary-400: 74 222 128;
+    --color-primary-500: 52 211 116;
+    --color-primary-600: 34 197 94;
+    --color-primary-700: 21 128 61;
+    --color-primary-800: 22 101 52;
+    --color-primary-900: 20 83 45;
+    --color-primary: 52 211 116;
+    --color-primary-hover: 74 222 128;
+    --color-primary-text: 20 83 45;
+    --color-glow: 52 211 116;
+  }
+
+  /* ===== ACCENT COLOR THEMES ===== */
+
+  /* GREEN THEME (default) */
+  [data-accent="green"] {
+    --color-primary-50: 240 253 244;
+    --color-primary-100: 220 252 231;
+    --color-primary-200: 187 247 208;
+    --color-primary-300: 134 239 172;
+    --color-primary-400: 74 222 128;
+    --color-primary-500: 34 197 94;
+    --color-primary-600: 22 163 74;
+    --color-primary-700: 21 128 61;
+    --color-primary-800: 22 101 52;
+    --color-primary-900: 20 83 45;
+    --color-primary: 34 197 94;
+    --color-primary-hover: 22 163 74;
+    --color-primary-text: 20 83 45;
+    --color-glow: 34 197 94;
+  }
+  .dark[data-accent="green"],
+  [data-accent="green"] .dark {
+    --color-primary: 52 211 116;
+    --color-primary-hover: 74 222 128;
+    --color-primary-text: 20 83 45;
+    --color-glow: 52 211 116;
+  }
+
+  /* RED THEME */
+  [data-accent="red"] {
+    --color-primary-50: 254 242 242;
+    --color-primary-100: 254 226 226;
+    --color-primary-200: 254 202 202;
+    --color-primary-300: 252 165 165;
+    --color-primary-400: 248 113 113;
+    --color-primary-500: 239 68 68;
+    --color-primary-600: 220 38 38;
+    --color-primary-700: 185 28 28;
+    --color-primary-800: 153 27 27;
+    --color-primary-900: 127 29 29;
+    --color-primary: 239 68 68;
+    --color-primary-hover: 220 38 38;
+    --color-primary-text: 127 29 29;
+    --color-glow: 239 68 68;
+  }
+  .dark[data-accent="red"],
+  [data-accent="red"] .dark {
+    --color-primary: 248 113 113;
+    --color-primary-hover: 252 165 165;
+    --color-primary-text: 127 29 29;
+    --color-glow: 248 113 113;
+  }
+
+  /* PURPLE THEME */
+  [data-accent="purple"] {
+    --color-primary-50: 250 245 255;
+    --color-primary-100: 243 232 255;
+    --color-primary-200: 233 213 255;
+    --color-primary-300: 216 180 254;
+    --color-primary-400: 192 132 252;
+    --color-primary-500: 168 85 247;
+    --color-primary-600: 147 51 234;
+    --color-primary-700: 126 34 206;
+    --color-primary-800: 107 33 168;
+    --color-primary-900: 88 28 135;
+    --color-primary: 168 85 247;
+    --color-primary-hover: 147 51 234;
+    --color-primary-text: 88 28 135;
+    --color-glow: 168 85 247;
+  }
+  .dark[data-accent="purple"],
+  [data-accent="purple"] .dark {
+    --color-primary: 192 132 252;
+    --color-primary-hover: 216 180 254;
+    --color-primary-text: 88 28 135;
+    --color-glow: 192 132 252;
+  }
+
+  /* BLUE THEME */
+  [data-accent="blue"] {
+    --color-primary-50: 239 246 255;
+    --color-primary-100: 219 234 254;
+    --color-primary-200: 191 219 254;
+    --color-primary-300: 147 197 253;
+    --color-primary-400: 96 165 250;
+    --color-primary-500: 59 130 246;
+    --color-primary-600: 37 99 235;
+    --color-primary-700: 29 78 216;
+    --color-primary-800: 30 64 175;
+    --color-primary-900: 30 58 138;
+    --color-primary: 59 130 246;
+    --color-primary-hover: 37 99 235;
+    --color-primary-text: 30 58 138;
+    --color-glow: 59 130 246;
+  }
+  .dark[data-accent="blue"],
+  [data-accent="blue"] .dark {
+    --color-primary: 96 165 250;
+    --color-primary-hover: 147 197 253;
+    --color-primary-text: 30 58 138;
+    --color-glow: 96 165 250;
+  }
+
+  /* GOLD THEME */
+  [data-accent="gold"] {
+    --color-primary-50: 254 252 232;
+    --color-primary-100: 254 249 195;
+    --color-primary-200: 254 240 138;
+    --color-primary-300: 253 224 71;
+    --color-primary-400: 250 204 21;
+    --color-primary-500: 234 179 8;
+    --color-primary-600: 202 138 4;
+    --color-primary-700: 161 98 7;
+    --color-primary-800: 133 77 14;
+    --color-primary-900: 113 63 18;
+    --color-primary: 234 179 8;
+    --color-primary-hover: 202 138 4;
+    --color-primary-text: 113 63 18;
+    --color-glow: 234 179 8;
+  }
+  .dark[data-accent="gold"],
+  [data-accent="gold"] .dark {
+    --color-primary: 250 204 21;
+    --color-primary-hover: 253 224 71;
+    --color-primary-text: 113 63 18;
+    --color-glow: 250 204 21;
+  }
+
+  /* MONO THEME - Pure Black & White */
+  /* Light mode: dark/black accents on light backgrounds */
+  [data-accent="mono"] {
+    --color-primary-50: 245 245 245;
+    --color-primary-100: 229 229 229;
+    --color-primary-200: 212 212 212;
+    --color-primary-300: 163 163 163;
+    --color-primary-400: 115 115 115;
+    --color-primary-500: 64 64 64;
+    --color-primary-600: 38 38 38;
+    --color-primary-700: 23 23 23;
+    --color-primary-800: 15 15 15;
+    --color-primary-900: 5 5 5;
+    --color-primary: 38 38 38;
+    --color-primary-hover: 23 23 23;
+    --color-primary-text: 255 255 255;
+    --color-glow: 64 64 64;
+  }
+  /* Dark mode: light/white accents on dark backgrounds */
+  .dark[data-accent="mono"],
+  [data-accent="mono"] .dark {
+    --color-primary-50: 23 23 23;
+    --color-primary-100: 38 38 38;
+    --color-primary-200: 64 64 64;
+    --color-primary-300: 115 115 115;
+    --color-primary-400: 163 163 163;
+    --color-primary-500: 212 212 212;
+    --color-primary-600: 229 229 229;
+    --color-primary-700: 245 245 245;
+    --color-primary-800: 250 250 250;
+    --color-primary-900: 255 255 255;
+    --color-primary: 229 229 229;
+    --color-primary-hover: 245 245 245;
+    --color-primary-text: 23 23 23;
+    --color-glow: 200 200 200;
+  }
+
+  /* TEAL THEME */
+  [data-accent="teal"] {
+    --color-primary-50: 240 253 250;
+    --color-primary-100: 204 251 241;
+    --color-primary-200: 153 246 228;
+    --color-primary-300: 94 234 212;
+    --color-primary-400: 45 212 191;
+    --color-primary-500: 20 184 166;
+    --color-primary-600: 13 148 136;
+    --color-primary-700: 15 118 110;
+    --color-primary-800: 17 94 89;
+    --color-primary-900: 19 78 74;
+    --color-primary: 20 184 166;
+    --color-primary-hover: 13 148 136;
+    --color-primary-text: 19 78 74;
+    --color-glow: 20 184 166;
+  }
+  .dark[data-accent="teal"],
+  [data-accent="teal"] .dark {
+    --color-primary: 45 212 191;
+    --color-primary-hover: 94 234 212;
+    --color-primary-text: 19 78 74;
+    --color-glow: 45 212 191;
+  }
+
+  /* ORANGE THEME */
+  [data-accent="orange"] {
+    --color-primary-50: 255 247 237;
+    --color-primary-100: 255 237 213;
+    --color-primary-200: 254 215 170;
+    --color-primary-300: 253 186 116;
+    --color-primary-400: 251 146 60;
+    --color-primary-500: 249 115 22;
+    --color-primary-600: 234 88 12;
+    --color-primary-700: 194 65 12;
+    --color-primary-800: 154 52 18;
+    --color-primary-900: 124 45 18;
+    --color-primary: 249 115 22;
+    --color-primary-hover: 234 88 12;
+    --color-primary-text: 124 45 18;
+    --color-glow: 249 115 22;
+  }
+  .dark[data-accent="orange"],
+  [data-accent="orange"] .dark {
+    --color-primary: 251 146 60;
+    --color-primary-hover: 253 186 116;
+    --color-primary-text: 124 45 18;
+    --color-glow: 251 146 60;
+  }
+
+  /* GRADIENT THEME - Uses gradient background on buttons */
+  [data-accent="gradient"] {
+    --color-primary-50: 250 245 255;
+    --color-primary-100: 243 232 255;
+    --color-primary-200: 233 213 255;
+    --color-primary-300: 216 180 254;
+    --color-primary-400: 192 132 252;
+    --color-primary-500: 168 85 247;
+    --color-primary-600: 147 51 234;
+    --color-primary-700: 126 34 206;
+    --color-primary-800: 107 33 168;
+    --color-primary-900: 88 28 135;
+    --color-primary: 168 85 247;
+    --color-primary-hover: 147 51 234;
+    --color-primary-text: 255 255 255;
+    --color-glow: 168 85 247;
+    --btn-gradient: linear-gradient(
+      135deg,
+      rgb(168 85 247) 0%,
+      rgb(236 72 153) 50%,
+      rgb(249 115 22) 100%
+    );
+    --btn-gradient-hover: linear-gradient(
+      135deg,
+      rgb(147 51 234) 0%,
+      rgb(219 39 119) 50%,
+      rgb(234 88 12) 100%
+    );
+  }
+  .dark[data-accent="gradient"],
+  [data-accent="gradient"] .dark {
+    --color-primary: 192 132 252;
+    --color-primary-hover: 216 180 254;
+    --color-primary-text: 255 255 255;
+    --color-glow: 192 132 252;
+    --btn-gradient: linear-gradient(
+      135deg,
+      rgb(192 132 252) 0%,
+      rgb(244 114 182) 50%,
+      rgb(251 146 60) 100%
+    );
+    --btn-gradient-hover: linear-gradient(
+      135deg,
+      rgb(168 85 247) 0%,
+      rgb(236 72 153) 50%,
+      rgb(249 115 22) 100%
+    );
+  }
+
+  /* VERDANT THEME - Tricolor purple->teal->green gradient on primary surfaces.
+     Solid fallback uses the purple palette so rings/text/borders stay readable. */
+  [data-accent="verdant"] {
+    --color-primary-50: 250 245 255;
+    --color-primary-100: 243 232 255;
+    --color-primary-200: 233 213 255;
+    --color-primary-300: 216 180 254;
+    --color-primary-400: 192 132 252;
+    --color-primary-500: 168 85 247;
+    --color-primary-600: 147 51 234;
+    --color-primary-700: 126 34 206;
+    --color-primary-800: 107 33 168;
+    --color-primary-900: 88 28 135;
+    --color-primary: 168 85 247;
+    --color-primary-hover: 147 51 234;
+    --color-primary-text: 255 255 255;
+    --color-glow: 168 85 247;
+    --btn-gradient: linear-gradient(
+      135deg,
+      #a855f7 0%,
+      #2dd4bf 52%,
+      #22c55e 100%
+    );
+    --btn-gradient-hover: linear-gradient(
+      135deg,
+      #9333ea 0%,
+      #14b8a6 52%,
+      #16a34a 100%
+    );
+  }
+  .dark[data-accent="verdant"],
+  [data-accent="verdant"] .dark {
+    --color-primary: 192 132 252;
+    --color-primary-hover: 216 180 254;
+    --color-primary-text: 255 255 255;
+    --color-glow: 192 132 252;
+    --btn-gradient: linear-gradient(
+      135deg,
+      #a855f7 0%,
+      #2dd4bf 52%,
+      #22c55e 100%
+    );
+    --btn-gradient-hover: linear-gradient(
+      135deg,
+      #c084fc 0%,
+      #2dd4bf 52%,
+      #4ade80 100%
+    );
+  }
+
+  body {
+    @apply bg-surface-50 dark:bg-surface-900 text-surface-900 dark:text-surface-100;
+    font-feature-settings: "cv11", "ss01";
+    cursor: default;
+  }
+
+  /* Only interactive elements should have pointer cursor */
+  a,
+  button,
+  [role="button"],
+  label[for],
+  select,
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="range"],
+  summary,
+  [onclick],
+  [tabindex]:not([tabindex="-1"]):not([contenteditable="true"]) {
+    cursor: pointer;
+  }
+
+  /* Text inputs and contenteditable (rich text editors) should have text cursor */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
+      [type="button"]
+    ):not([type="submit"]),
+  textarea,
+  [contenteditable="true"] {
+    cursor: text;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-surface-300 dark:bg-surface-600 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-surface-400 dark:bg-surface-500;
+  }
+}
+
+@layer components {
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 
+           font-medium text-sm rounded-pill transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-offset-2 
+           dark:focus:ring-offset-surface-900
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary-500 text-white focus:ring-primary-500;
+  }
+  .btn-primary:hover {
+    @apply bg-primary-600;
+  }
+  .btn-primary:active {
+    @apply bg-primary-700;
+  }
+
+  /* Gradient theme override for buttons */
+  [data-accent="gradient"] .btn-primary,
+  [data-accent="verdant"] .btn-primary {
+    background: var(--btn-gradient);
+  }
+  [data-accent="gradient"] .btn-primary:hover,
+  [data-accent="verdant"] .btn-primary:hover {
+    background: var(--btn-gradient-hover);
+  }
+
+  /* Mono theme override for buttons in dark mode - dark text on light buttons */
+  .dark[data-accent="mono"] .btn-primary,
+  [data-accent="mono"] .dark .btn-primary {
+    @apply text-surface-900;
+  }
+  .dark[data-accent="mono"] .btn-primary:hover,
+  [data-accent="mono"] .dark .btn-primary:hover {
+    @apply text-surface-900;
+  }
+
+  .btn-secondary {
+    @apply btn bg-surface-200 dark:bg-[rgb(var(--color-surface-elevated))]
+           text-surface-700 dark:text-surface-100
+           hover:bg-surface-300 dark:hover:bg-[rgb(var(--color-surface-hover))]
+           border border-transparent dark:border-[rgb(var(--color-border))]
+           focus:ring-surface-400;
+  }
+
+  .btn-danger {
+    @apply btn bg-red-500 text-white 
+           hover:bg-red-600 active:bg-red-700
+           focus:ring-red-500;
+  }
+
+  .btn-ghost {
+    @apply btn bg-transparent text-surface-600 dark:text-surface-300
+           hover:bg-surface-100 dark:hover:bg-[rgb(var(--color-surface-hover))]
+           focus:ring-surface-300;
+  }
+
+  .btn-sm {
+    @apply px-3.5 py-1.5 text-xs;
+  }
+
+  .btn-lg {
+    @apply px-6 py-3 text-base;
+  }
+
+  .btn-icon {
+    @apply p-2 rounded-xl;
+  }
+
+  /* Inputs */
+  .input {
+    @apply w-full px-4 py-2.5 rounded-xl text-sm
+           bg-surface-50 dark:bg-[rgb(var(--color-bg))]
+           border border-surface-200 dark:border-[rgb(var(--color-border-strong))]
+           text-surface-900 dark:text-surface-100
+           placeholder:text-surface-400 dark:placeholder:text-surface-500
+           focus:outline-none focus:ring-2 focus:ring-primary-500/40 
+           focus:border-primary-500 dark:focus:border-primary-400
+           transition-colors duration-200;
+  }
+
+  /* Date input calendar icon theming */
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+  }
+
+  .dark input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
+
+  /* Time input clock icon theming */
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+  }
+
+  input[type="time"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+  }
+
+  .dark input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
+
+  /* Datetime-local input icon theming */
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+  }
+
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+  }
+
+  .dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
+
+  .input-error {
+    @apply border-red-500 focus:ring-red-500/50 focus:border-red-500;
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-white dark:bg-[rgb(var(--color-surface))] rounded-2xl 
+           border border-surface-200 dark:border-[rgb(var(--color-border))]
+           shadow-sm;
+  }
+
+  /* ── Ambient Background ── */
+
+  /* Blobs layer - sits ABOVE page backgrounds, below interactive content */
+  .ambient-blobs {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .ambient-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(140px);
+    will-change: transform;
+  }
+  .ambient-blob { opacity: 0.12; }
+  .dark .ambient-blob { opacity: 0.14; }
+
+  .ambient-blob-1 {
+    width: 600px; height: 600px;
+    top: -10%; left: -8%;
+    background: radial-gradient(circle, rgb(var(--color-primary-400)), transparent 70%);
+  }
+  .ambient-blob-2 {
+    width: 520px; height: 520px;
+    bottom: -12%; right: -6%;
+    background: radial-gradient(circle, rgb(var(--color-primary-500)), transparent 70%);
+  }
+  .ambient-blob-3 {
+    width: 400px; height: 400px;
+    top: 35%; right: 18%;
+    background: radial-gradient(circle, rgb(var(--color-primary-300)), transparent 70%);
+  }
+
+  /* Ambient card/blob styles are defined outside @layer to avoid circular deps */
+
+  /* Status badges */
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 
+           rounded-pill text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400;
+  }
+
+  .badge-warning {
+    @apply bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400;
+  }
+
+  .badge-danger {
+    @apply bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400;
+  }
+
+  .badge-info {
+    @apply bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400;
+  }
+
+  /* Material Symbols */
+  .material-symbols-rounded {
+    font-family: 'Material Symbols Rounded';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'liga';
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+  }
+
+  .icon-filled {
+    font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    @apply fixed inset-0 bg-black/40 dark:bg-black/70 backdrop-blur-sm z-50 
+           flex items-center justify-center p-4;
+  }
+
+  .modal {
+    @apply bg-white dark:bg-[rgb(var(--color-surface-elevated))] rounded-2xl 
+           border border-surface-200 dark:border-[rgb(var(--color-border-strong))]
+           w-full max-w-lg max-h-[90vh] overflow-hidden shadow-xl
+           flex flex-col;
+  }
+
+  /* Mobile modal - full screen */
+  @media (max-width: 640px) {
+    .modal-overlay {
+      @apply p-0;
+      top: 7rem;
+    }
+
+    .modal {
+      @apply max-w-none max-h-none h-full rounded-none border-0;
+    }
+  }
+
+  .modal-lg {
+    @apply max-w-2xl;
+  }
+
+  .modal-xl {
+    @apply max-w-4xl;
+  }
+
+  .modal-header {
+    @apply flex items-center justify-between px-6 py-4
+           border-b border-surface-200 dark:border-[rgb(var(--color-border))]
+           bg-surface-50 dark:bg-[rgb(var(--color-surface))]
+           flex-shrink-0;
+  }
+
+  .modal-body {
+    @apply px-6 py-5 overflow-y-auto flex-1 min-h-0;
+  }
+
+  .modal-footer {
+    @apply flex items-center justify-end gap-3 px-6 py-4
+           border-t border-surface-200 dark:border-[rgb(var(--color-border))]
+           bg-surface-50 dark:bg-[rgb(var(--color-surface))]
+           flex-shrink-0;
+  }
+
+  /* Email list item */
+  .email-item {
+    @apply flex items-start gap-3 px-4 py-3 cursor-pointer
+           border-b border-surface-100 dark:border-[rgb(var(--color-border))]
+           hover:bg-surface-50 dark:hover:bg-[rgb(var(--color-surface-hover))]
+           transition-colors duration-150;
+  }
+
+  .email-item.selected {
+    @apply bg-primary-50 dark:bg-primary-500/10;
+  }
+
+  .email-item.unread {
+    @apply font-semibold;
+    background-color: #0000000a;
+  }
+
+  .dark .email-item.unread {
+    background-color: #afafaf1a;
+  }
+
+  /* Selected state overrides unread background */
+  .email-item.unread.selected {
+    @apply bg-primary-50 dark:bg-primary-500/10;
+  }
+
+  .email-item.unread .email-subject {
+    @apply text-surface-900 dark:text-surface-100;
+  }
+
+  /* Unread indicator dot */
+  .unread-dot {
+    @apply w-2 h-2 rounded-full flex-shrink-0;
+    background-color: rgb(var(--color-primary-500));
+    margin-top: 6px;
+  }
+
+  /* Spacer for read emails (maintains alignment) */
+  .unread-dot-spacer {
+    @apply w-2 flex-shrink-0;
+    margin-top: 6px;
+  }
+
+  /* Smaller dot for nested/expanded conversation messages */
+  .unread-dot-nested {
+    @apply w-1.5 h-1.5 rounded-full flex-shrink-0 self-center;
+    background-color: rgb(var(--color-primary-500));
+  }
+
+  .unread-dot-spacer-nested {
+    @apply w-1.5 flex-shrink-0 self-center;
+  }
+
+  /* Thread message direction indicators */
+  .thread-direction-indicator {
+    @apply w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 self-center;
+  }
+
+  .thread-direction-indicator.sent {
+    @apply bg-primary-100 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400;
+  }
+
+  .thread-direction-indicator.received {
+    @apply bg-surface-200 dark:bg-surface-700 text-surface-500 dark:text-surface-400;
+  }
+
+  /* Subtle background for sent messages in thread */
+  .thread-msg-sent {
+    background-color: rgb(var(--color-primary-500) / 0.03);
+  }
+
+  .dark .thread-msg-sent {
+    background-color: rgb(var(--color-primary-500) / 0.05);
+  }
+
+  .thread-msg-sent.selected {
+    @apply bg-primary-100 dark:bg-primary-500/15;
+  }
+
+  /* Email list item - wide (2-column Gmail-style layout) */
+  .email-item-wide {
+    @apply flex items-center gap-3 px-4 cursor-pointer
+           border-b border-surface-100 dark:border-[rgb(61_61_71_/_14%)]
+           hover:bg-surface-50 dark:hover:bg-[rgb(var(--color-surface-hover))]
+           transition-colors duration-150;
+    height: 2.5rem;
+  }
+
+  .email-item-wide.selected {
+    @apply bg-primary-50 dark:bg-primary-500/10;
+  }
+
+  .email-item-wide.unread {
+    @apply font-semibold;
+    background-color: #0000000a;
+  }
+
+  .dark .email-item-wide.unread {
+    background-color: #afafaf1a;
+  }
+
+  /* Selected state overrides unread background */
+  .email-item-wide.unread.selected {
+    @apply bg-primary-50 dark:bg-primary-500/10;
+  }
+
+  /* Email list item - compact (3-column aligned layout) */
+  .email-item-compact {
+    @apply flex items-center gap-2 px-3 cursor-pointer
+           border-b border-surface-100 dark:border-[rgb(61_61_71_/_14%)]
+           hover:bg-surface-50 dark:hover:bg-[rgb(var(--color-surface-hover))]
+           transition-colors duration-150;
+    height: 2.25rem;
+  }
+
+  .email-item-compact.selected {
+    @apply bg-primary-50 dark:bg-primary-500/10;
+  }
+
+  .email-item-compact.unread {
+    @apply font-semibold;
+    background-color: #0000000a;
+  }
+
+  .dark .email-item-compact.unread {
+    background-color: #afafaf1a;
+  }
+
+  .email-item-compact.unread.selected {
+    @apply bg-primary-50 dark:bg-primary-500/10;
+  }
+
+  /* Folder item */
+  .folder-item {
+    @apply flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer
+           text-surface-600 dark:text-surface-300 text-sm
+           hover:bg-surface-100 dark:hover:bg-[rgb(var(--color-surface-hover))]
+           transition-colors duration-150;
+  }
+
+  .folder-item.active {
+    @apply bg-primary-500/15 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400;
+  }
+
+  /* Mono theme active folder - ensure contrast in dark mode */
+  .dark[data-accent="mono"] .folder-item.active,
+  [data-accent="mono"] .dark .folder-item.active {
+    @apply bg-surface-700 text-surface-100;
+  }
+
+  /* Mono theme - all primary text should be visible in dark mode */
+  .dark[data-accent="mono"] .text-primary-500,
+  .dark[data-accent="mono"] .text-primary-400,
+  .dark[data-accent="mono"] .text-primary-600,
+  [data-accent="mono"] .dark .text-primary-500,
+  [data-accent="mono"] .dark .text-primary-400,
+  [data-accent="mono"] .dark .text-primary-600 {
+    color: rgb(212 212 212) !important;
+  }
+
+  /* Mono theme - toggle switches need dark thumb in dark mode */
+  .dark[data-accent="mono"] .bg-primary-500,
+  [data-accent="mono"] .dark .bg-primary-500 {
+    background-color: rgb(212 212 212) !important;
+  }
+
+  /* Mono theme - secondary buttons in dark mode need better contrast */
+  .dark[data-accent="mono"] .btn-secondary,
+  [data-accent="mono"] .dark .btn-secondary {
+    @apply border-surface-500;
+  }
+
+  /* Mono theme - email selected state in dark mode */
+  .dark[data-accent="mono"] .email-item.selected,
+  .dark[data-accent="mono"] .email-item-wide.selected,
+  .dark[data-accent="mono"] .email-item-compact.selected,
+  [data-accent="mono"] .dark .email-item.selected,
+  [data-accent="mono"] .dark .email-item-wide.selected,
+  [data-accent="mono"] .dark .email-item-compact.selected {
+    @apply bg-surface-700;
+  }
+
+  /* Mono theme - focus rings in dark mode should be visible */
+  .dark[data-accent="mono"] .focus\:ring-primary-500:focus,
+  [data-accent="mono"] .dark .focus\:ring-primary-500:focus {
+    --tw-ring-color: rgb(163 163 163);
+  }
+
+  /* Mono theme - input focus border in dark mode */
+  .dark[data-accent="mono"] .input:focus,
+  [data-accent="mono"] .dark .input:focus {
+    border-color: rgb(163 163 163);
+    --tw-ring-color: rgb(163 163 163 / 0.4);
+  }
+
+  /* Mono theme - logo icon in dark mode */
+  .dark[data-accent="mono"] .logo-icon,
+  [data-accent="mono"] .dark .logo-icon {
+    @apply bg-surface-200;
+  }
+  .dark[data-accent="mono"] .logo-icon .material-symbols-rounded,
+  [data-accent="mono"] .dark .logo-icon .material-symbols-rounded {
+    @apply text-surface-900;
+  }
+
+  /* Accent color slider */
+  .accent-slider {
+    accent-color: rgb(var(--color-primary-500));
+  }
+
+  /* Toast */
+  .toast {
+    @apply fixed bottom-4 right-4 z-50 
+           card px-4 py-3 flex items-center gap-3
+           shadow-lg animate-slide-up;
+  }
+}
+
+@layer utilities {
+  /* Hide scrollbar but keep scrolling */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .spinner {
+    @apply w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin;
+  }
+
+  /* Rich text editor styles */
+  .ProseMirror {
+    @apply min-h-[200px] outline-none p-4;
+  }
+
+  .ProseMirror p {
+    @apply my-2;
+  }
+
+  .ProseMirror ul,
+  .ProseMirror ol {
+    @apply ml-6 my-2;
+  }
+
+  .ProseMirror li {
+    @apply my-1;
+  }
+
+  .ProseMirror blockquote {
+    @apply border-l-4 border-surface-300 dark:border-surface-600 pl-4 my-4 italic;
+  }
+
+  .ProseMirror pre {
+    @apply bg-surface-100 dark:bg-surface-800 rounded-lg p-4 my-4 font-mono text-sm overflow-x-auto;
+  }
+
+  .ProseMirror code {
+    @apply bg-surface-100 dark:bg-surface-800 px-1.5 py-0.5 rounded text-sm font-mono;
+  }
+
+  .ProseMirror a {
+    @apply text-primary-500 hover:underline;
+  }
+
+  .ProseMirror img {
+    @apply max-w-full h-auto rounded-lg my-4;
+  }
+
+  .ProseMirror p.is-editor-empty:first-child::before {
+    @apply text-surface-400 dark:text-surface-500 float-left h-0 pointer-events-none;
+    content: attr(data-placeholder);
+  }
+}
+
+/* Email body container - padding lives here so email <style> tags can't override it */
+.email-body-wrapper {
+  @apply bg-white dark:bg-surface-800 rounded-lg;
+  padding: 24px;
+}
+
+@media (min-width: 640px) {
+  .email-body-wrapper {
+    padding: 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .email-body-wrapper {
+    padding: 40px;
+  }
+}
+
+/* Drive Attachments Card - ProseMirror editor only (email body now in iframe) */
+.ProseMirror .drive-attachments-card {
+  margin: 16px 0;
+  max-width: 480px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  border: 2px solid #7c3aed !important;
+  border-radius: 16px !important;
+  overflow: hidden;
+  background: #ffffff !important;
+}
+
+.dark .ProseMirror .drive-attachments-card {
+  background: #1e1b2e !important;
+  border-color: #a78bfa !important;
+}
+
+.ProseMirror .drive-card-header {
+  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%) !important;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ProseMirror .drive-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff !important;
+}
+
+.ProseMirror .drive-card-subtitle {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.ProseMirror .drive-card-items {
+  padding: 8px;
+}
+
+.ProseMirror .drive-attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f5f3ff !important;
+  margin-bottom: 6px;
+}
+
+.ProseMirror .drive-attachment-item:last-child {
+  margin-bottom: 0;
+}
+
+.dark .ProseMirror .drive-attachment-item {
+  background: #2e1065 !important;
+}
+
+.ProseMirror .drive-item-icon {
+  font-size: 24px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.ProseMirror .drive-item-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.ProseMirror .drive-item-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937 !important;
+  word-break: break-word;
+  line-height: 1.3;
+}
+
+.dark .ProseMirror .drive-item-name {
+  color: #f3f4f6 !important;
+}
+
+.ProseMirror .drive-item-size {
+  font-size: 11px;
+  color: #6b7280 !important;
+  margin-top: 2px;
+}
+
+.dark .ProseMirror .drive-item-size {
+  color: #9ca3af !important;
+}
+
+.ProseMirror .drive-item-download {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  text-decoration: none !important;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+  transition: background 0.2s ease;
+}
+
+.ProseMirror .drive-item-download:hover {
+  background: #6d28d9 !important;
+  text-decoration: none !important;
+  color: #ffffff !important;
+}
+
+.dark .ProseMirror .drive-item-download {
+  background: #8b5cf6 !important;
+}
+
+.dark .ProseMirror .drive-item-download:hover {
+  background: #a78bfa !important;
+}
+
+.ProseMirror .drive-attachment-card {
+  margin: 16px 0;
+  max-width: 420px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+.ProseMirror .drive-card-inner {
+  border: 2px solid #7c3aed !important;
+  border-radius: 12px;
+  padding: 16px;
+  background: #faf5ff !important;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.dark .ProseMirror .drive-card-inner {
+  background: #2e1065 !important;
+  border-color: #a78bfa !important;
+}
+
+.ProseMirror .drive-card-icon {
+  font-size: 32px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.ProseMirror .drive-card-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.ProseMirror .drive-card-filename {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937 !important;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.dark .ProseMirror .drive-card-filename {
+  color: #f3f4f6 !important;
+}
+
+.ProseMirror .drive-card-meta {
+  font-size: 12px;
+  color: #6b7280 !important;
+  margin-bottom: 12px;
+}
+
+.dark .ProseMirror .drive-card-meta {
+  color: #9ca3af !important;
+}
+
+.ProseMirror .drive-card-button {
+  display: inline-block;
+  padding: 10px 20px;
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  text-decoration: none !important;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+.ProseMirror .drive-card-button:hover {
+  background: #6d28d9 !important;
+  text-decoration: none !important;
+  color: #ffffff !important;
+}
+
+.dark .ProseMirror .drive-card-button {
+  background: #8b5cf6 !important;
+}
+
+.dark .ProseMirror .drive-card-button:hover {
+  background: #a78bfa !important;
+}
+
+.ProseMirror .drive-card-expiry {
+  font-size: 11px;
+  color: #9ca3af !important;
+  margin-top: 10px;
+}
+
+.dark .ProseMirror .drive-card-expiry {
+  color: #6b7280 !important;
+}
+
+/* Resizable images in editor */
+.ProseMirror .resizable-image-wrapper {
+  display: inline-block;
+  vertical-align: bottom;
+}
+
+.ProseMirror .resizable-image-wrapper img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   @mention chips — rendered both inside the compose editor (ProseMirror)
+   and inside email-view bodies. We scope the styling to the chip itself so
+   it survives the trip through MUAs that strip class names but keep inline
+   spans — falling back to a sane underline-look if our class is dropped.
+   ───────────────────────────────────────────────────────────────────── */
+.mention-chip,
+span[data-type="mention"] {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px 2px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.95em;
+  color: #0369a1;
+  background: rgba(14, 165, 233, 0.12);
+  text-decoration: none;
+  cursor: default;
+  white-space: nowrap;
+  user-select: all;
+}
+.dark .mention-chip,
+.dark span[data-type="mention"] {
+  color: #7dd3fc;
+  background: rgba(14, 165, 233, 0.22);
+}
+
+/* Tippy popup theme for the @mention suggestion list */
+.tippy-box[data-theme~="flowone-mention"] {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+.tippy-box[data-theme~="flowone-mention"] > .tippy-arrow {
+  display: none;
+}
+
+/* ============================================
+   AURORA/GRADIENT THEME ENHANCEMENTS
+   ============================================ */
+
+/* Gradient sidebar active item */
+[data-accent="gradient"] .folder-item.active {
+  background: linear-gradient(
+    135deg,
+    rgba(168, 85, 247, 0.15) 0%,
+    rgba(236, 72, 153, 0.15) 50%,
+    rgba(249, 115, 22, 0.15) 100%
+  );
+}
+.dark[data-accent="gradient"] .folder-item.active,
+[data-accent="gradient"] .dark .folder-item.active {
+  background: linear-gradient(
+    135deg,
+    rgba(192, 132, 252, 0.2) 0%,
+    rgba(244, 114, 182, 0.2) 50%,
+    rgba(251, 146, 60, 0.2) 100%
+  );
+}
+
+/* Gradient header logo background */
+[data-accent="gradient"] .logo-icon {
+  background: var(--btn-gradient) !important;
+}
+
+/* Gradient toggle switches when active - target the round toggle tracks */
+[data-accent="gradient"]
+  button.bg-primary-500[class*="rounded-full"][class*="h-6"],
+[data-accent="gradient"] .bg-primary-500[class*="rounded-full"][class*="h-6"],
+[data-accent="verdant"]
+  button.bg-primary-500[class*="rounded-full"][class*="h-6"],
+[data-accent="verdant"] .bg-primary-500[class*="rounded-full"][class*="h-6"] {
+  background: var(--btn-gradient) !important;
+}
+
+/* Gradient badges */
+[data-accent="gradient"] .badge-primary,
+[data-accent="verdant"] .badge-primary {
+  background: var(--btn-gradient);
+  color: white;
+}
+
+/* Gradient selected email */
+[data-accent="gradient"] .email-item.selected {
+  background: linear-gradient(
+    135deg,
+    rgba(168, 85, 247, 0.08) 0%,
+    rgba(236, 72, 153, 0.08) 50%,
+    rgba(249, 115, 22, 0.08) 100%
+  );
+}
+.dark[data-accent="gradient"] .email-item.selected,
+[data-accent="gradient"] .dark .email-item.selected {
+  background: linear-gradient(
+    135deg,
+    rgba(192, 132, 252, 0.12) 0%,
+    rgba(244, 114, 182, 0.12) 50%,
+    rgba(251, 146, 60, 0.12) 100%
+  );
+}
+
+/* Gradient selected email (wide view) */
+[data-accent="gradient"] .email-item-wide.selected,
+[data-accent="gradient"] .email-item-compact.selected {
+  background: linear-gradient(
+    135deg,
+    rgba(168, 85, 247, 0.08) 0%,
+    rgba(236, 72, 153, 0.08) 50%,
+    rgba(249, 115, 22, 0.08) 100%
+  );
+}
+.dark[data-accent="gradient"] .email-item-wide.selected,
+[data-accent="gradient"] .dark .email-item-wide.selected,
+.dark[data-accent="gradient"] .email-item-compact.selected,
+[data-accent="gradient"] .dark .email-item-compact.selected {
+  background: linear-gradient(
+    135deg,
+    rgba(192, 132, 252, 0.12) 0%,
+    rgba(244, 114, 182, 0.12) 50%,
+    rgba(251, 146, 60, 0.12) 100%
+  );
+}
+
+/* Gradient glow effect */
+[data-accent="gradient"] .shadow-glow {
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.3), 0 0 40px rgba(236, 72, 153, 0.2),
+    0 0 60px rgba(249, 115, 22, 0.1);
+}
+.dark[data-accent="gradient"] .shadow-glow,
+[data-accent="gradient"] .dark .shadow-glow {
+  box-shadow: 0 0 25px rgba(192, 132, 252, 0.35),
+    0 0 50px rgba(244, 114, 182, 0.25), 0 0 75px rgba(251, 146, 60, 0.15);
+}
+
+/* Gradient focus rings */
+[data-accent="gradient"] .btn-primary:focus {
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.3),
+    0 0 0 3px rgba(236, 72, 153, 0.2);
+}
+
+/* Gradient text for special elements */
+[data-accent="gradient"] .text-gradient {
+  background: linear-gradient(
+    135deg,
+    rgb(168, 85, 247) 0%,
+    rgb(236, 72, 153) 50%,
+    rgb(249, 115, 22) 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.dark[data-accent="gradient"] .text-gradient,
+[data-accent="gradient"] .dark .text-gradient {
+  background: linear-gradient(
+    135deg,
+    rgb(192, 132, 252) 0%,
+    rgb(244, 114, 182) 50%,
+    rgb(251, 146, 60) 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Gradient border accent */
+[data-accent="gradient"] .border-gradient {
+  border-image: linear-gradient(
+      135deg,
+      rgb(168, 85, 247) 0%,
+      rgb(236, 72, 153) 50%,
+      rgb(249, 115, 22) 100%
+    )
+    1;
+}
+
+/* Gradient progress bars */
+[data-accent="gradient"] .progress-bar,
+[data-accent="verdant"] .progress-bar {
+  background: var(--btn-gradient);
+}
+
+/* ============================================
+   VERDANT THEME ENHANCEMENTS (purple -> teal -> green)
+   Mirrors the Aurora rules above using the verdant palette so the
+   sidebar, logo, selected rows, glow and gradient text all match.
+   ============================================ */
+
+/* Verdant sidebar active item — bold, saturated green->teal->purple pill with
+   white text so it reads like a primary surface (matches the design mock). */
+[data-accent="verdant"] .folder-item.active {
+  background: linear-gradient(
+    135deg,
+    #22c55e 0%,
+    #2dd4bf 50%,
+    #a855f7 100%
+  );
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(34, 197, 94, 0.25);
+}
+.dark[data-accent="verdant"] .folder-item.active,
+[data-accent="verdant"] .dark .folder-item.active {
+  background: linear-gradient(
+    135deg,
+    rgba(34, 197, 94, 0.92) 0%,
+    rgba(45, 212, 191, 0.88) 50%,
+    rgba(168, 85, 247, 0.96) 100%
+  );
+  color: #fff;
+  box-shadow: 0 2px 14px rgba(168, 85, 247, 0.3);
+}
+/* Keep every glyph/label/count on the active pill legible on the gradient.
+   Target child spans by element (not Tailwind utility classes) so we don't
+   trip Tailwind's @apply circular-dependency guard inside @layer utilities. */
+[data-accent="verdant"] .folder-item.active,
+[data-accent="verdant"] .folder-item.active span {
+  color: #fff;
+}
+
+/* Verdant header logo background */
+[data-accent="verdant"] .logo-icon {
+  background: var(--btn-gradient) !important;
+}
+
+/* Verdant mailbox storage bar — use the full tricolor gradient instead of the
+   default primary->violet. The fill carries a dedicated `.mail-quota-fill`
+   marker class only in the normal state, so red/amber over-quota warnings
+   (which omit it) are unaffected. */
+[data-accent="verdant"] .mail-quota-card .mail-quota-fill {
+  background-image: var(--btn-gradient) !important;
+}
+
+/* Verdant selected email */
+[data-accent="verdant"] .email-item.selected {
+  background: linear-gradient(
+    135deg,
+    rgba(168, 85, 247, 0.08) 0%,
+    rgba(45, 212, 191, 0.08) 52%,
+    rgba(34, 197, 94, 0.08) 100%
+  );
+}
+.dark[data-accent="verdant"] .email-item.selected,
+[data-accent="verdant"] .dark .email-item.selected {
+  background: linear-gradient(
+    135deg,
+    rgba(192, 132, 252, 0.13) 0%,
+    rgba(45, 212, 191, 0.13) 52%,
+    rgba(74, 222, 128, 0.13) 100%
+  );
+}
+
+/* Verdant selected email (wide / compact view) */
+[data-accent="verdant"] .email-item-wide.selected,
+[data-accent="verdant"] .email-item-compact.selected {
+  background: linear-gradient(
+    135deg,
+    rgba(168, 85, 247, 0.08) 0%,
+    rgba(45, 212, 191, 0.08) 52%,
+    rgba(34, 197, 94, 0.08) 100%
+  );
+}
+.dark[data-accent="verdant"] .email-item-wide.selected,
+[data-accent="verdant"] .dark .email-item-wide.selected,
+.dark[data-accent="verdant"] .email-item-compact.selected,
+[data-accent="verdant"] .dark .email-item-compact.selected {
+  background: linear-gradient(
+    135deg,
+    rgba(192, 132, 252, 0.13) 0%,
+    rgba(45, 212, 191, 0.13) 52%,
+    rgba(74, 222, 128, 0.13) 100%
+  );
+}
+
+/* Verdant glow effect */
+[data-accent="verdant"] .shadow-glow {
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.3),
+    0 0 40px rgba(45, 212, 191, 0.2), 0 0 60px rgba(34, 197, 94, 0.12);
+}
+.dark[data-accent="verdant"] .shadow-glow,
+[data-accent="verdant"] .dark .shadow-glow {
+  box-shadow: 0 0 25px rgba(192, 132, 252, 0.35),
+    0 0 50px rgba(45, 212, 191, 0.25), 0 0 75px rgba(74, 222, 128, 0.18);
+}
+
+/* Verdant focus rings */
+[data-accent="verdant"] .btn-primary:focus {
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.3),
+    0 0 0 3px rgba(45, 212, 191, 0.2);
+}
+
+/* Verdant gradient text */
+[data-accent="verdant"] .text-gradient {
+  background: linear-gradient(
+    135deg,
+    rgb(168, 85, 247) 0%,
+    rgb(45, 212, 191) 52%,
+    rgb(34, 197, 94) 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.dark[data-accent="verdant"] .text-gradient,
+[data-accent="verdant"] .dark .text-gradient {
+  background: linear-gradient(
+    135deg,
+    rgb(192, 132, 252) 0%,
+    rgb(45, 212, 191) 52%,
+    rgb(74, 222, 128) 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Verdant border accent */
+[data-accent="verdant"] .border-gradient {
+  border-image: linear-gradient(
+      135deg,
+      rgb(168, 85, 247) 0%,
+      rgb(45, 212, 191) 52%,
+      rgb(34, 197, 94) 100%
+    )
+    1;
+}
+
+/* ============================================
+   VERDANT ACCENT - Settings swatch rotating ring
+   ============================================ */
+
+/* Registered custom property so the conic angle can actually tween.
+   Falls back gracefully on browsers without @property (static ring). */
+@property --verdant-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes verdant-spin {
+  to {
+    --verdant-angle: 360deg;
+  }
+}
+
+/* Settings swatch: rotating ring on hover; always-on when the swatch is the
+   active accent so the user gets an unmistakable "this is selected" cue. */
+[data-accent-swatch="verdant"] {
+  position: relative;
+  isolation: isolate;
+}
+[data-accent-swatch="verdant"]::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 9999px;
+  padding: 3px;
+  background: conic-gradient(
+    from var(--verdant-angle, 0deg),
+    #a855f7,
+    #2dd4bf,
+    #22c55e,
+    #a855f7
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+[data-accent-swatch="verdant"]:hover::before,
+[data-accent-swatch="verdant"].is-selected::before {
+  opacity: 1;
+  animation: verdant-spin 5s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-accent-swatch="verdant"]:hover::before,
+  [data-accent-swatch="verdant"].is-selected::before {
+    animation: none;
+  }
+}
+
+/* ============================================
+   MOBILE RESPONSIVE STYLES
+   ============================================ */
+
+/* Mobile base styles */
+@media (max-width: 768px) {
+  html, body, #app {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+  }
+
+  /* Hide feature guide & info buttons on mobile */
+  .hiw-btn,
+  .view-info-btn {
+    display: none !important;
+  }
+
+  /* Responsive tables: smooth horizontal scroll on mobile */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+  .overflow-x-auto > table {
+    min-width: 600px;
+  }
+
+  /* Hide non-essential table columns on mobile */
+  .hide-on-mobile {
+    display: none !important;
+  }
+
+  /* Larger conversation names in chat sidebar on mobile */
+  .chat-conv-name {
+    font-size: 1rem !important;
+  }
+
+  /* Larger filter pills in chat sidebar on mobile */
+  .chat-filter-pill {
+    font-size: 1rem !important;
+    padding: 0.375rem 0.875rem !important;
+  }
+
+  /* Hide sidebar by default on mobile */
+  .sidebar-container {
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    width: 280px !important;
+    max-width: 85vw;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    padding-top: 4rem;
+  }
+
+  .sidebar-container.open {
+    transform: translateX(0);
+  }
+
+  /* Mobile sidebar overlay */
+  .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 49;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .sidebar-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Drive sidebar: off-canvas drawer on mobile (mirrors .sidebar-container).
+     The <aside> root carries both .drive-sidebar and .drive-sidebar-host; on
+     mobile it slides in from the left when .open is toggled by the hamburger. */
+  .drive-sidebar-host {
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    width: 280px !important;
+    max-width: 85vw;
+    padding-top: 4rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  }
+
+  .drive-sidebar-host.open {
+    transform: translateX(0);
+  }
+
+  /* Full width email list on mobile */
+  .email-list-container {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  /* Hide email view panel on mobile - show as overlay */
+  .email-view-container {
+    position: fixed !important;
+    inset: 0;
+    z-index: 40;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+  }
+
+  .email-view-container.open {
+    transform: translateX(0);
+  }
+
+  /* Mobile header adjustments */
+  .mobile-header {
+    padding: 0.5rem 1rem;
+  }
+
+  /* Smaller buttons on mobile */
+  .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  .btn-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .btn-icon .material-symbols-rounded {
+    font-size: 27px !important;
+    line-height: 1 !important;
+  }
+
+  .material-symbols-rounded.text-lg {
+    font-size: 1.6rem;
+  }
+
+  /* Deprecated: use .mobile-fab instead */
+
+  /* Email item touch-friendly */
+  .email-item,
+  .email-item-wide,
+  .email-item-compact {
+    padding: 1rem;
+    min-height: 4.5rem;
+  }
+
+  /* Folder items touch-friendly */
+  .folder-item {
+    padding: 0.875rem 1rem;
+    min-height: 3rem;
+  }
+
+  /* Hide compose modal footer buttons text on mobile */
+  .compose-modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Settings view mobile */
+  .settings-sidebar {
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 50;
+    width: 280px !important;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+
+  .settings-sidebar.open {
+    transform: translateX(0);
+  }
+
+  /* Modal full screen on mobile */
+  .modal-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Calendar mobile grid */
+  .calendar-grid {
+    font-size: 0.75rem;
+  }
+
+  .calendar-day {
+    min-height: 3rem;
+    padding: 0.25rem;
+  }
+
+  /* Drive grid mobile */
+  .drive-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem;
+  }
+
+  /* Search input full width */
+  .search-input-container {
+    width: 100% !important;
+  }
+
+  /* Account dropdown adjustments */
+  .account-dropdown {
+    width: calc(100vw - 2rem) !important;
+    max-width: 320px;
+  }
+
+  /* Toast positioning */
+  .toast {
+    left: 1rem;
+    right: 1rem;
+    bottom: 5rem;
+    width: auto;
+  }
+
+  /* Rich text editor toolbar mobile */
+  .editor-toolbar {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .editor-toolbar button {
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Small mobile screens (< 480px) */
+@media (max-width: 480px) {
+  /* Even smaller adjustments */
+  .email-item,
+  .email-item-wide,
+  .email-item-compact {
+    padding: 0.75rem;
+  }
+
+  /* Stack email metadata */
+  .email-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  /* Smaller header */
+  header {
+    height: 3.5rem !important;
+    padding: 0 0.75rem !important;
+  }
+
+  /* Drive single column */
+  .drive-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Filter panel adjustments */
+  .filter-panel {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  /* Mobile folder tree - larger tap targets */
+  .folder-item {
+    padding: 0.875rem 1rem;
+    font-size: 1.1rem;
+    min-height: 3rem;
+    gap: 0.75rem;
+  }
+
+  .sidebar-container .material-symbols-rounded {
+    font-size: 22px;
+  }
+}
+
+/* Tablet screens (768px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  /* Narrower sidebar */
+  .sidebar-container {
+    width: 220px !important;
+  }
+
+  /* Smaller email view */
+  .email-view-container {
+    min-width: 350px;
+  }
+
+  /* 3-column drive grid */
+  .drive-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Remove hover effects that don't work on touch */
+  .email-item:hover,
+  .email-item-wide:hover,
+  .email-item-compact:hover,
+  .folder-item:hover {
+    background: transparent;
+  }
+
+  /* Larger tap targets */
+  .btn-icon {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Better checkbox/toggle tap areas */
+  input[type="checkbox"],
+  .toggle-track {
+    min-width: 44px;
+    min-height: 24px;
+  }
+
+  /* Swipe hint on email items */
+  .email-item,
+  .email-item-wide,
+  .email-item-compact {
+    touch-action: pan-x;
+  }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .mobile-fab {
+    bottom: calc(6.5rem + env(safe-area-inset-bottom)) !important;
+  }
+
+  .toast {
+    bottom: calc(5.3rem + env(safe-area-inset-bottom));
+  }
+
+  .modal-content,
+  .compose-modal {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Landscape mobile orientation */
+@media (max-width: 896px) and (orientation: landscape) {
+  .compose-modal {
+    max-height: 100vh;
+  }
+
+  .modal-content {
+    max-height: 100vh;
+  }
+
+  header {
+    height: 3rem !important;
+  }
+}
+
+/* DOCX Preview Styles - mimics Word document appearance */
+.docx-preview {
+  max-width: 816px; /* 8.5 inches at 96dpi */
+  margin: 0 auto;
+  padding: 48px 72px; /* ~1 inch margins like Word */
+  background: white;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  min-height: 100%;
+  color: #1f2937;
+  font-family: "Calibri", "Arial", sans-serif;
+  font-size: 11pt;
+  line-height: 1.5;
+}
+
+.docx-preview h1 {
+  font-size: 26pt;
+  font-weight: bold;
+  color: #2563eb;
+  margin: 24pt 0 12pt 0;
+  line-height: 1.2;
+}
+
+.docx-preview h1.doc-title {
+  font-size: 32pt;
+  text-align: center;
+  margin-bottom: 6pt;
+}
+
+.docx-preview h2 {
+  font-size: 18pt;
+  font-weight: bold;
+  color: #2563eb;
+  margin: 18pt 0 6pt 0;
+  line-height: 1.3;
+}
+
+.docx-preview h3 {
+  font-size: 14pt;
+  font-weight: bold;
+  color: #1f2937;
+  margin: 12pt 0 6pt 0;
+}
+
+.docx-preview p {
+  margin: 0 0 12pt 0;
+}
+
+.docx-preview p.doc-subtitle {
+  font-size: 14pt;
+  color: #6b7280;
+  text-align: center;
+  font-style: italic;
+  margin-bottom: 24pt;
+}
+
+.docx-preview strong,
+.docx-preview b {
+  font-weight: bold;
+}
+
+.docx-preview em,
+.docx-preview i {
+  font-style: italic;
+}
+
+.docx-preview u {
+  text-decoration: underline;
+}
+
+.docx-preview ul,
+.docx-preview ol {
+  margin: 12pt 0;
+  padding-left: 36pt;
+}
+
+.docx-preview li {
+  margin: 6pt 0;
+}
+
+.docx-preview table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 12pt 0;
+}
+
+.docx-preview table td,
+.docx-preview table th {
+  border: 1px solid #d1d5db;
+  padding: 6pt 12pt;
+  text-align: left;
+}
+
+.docx-preview table th {
+  background: #f3f4f6;
+  font-weight: bold;
+}
+
+.docx-preview blockquote {
+  border-left: 4px solid #2563eb;
+  padding-left: 16pt;
+  margin: 12pt 0;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.docx-preview blockquote.intense {
+  background: #eff6ff;
+  padding: 12pt 16pt;
+  border-radius: 4px;
+}
+
+.docx-preview img {
+  max-width: 100%;
+  height: auto;
+  margin: 12pt 0;
+}
+
+.docx-preview a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.docx-preview hr {
+  border: none;
+  border-top: 1px solid #d1d5db;
+  margin: 24pt 0;
+}
+
+/* Safe Area Utility Classes for PWA/Mobile */
+.safe-area-top {
+  /* Padding for notch: small base (0.5rem) + safe area inset */
+  padding-top: calc(0.5rem + env(safe-area-inset-top, 0px));
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-area-left {
+  padding-left: env(safe-area-inset-left, 0px);
+}
+
+.safe-area-right {
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+.safe-area-x {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+.safe-area-y {
+  padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-area-all {
+  padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* Min-height that accounts for safe area - header needs base height + safe area */
+.min-h-safe-top {
+  min-height: calc(3.5rem + env(safe-area-inset-top, 0px));
+  /* Align content to bottom so padding-top pushes from notch, not centered */
+  align-items: flex-end !important;
+  padding-bottom: 0.5rem;
+}
+
+/* Mobile bottom padding - accounts for bottom nav height */
+@media (max-width: 768px) {
+  .pb-12 {
+    padding-bottom: 4.6rem;
+  }
+  .pb-20 {
+    padding-bottom: 5.7rem;
+  }
+}
+
+/* Mobile Bottom Navigation - reusable styles */
+.mobile-bottom-nav {
+  @apply fixed left-0 right-0 bg-white dark:bg-surface-800 border-t border-surface-200 dark:border-surface-700 flex items-center justify-around z-50;
+  bottom: 0;
+  padding: 0.5rem 1.5rem 1.5rem 1.5rem;
+}
+
+/* Mobile FAB (Floating Action Button) - unified positioning for Mail, Drive, Calendar */
+.mobile-fab {
+  position: fixed !important;
+  bottom: 9.2rem !important;
+  right: 1.2rem !important;
+  z-index: 40 !important;
+  width: 3.5rem !important;
+  height: 3.5rem !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  padding: 0 !important;
+}
+
+.mobile-fab .material-symbols-rounded {
+  font-size: 1.5rem !important; /* 24px */
+  line-height: 1 !important;
+}
+
+.mobile-fab .spinner {
+  width: 1.5rem !important;
+  height: 1.5rem !important;
+}
+
+.mobile-nav-item {
+  @apply flex flex-col items-center justify-center rounded-xl text-surface-500 dark:text-surface-400 transition-colors;
+  min-width: 3.5rem;
+  padding: 0.5rem;
+  gap: 0;
+}
+
+.mobile-nav-item:hover,
+.mobile-nav-item:active {
+  @apply bg-surface-100 dark:bg-surface-700;
+}
+
+.mobile-nav-item.active {
+  @apply text-primary-500 bg-primary-500/10;
+}
+
+.mobile-nav-item .material-symbols-rounded {
+  font-size: 30px !important;
+  line-height: 1 !important;
+}
+
+.mobile-nav-label {
+  @apply text-[13px] font-medium;
+  line-height: 1;
+  margin-top: 1px;
+}
+
+/* ============================================
+   DISPLAY DENSITY MODES
+   ============================================ */
+
+/* Default is cosy - no changes needed */
+.density-cosy {
+  /* Current default styles apply */
+}
+
+/* Compact mode - tighter spacing, smaller text */
+.density-compact {
+  /* CSS custom properties for compact mode */
+  --compact-scale: 0.875;
+}
+
+/* Compact: Email list items */
+.density-compact .email-item {
+  padding: 0.375rem 0.75rem !important;
+  gap: 0.375rem !important;
+}
+
+.density-compact .email-item-wide {
+  height: 1.75rem !important;
+  padding: 0 0.75rem !important;
+  gap: 0.375rem !important;
+}
+
+.density-compact .email-item-compact {
+  height: 1.75rem !important;
+  padding: 0 0.5rem !important;
+  gap: 0.25rem !important;
+}
+
+/* Compact: Action button group */
+.density-compact .email-item-wide button.w-7,
+.density-compact .email-item-compact button.w-7 {
+  width: 1.375rem !important;
+  height: 1.375rem !important;
+}
+
+/* Compact: Date group headers (Today, Last Week, etc.) */
+.density-compact .date-group-header {
+  padding: 0.25rem 0.75rem !important;
+  gap: 0.375rem !important;
+}
+
+.density-compact .date-group-header .font-medium {
+  font-size: 0.75rem !important;
+}
+
+.density-compact .date-group-header .text-xs {
+  font-size: 0.65rem !important;
+}
+
+.density-compact .date-group-header .material-symbols-rounded {
+  font-size: 14px !important;
+}
+
+/* Compact: Email item text */
+.density-compact .email-item .text-sm,
+.density-compact .email-item-wide .text-sm,
+.density-compact .email-item-compact .text-sm {
+  font-size: 0.8125rem !important;
+  line-height: 1.125rem !important;
+}
+
+.density-compact .email-item .text-xs,
+.density-compact .email-item-wide .text-xs,
+.density-compact .email-item-compact .text-xs {
+  font-size: 0.6875rem !important;
+  line-height: 1rem !important;
+}
+
+/* Compact: All text in email items */
+.density-compact .email-item,
+.density-compact .email-item-wide,
+.density-compact .email-item-compact {
+  font-size: 0.8125rem !important;
+}
+
+/* Compact: Folder items in sidebar.
+ *
+ * Split the padding into individual properties so the inline
+ *   :style="{ paddingLeft: (folder.depth * 16 + 24) + 'px' }"
+ * that FolderTree.vue puts on user-folder rows can still win — the previous
+ * shorthand `padding: ... !important` was clobbering the depth-based indent
+ * and flattening every subfolder to the root margin.
+ *
+ * padding-left intentionally has no !important here so inline styles can
+ * override it; system folders (Inbox/Sent/…) that don't carry an inline
+ * style still pick up the 0.5rem from this rule via the cascade.
+ */
+.density-compact .folder-item {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-right: 0.5rem !important;
+  padding-left: 0.5rem;
+  gap: 0.375rem !important;
+  font-size: 0.75rem !important;
+  line-height: 1rem !important;
+}
+
+/* Compact: Sidebar width reduction */
+.density-compact .sidebar-container {
+  width: 14rem !important;
+}
+
+/* Compact: Buttons */
+.density-compact .btn {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  gap: 0.375rem;
+}
+
+.density-compact .btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.625rem;
+}
+
+.density-compact .btn-icon {
+  padding: 0.375rem;
+}
+
+/* Compact: Inputs */
+.density-compact .input {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  min-height: 2rem;
+}
+
+/* Compact: Inputs with left icon (search inputs, login inputs, etc.) */
+.density-compact .input.pl-10 {
+  padding-left: 35px;
+}
+
+.density-compact .input.pl-12 {
+  padding-left: 40px;
+}
+
+/* Compact: Cards */
+.density-compact .card {
+  border-radius: 0.75rem;
+}
+
+/* Compact: Badges */
+.density-compact .badge {
+  padding: 0.125rem 0.5rem;
+  font-size: 0.625rem;
+  gap: 0.25rem;
+}
+
+/* Compact: Modal */
+.density-compact .modal-header {
+  padding: 0.75rem 1rem;
+}
+
+.density-compact .modal-body {
+  padding: 0.75rem 1rem;
+}
+
+.density-compact .modal-footer {
+  padding: 0.75rem 1rem;
+  gap: 0.5rem;
+}
+
+/* Compact: Email view header */
+.density-compact .email-view-header {
+  padding: 0.75rem;
+}
+
+/* Cosy: Main app header (default) */
+.density-cosy header.h-14 {
+  height: 56px;
+}
+
+/* Compact: Main app header */
+.density-compact header.h-14 {
+  height: 45px;
+}
+
+/* Compact: Email body */
+.density-compact .email-body {
+  padding: 0.5rem;
+  font-size: 1rem;
+  line-height: 1.625;
+}
+
+/* Compact: Unread dot */
+.density-compact .unread-dot {
+  width: 0.375rem;
+  height: 0.375rem;
+  margin-top: 4px;
+}
+
+.density-compact .unread-dot-spacer {
+  width: 0.375rem;
+  margin-top: 4px;
+}
+
+/* Compact: Thread message items */
+.density-compact .thread-direction-indicator {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+/* Compact: Material icons */
+.density-compact .material-symbols-rounded {
+  font-size: 20px;
+}
+
+.density-compact .sidebar-container .material-symbols-rounded {
+  font-size: 18px;
+}
+
+/* Compact: Section headings */
+.density-compact h1 {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+.density-compact h2 {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+
+.density-compact h3 {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+/* Compact: Specific component adjustments */
+.density-compact .todo-item {
+  padding: 0.375rem 0.5rem;
+}
+
+.density-compact .calendar-day {
+  padding: 0.25rem;
+}
+
+.density-compact .drive-item {
+  padding: 0.5rem;
+}
+
+/* Drive footer sections (download button & quota bar) - must have same height */
+.drive-footer-section {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+}
+
+.density-compact .drive-footer-section {
+  min-height: 56px;
+}
+
+/* Compact: Drive sidebar.
+ * Mirrors the email sidebar compaction (narrower + tighter rows + smaller
+ * icons) so the left Drive navigation/folder tree shrinks in compact density.
+ * .drive-sidebar is the <aside> root (same element as .drive-sidebar-host). */
+.density-compact .drive-sidebar {
+  width: 14rem !important;
+}
+
+/* "+ New" button wrapper (first child) */
+.density-compact .drive-sidebar > div:first-child {
+  padding: 0.5rem !important;
+}
+
+/* Primary nav items (My Drive, Shared with me, Recent, Starred, …) */
+.density-compact .drive-sidebar nav > button {
+  padding-top: 0.25rem !important;
+  padding-bottom: 0.25rem !important;
+  gap: 0.5rem !important;
+  font-size: 0.75rem !important;
+}
+
+/* Section spacing (FOLDERS heading, Shared-with-me block) */
+.density-compact .drive-sidebar .mt-5 {
+  margin-top: 0.75rem !important;
+}
+
+/* Folder tree rows. Only the row itself (first child) is tightened; the inline
+ * depth-indent paddingLeft and the nested children wrapper are left alone. */
+.density-compact .drive-sidebar .folder-tree-item > div:first-child {
+  padding-top: 0.125rem !important;
+  padding-bottom: 0.125rem !important;
+  font-size: 0.75rem !important;
+}
+
+/* Shrink only the larger icons (text-lg) so the small chevron/add (text-sm)
+ * controls keep their size. */
+.density-compact .drive-sidebar .material-symbols-rounded.text-lg {
+  font-size: 1rem !important;
+}
+
+/* Compact: Scrollbar thinner */
+.density-compact ::-webkit-scrollbar {
+  width: 0.375rem;
+  height: 0.375rem;
+}
+
+/* Compact: Attachments section */
+.density-compact .attachments-section {
+  padding: 0.375rem 0.75rem !important;
+  background: rgb(var(--color-surface-hover));
+}
+
+/* Cosy: Attachments section */
+.density-cosy .attachments-section {
+  padding: 0.375rem 0.75rem !important;
+  background: rgb(var(--color-surface-hover));
+}
+
+.density-compact .attachments-header {
+  margin-bottom: 0.375rem !important;
+  font-size: 0.625rem !important;
+}
+
+.density-compact .attachment-card {
+  padding: 0.25rem 0.5rem !important;
+  gap: 0.375rem !important;
+  min-width: 180px !important;
+}
+
+.density-compact .attachment-card .text-sm {
+  font-size: 0.75rem !important;
+}
+
+.density-compact .attachment-card .text-xs {
+  font-size: 0.625rem !important;
+}
+
+.density-compact .attachment-card .material-symbols-rounded {
+  font-size: 14px !important;
+}
+
+.density-compact .attachments-grid {
+  gap: 0.375rem !important;
+}
+
+/* Mobile: Compact mode adjustments */
+@media (max-width: 768px) {
+  .density-compact .email-item,
+  .density-compact .email-item-wide,
+  .density-compact .email-item-compact {
+    padding: 0.5rem 0.75rem;
+    min-height: 3.5rem;
+  }
+
+  .density-compact .folder-item {
+    /* Same split-padding trick as the desktop rule above — keep the
+     * inline depth indent working on user folders. */
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+    min-height: 2.5rem;
+  }
+
+  .density-compact .mobile-fab {
+    width: 3rem !important;
+    height: 3rem !important;
+  }
+
+  .density-compact .mobile-fab .material-symbols-rounded {
+    font-size: 1.25rem !important;
+  }
+}
+
+/* ── Ambient Background Overrides ──
+ * Only target elements explicitly marked with .ambient-tint,
+ * plus the .card component class. Never target utility classes globally.
+ */
+
+.ambient-bg .ambient-tint {
+  background-color: rgb(var(--color-surface-50) / 0.55) !important;
+}
+.ambient-bg.dark .ambient-tint {
+  background-color: rgb(var(--color-surface-900) / 0.55) !important;
+}
+
+.ambient-bg .card:not(.no-ambient):not(.toast) {
+  background: linear-gradient(135deg, rgb(var(--color-primary-500) / 0.06) 0%, rgb(255 255 255 / 0.75) 60%) !important;
+  border-color: rgb(var(--color-primary-500) / 0.1) !important;
+  box-shadow: 0 1px 3px rgb(var(--color-primary-500) / 0.04);
+}
+.ambient-bg.dark .card:not(.no-ambient):not(.toast),
+.ambient-bg .dark .card:not(.no-ambient):not(.toast) {
+  background: linear-gradient(135deg, rgb(var(--color-primary-500) / 0.08) 0%, rgb(var(--color-surface-800) / 0.7) 60%) !important;
+  border-color: rgb(var(--color-primary-500) / 0.1) !important;
+  box-shadow: 0 1px 3px rgb(var(--color-primary-500) / 0.06);
+}

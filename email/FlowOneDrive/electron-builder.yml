@@ -1,0 +1,109 @@
+appId: com.flowone.drive
+productName: FlowOne Drive
+copyright: Copyright (c) 2024 FlowOne
+
+protocols:
+  - name: FlowOne
+    schemes:
+      - flowone
+
+directories:
+  output: release
+  buildResources: assets
+
+files:
+  - dist/**/*
+  - assets/**/*
+
+extraResources:
+  - from: assets/tray-iconTemplate.png
+    to: assets/tray-iconTemplate.png
+  - from: assets/tray-iconTemplate@2x.png
+    to: assets/tray-iconTemplate@2x.png
+  - from: assets/tray-icon-color.png
+    to: assets/tray-icon-color.png
+  - from: assets/tray-icon.ico
+    to: assets/tray-icon.ico
+  # Notification toast icon — must be a plain file outside asar (notifications.ts)
+  - from: assets/icon.png
+    to: assets/icon.png
+
+asar: true
+# Native binary modules must live outside asar so the OS loader can dlopen them.
+# - get-windows (Wave A.3) ships a per-platform native binary
+# - better-sqlite3 (Wave B.1) ships a prebuilt .node binding
+asarUnpack:
+  - node_modules/get-windows/**
+  - node_modules/better-sqlite3/**
+compression: normal
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: assets/icon.ico
+  artifactName: ${productName}-${version}-${arch}.${ext}
+  publisherName: FlowOne
+  signingHashAlgorithms:
+    - sha256
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  runAfterFinish: true
+
+portable:
+  artifactName: ${productName}-${version}-Portable.${ext}
+
+mac:
+  target:
+    - target: dmg
+      arch:
+        - arm64
+  icon: assets/icon.icns
+  category: public.app-category.productivity
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+
+dmg:
+  artifactName: ${productName}-${version}-${arch}.${ext}
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64
+    - target: deb
+      arch:
+        - x64
+  icon: assets/icons
+  category: Utility
+  maintainer: support@flowone.app
+
+appImage:
+  artifactName: ${productName}-${version}.${ext}
+
+deb:
+  artifactName: ${productName}-${version}-${arch}.${ext}
+  depends:
+    - libnotify4
+    - libxtst6
+    - libnss3
+
+publish:
+  provider: generic
+  url: https://updates.mailflow.app/desktop
+
+electronUpdaterCompatibility: ">= 2.16"

@@ -1,0 +1,16 @@
+# Postfix Virtual Aliases MySQL Configuration
+# Template for Fleet Manager deployment
+# Variables: {{MAIL_DB_USER}}, {{MAIL_DB_PASS}}, {{MAIL_DB_NAME}}
+#
+# This file handles email forwarding/aliases.
+# Place at: /etc/postfix/mysql-virtual-aliases.cf
+
+user = {{MAIL_DB_USER}}
+password = {{MAIL_DB_PASS}}
+hosts = 127.0.0.1
+dbname = {{MAIL_DB_NAME}}
+
+# Query returns the destination email address for forwards
+# Multiple destinations can be comma-separated in the destination field
+query = SELECT destination FROM mail_forwards WHERE source_email='%s' AND status='active'
+

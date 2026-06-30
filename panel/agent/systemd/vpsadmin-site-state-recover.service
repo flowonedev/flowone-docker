@@ -1,0 +1,40 @@
+[Unit]
+Description=FlowOne VPS Admin stuck-site recovery sweep (one-shot)
+Documentation=file:///var/www/vps-admin/agent/site-state-recover.php
+After=mariadb.service network-online.target
+Wants=mariadb.service
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+
+ExecStart=/usr/local/lsws/lsphp83/bin/php /var/www/vps-admin/agent/site-state-recover.php --json
+
+# The sweep is a couple of SELECTs plus per-row guarded UPDATEs. If a
+# pass takes longer than 60s something is badly wrong; let systemd
+# kill it so the next timer firing gets a clean slot.
+TimeoutStartSec=60
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=vpsadmin-site-state-recover
+
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+PrivateTmp=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+
+# Only network access we need is to MariaDB.
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+# Nothing to write outside the DB itself (which is via the socket).
+ReadWritePaths=
+
+LimitNOFILE=1024
+LimitNPROC=32

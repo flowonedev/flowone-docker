@@ -1,0 +1,17 @@
+{
+  "_info": {
+    "description": "Translation reference file for MailFlow landing page",
+    "languages": ["en", "hu", "ro", "de"],
+    "files": {
+      "en": "en.json",
+      "hu": "hu.json",
+      "ro": "ro.json",
+      "de": "de.json"
+    },
+    "special_characters": {
+      "hu": "áéíóöőúüű ÁÉÍÓÖŐÚÜŰ",
+      "ro": "ăâîșț ĂÂÎȘȚ",
+      "de": "äöüß ÄÖÜ"
+    }
+  }
+}

@@ -1,0 +1,27 @@
+FROM php:8.2-apache-bookworm
+
+RUN a2enmod rewrite
+
+RUN apt-get update && apt-get install -y \
+    libc-client-dev libkrb5-dev libssl-dev libonig-dev libzip-dev \
+    libpng-dev libjpeg-dev libwebp-dev libfreetype6-dev \
+    libxml2-dev libicu-dev \
+    && docker-php-ext-configure imap --with-kerberos --with-imap-ssl \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-install \
+        pdo pdo_mysql imap gd zip mbstring xml intl opcache \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+COPY apache.local.conf /etc/apache2/sites-available/000-default.conf
+
+# Live server stores user settings/data at /var/www/vps-email/data — many
+# controllers hardcode this path. Create it here so PUT /api/settings, the
+# onboarding flow, sieve sync, etc. work locally. www-data is the Apache user.
+RUN mkdir -p /var/www/vps-email/data/settings \
+ && chown -R www-data:www-data /var/www/vps-email
+
+WORKDIR /var/www/html

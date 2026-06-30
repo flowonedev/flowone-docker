@@ -1,0 +1,67 @@
+# Testing Policy
+
+## Mandatory Rule
+
+Every code change -- new feature, bug fix, or refactor -- MUST include corresponding tests.
+No change is considered complete without test coverage for the modified code paths.
+
+## When Tests Are Required
+
+- New public method in a Service or Controller -> at least one test
+- Bug fix -> regression test that would have caught the bug
+- API endpoint change -> test happy path + at least one error path (auth, validation, 404)
+- New composable or store action -> unit test reactive behavior and return values
+- Complex computed property or utility function -> unit test with edge cases
+- Refactor of existing code -> verify existing tests pass, add tests for uncovered paths
+
+## When Tests Can Be Skipped
+
+- Pure template/style-only changes with zero logic
+- Config file edits (env, vite config, tailwind config)
+- Migration SQL files (but DO test PHP code that depends on new schema)
+- Documentation-only changes
+
+## Test Locations
+
+```
+email/backend/tests/                   PHP tests (PHPUnit)
+  Unit/Services/                       Service unit tests
+  Unit/Addons/{AddonName}/             Per-addon service tests
+  Integration/Controllers/             API endpoint integration tests
+  Integration/Addons/{AddonName}/      Per-addon controller tests
+
+email/frontend/tests/                  JS/Vue tests (Vitest)
+  unit/stores/                         Pinia store tests
+  unit/composables/                    Composable tests
+  unit/utils/                          Utility function tests
+  unit/addons/{addon-name}/            Per-addon unit tests
+  component/                           Vue component tests
+  component/addons/{addon-name}/       Per-addon component tests
+```
+
+## Naming Conventions
+
+### PHP
+- File: `{ClassName}Test.php`
+- Method: `test_{methodName}_{scenario}` or `test_{methodName}_returns_{expected}_when_{condition}`
+- Example: `BoardServiceTest.php` -> `test_createBoard_returnsBoard_whenValidInput()`
+
+### JavaScript / Vue
+- File: `{fileName}.test.js`
+- Structure: `describe('{ModuleName}')` with `it('should {expected behavior}')`
+- Example: `boards.test.js` -> `describe('boards store')` -> `it('should add card to correct column')`
+
+## Test Quality Rules
+
+- Tests must be independent -- no shared mutable state between tests
+- Tests must be deterministic -- no reliance on time, random, or external services
+- Mock external dependencies (API calls, database, Redis, filesystem)
+- Each test should test ONE behavior
+- Use descriptive test names that explain the scenario, not the implementation
+
+## Self-Check Before Finishing Any Task
+
+1. Did I add or modify a public method? -> Write a test
+2. Did I fix a bug? -> Write a regression test
+3. Did I refactor? -> Ensure existing tests still pass
+4. Could this break in production without tests catching it? -> Add more tests

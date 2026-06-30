@@ -1,0 +1,73 @@
+[Unit]
+Description=FlowOne Reclaim Daemon (Phase 6c — proactive tier-down under budget pressure)
+Documentation=file:///var/www/shared/docs/INVARIANTS.md
+After=flowone-storage-monitord.service mariadb.service network-online.target
+Wants=flowone-storage-monitord.service mariadb.service
+
+[Service]
+Type=simple
+# Same dedicated unprivileged user as the monitor daemon. Performs no
+# privileged operations — every mount/recovery action goes through the
+# storage-helper socket. Needs read+write on /mnt/nas-drive (tier-down
+# writes) and /var/www/vps-email/storage/drive (source bytes).
+User=flowone-storage
+Group=flowone-storage
+ExecStart=/usr/local/lsws/lsphp83/bin/php /var/www/shared/bin/reclaim-daemon.php
+
+# The daemon refuses to enter the loop when the kill switch is off;
+# under that condition it exits 0. Setting Restart=on-failure means
+# systemd will NOT thrash-restart it when the flag is off — only when
+# the daemon actually crashes.
+Restart=on-failure
+RestartSec=10
+
+# ─── Sandbox (mirrors flowone-storage-monitord.service) ───
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectProc=invisible
+ProcSubset=pid
+LockPersonality=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+SystemCallArchitectures=native
+
+# Writes:
+#   /var/log/flowone        — journal entries
+#   /var/lib/flowone        — daemon state file + pid file + per-file tier locks
+#   /mnt/nas-drive          — tier-down destination (and sweep deletes here)
+#   /var/www/vps-email/storage/drive — source files (we don't write here per se,
+#                                     but PHP needs the dir RW-accessible to fopen()
+#                                     and the destructive sweep deletes shadow copies)
+ReadWritePaths=/var/log/flowone /var/lib/flowone /mnt/nas-drive /var/www/vps-email/storage/drive
+ReadOnlyPaths=/etc/flowone /var/www/vps-email/backend/src/config.php
+
+# Networking: AF_UNIX (helper socket) + AF_INET (MySQL).
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+# Seccomp — same allowlist the monitor uses. PHP CLI needs lots of
+# syscalls across versions; defence-in-depth lives in the application
+# layer.
+SystemCallFilter=@system-service
+SystemCallFilter=~@debug @cpu-emulation @keyring @mount @obsolete @raw-io @reboot @swap @module
+
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+LimitNOFILE=4096
+LimitNPROC=64
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=flowone-reclaim-daemon
+
+[Install]
+WantedBy=multi-user.target

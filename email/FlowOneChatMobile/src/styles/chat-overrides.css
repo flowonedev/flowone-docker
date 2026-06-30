@@ -1,0 +1,41 @@
+/*
+ * Chat app style overrides.
+ *
+ * The chat app imports the SHARED frontend stylesheet
+ * (`@/assets/styles/main.css`, i.e. email/frontend/src/assets/styles/main.css)
+ * so it never drifts from the real app — every Drive/email/global style fix
+ * flows in automatically. This file holds ONLY the deliberate chat deltas.
+ *
+ * These rules are intentionally unlayered (no @layer), so they win over the
+ * shared sheet's @layer rules regardless of source order, and they are loaded
+ * AFTER the shared sheet in main.js so they also beat any unlayered rules.
+ */
+
+/* ── Ambient background: lighter on mobile ──
+ * The full app uses big, heavily-blurred blobs (blur 140px, 600px wide). On a
+ * phone GPU that thrashes compositing, so the chat app uses smaller, lighter
+ * blobs with paint containment. */
+.ambient-blob {
+  filter: blur(70px);
+  contain: strict;
+  transform: translateZ(0);
+  opacity: 0.10;
+}
+.dark .ambient-blob {
+  opacity: 0.12;
+}
+.ambient-blob-1 { width: 420px; height: 420px; }
+.ambient-blob-2 { width: 360px; height: 360px; }
+.ambient-blob-3 { width: 280px; height: 280px; }
+
+/* ── Mobile FAB: sit just above the chat app's 2-item bottom nav ──
+ * The full app's nav is taller (more items + todo bar) so it parks the FAB at
+ * 9.2rem / 6.5rem. The chat app's slimmer nav only needs ~5.3rem of clearance. */
+.mobile-fab {
+  bottom: 5.3rem !important;
+}
+@supports (padding: env(safe-area-inset-bottom)) {
+  .mobile-fab {
+    bottom: calc(5.3rem + env(safe-area-inset-bottom)) !important;
+  }
+}

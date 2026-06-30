@@ -1,0 +1,187 @@
+{
+  "HU": [
+    {"id": "hu_index", "region": "HU", "name": "Index – 24óra", "feed_url": "https://index.hu/24ora/rss/", "site_url": "https://index.hu", "default_category": "news"},
+    {"id": "hu_telex", "region": "HU", "name": "Telex", "feed_url": "https://telex.hu/rss", "site_url": "https://telex.hu", "default_category": "news"},
+    {"id": "hu_444", "region": "HU", "name": "444", "feed_url": "https://444.hu/feed", "site_url": "https://444.hu", "default_category": "news"},
+    {"id": "hu_hvg", "region": "HU", "name": "hvg.hu", "feed_url": "https://hvg.hu/rss", "site_url": "https://hvg.hu", "default_category": "news"},
+    {"id": "hu_24", "region": "HU", "name": "24.hu", "feed_url": "https://24.hu/feed/", "site_url": "https://24.hu", "default_category": "news"},
+    {"id": "hu_origo", "region": "HU", "name": "Origo", "feed_url": "https://www.origo.hu/rss", "site_url": "https://origo.hu", "default_category": "news"},
+    {"id": "hu_mno", "region": "HU", "name": "Magyar Nemzet", "feed_url": "https://magyarnemzet.hu/feed", "site_url": "https://magyarnemzet.hu", "default_category": "news"},
+    {"id": "hu_blikk", "region": "HU", "name": "Blikk", "feed_url": "https://www.blikk.hu/rss", "site_url": "https://blikk.hu", "default_category": "news"},
+    {"id": "hu_atlatszo", "region": "HU", "name": "Átlátszó", "feed_url": "https://atlatszo.hu/feed/", "site_url": "https://atlatszo.hu", "default_category": "news"},
+    {"id": "hu_24nyugat", "region": "HU", "name": "24.hu Nyugat", "feed_url": "https://24.hu/category/kulfold/feed/", "site_url": "https://24.hu/kulfold", "default_category": "world"},
+
+    {"id": "hu_portfolio", "region": "HU", "name": "Portfolio", "feed_url": "https://www.portfolio.hu/rss/all.xml", "site_url": "https://portfolio.hu", "default_category": "business"},
+    {"id": "hu_napi", "region": "HU", "name": "Napi.hu", "feed_url": "https://www.napi.hu/rss", "site_url": "https://napi.hu", "default_category": "business"},
+    {"id": "hu_privatbankar", "region": "HU", "name": "Privátbankár", "feed_url": "https://privatbankar.hu/rss", "site_url": "https://privatbankar.hu", "default_category": "business"},
+    {"id": "hu_mfor", "region": "HU", "name": "Mfor", "feed_url": "https://mfor.hu/cikk/rss.xml", "site_url": "https://mfor.hu", "default_category": "business"},
+
+    {"id": "hu_hwsw", "region": "HU", "name": "HWSW", "feed_url": "https://www.hwsw.hu/rss/all.xml", "site_url": "https://hwsw.hu", "default_category": "tech"},
+    {"id": "hu_itcafe", "region": "HU", "name": "IT Café", "feed_url": "https://itcafe.hu/rss/news.xml", "site_url": "https://itcafe.hu", "default_category": "tech"},
+    {"id": "hu_pcworld", "region": "HU", "name": "PC World HU", "feed_url": "https://pcworld.hu/rss", "site_url": "https://pcworld.hu", "default_category": "tech"},
+    {"id": "hu_sg", "region": "HU", "name": "SG.hu", "feed_url": "https://sg.hu/rss/all.xml", "site_url": "https://sg.hu", "default_category": "tech"},
+
+    {"id": "hu_nemzetisport", "region": "HU", "name": "Nemzeti Sport", "feed_url": "https://www.nemzetisport.hu/rss", "site_url": "https://nemzetisport.hu", "default_category": "sports"},
+    {"id": "hu_csakfoci", "region": "HU", "name": "Csakfoci", "feed_url": "https://www.csakfoci.hu/rss", "site_url": "https://csakfoci.hu", "default_category": "sports"},
+
+    {"id": "hu_qubit", "region": "HU", "name": "Qubit", "feed_url": "https://qubit.hu/rss", "site_url": "https://qubit.hu", "default_category": "science"},
+
+    {"id": "hu_filmvilag", "region": "HU", "name": "Filmvilág", "feed_url": "https://www.filmvilag.hu/rss/", "site_url": "https://filmvilag.hu", "default_category": "culture"},
+    {"id": "hu_velvet", "region": "HU", "name": "Velvet", "feed_url": "https://velvet.hu/24ora/rss/", "site_url": "https://velvet.hu", "default_category": "culture"}
+  ],
+
+  "EN": [
+    {"id": "en_bbc", "region": "EN", "name": "BBC News", "feed_url": "https://feeds.bbci.co.uk/news/rss.xml", "site_url": "https://bbc.com/news", "default_category": "news"},
+    {"id": "en_bbc_world", "region": "EN", "name": "BBC World", "feed_url": "https://feeds.bbci.co.uk/news/world/rss.xml", "site_url": "https://bbc.com/news/world", "default_category": "world"},
+    {"id": "en_guardian", "region": "EN", "name": "The Guardian – World", "feed_url": "https://www.theguardian.com/world/rss", "site_url": "https://theguardian.com", "default_category": "world"},
+    {"id": "en_guardian_uk", "region": "EN", "name": "The Guardian – UK", "feed_url": "https://www.theguardian.com/uk-news/rss", "site_url": "https://theguardian.com/uk-news", "default_category": "news"},
+    {"id": "en_aljazeera", "region": "EN", "name": "Al Jazeera", "feed_url": "https://www.aljazeera.com/xml/rss/all.xml", "site_url": "https://aljazeera.com", "default_category": "world"},
+    {"id": "en_sky", "region": "EN", "name": "Sky News", "feed_url": "https://feeds.skynews.com/feeds/rss/home.xml", "site_url": "https://news.sky.com", "default_category": "news"},
+    {"id": "en_economist", "region": "EN", "name": "The Economist – World", "feed_url": "https://www.economist.com/the-world-this-week/rss.xml", "site_url": "https://economist.com", "default_category": "world"},
+    {"id": "en_dw", "region": "EN", "name": "Deutsche Welle", "feed_url": "https://rss.dw.com/rdf/rss-en-all", "site_url": "https://dw.com/en", "default_category": "world"},
+    {"id": "en_france24", "region": "EN", "name": "France 24", "feed_url": "https://www.france24.com/en/rss", "site_url": "https://france24.com/en", "default_category": "world"},
+
+    {"id": "en_verge", "region": "EN", "name": "The Verge", "feed_url": "https://www.theverge.com/rss/index.xml", "site_url": "https://theverge.com", "default_category": "tech"},
+    {"id": "en_hn", "region": "EN", "name": "Hacker News", "feed_url": "https://hnrss.org/frontpage", "site_url": "https://news.ycombinator.com", "default_category": "tech"},
+    {"id": "en_tc", "region": "EN", "name": "TechCrunch", "feed_url": "https://techcrunch.com/feed/", "site_url": "https://techcrunch.com", "default_category": "tech"},
+    {"id": "en_ars", "region": "EN", "name": "Ars Technica", "feed_url": "https://feeds.arstechnica.com/arstechnica/index", "site_url": "https://arstechnica.com", "default_category": "tech"},
+    {"id": "en_wired", "region": "EN", "name": "Wired", "feed_url": "https://www.wired.com/feed/rss", "site_url": "https://wired.com", "default_category": "tech"},
+    {"id": "en_engadget", "region": "EN", "name": "Engadget", "feed_url": "https://www.engadget.com/rss.xml", "site_url": "https://engadget.com", "default_category": "tech"},
+    {"id": "en_mit", "region": "EN", "name": "MIT Technology Review", "feed_url": "https://www.technologyreview.com/feed/", "site_url": "https://technologyreview.com", "default_category": "tech"},
+    {"id": "en_404", "region": "EN", "name": "404 Media", "feed_url": "https://www.404media.co/rss/", "site_url": "https://404media.co", "default_category": "tech"},
+    {"id": "en_register", "region": "EN", "name": "The Register", "feed_url": "https://www.theregister.com/headlines.atom", "site_url": "https://theregister.com", "default_category": "tech"},
+
+    {"id": "en_bbc_business", "region": "EN", "name": "BBC Business", "feed_url": "https://feeds.bbci.co.uk/news/business/rss.xml", "site_url": "https://bbc.com/business", "default_category": "business"},
+    {"id": "en_guardian_business", "region": "EN", "name": "Guardian Business", "feed_url": "https://www.theguardian.com/uk/business/rss", "site_url": "https://theguardian.com/uk/business", "default_category": "business"},
+    {"id": "en_ft_companies", "region": "EN", "name": "FT Companies", "feed_url": "https://www.ft.com/companies?format=rss", "site_url": "https://ft.com", "default_category": "business"},
+
+    {"id": "en_bbc_sport", "region": "EN", "name": "BBC Sport", "feed_url": "https://www.bbc.com/sport/rss.xml", "site_url": "https://bbc.com/sport", "default_category": "sports"},
+    {"id": "en_skysport", "region": "EN", "name": "Sky Sports", "feed_url": "https://www.skysports.com/rss/0,20514,11661,00.xml", "site_url": "https://skysports.com", "default_category": "sports"},
+
+    {"id": "en_atlantic", "region": "EN", "name": "The Atlantic", "feed_url": "https://www.theatlantic.com/feed/all/", "site_url": "https://theatlantic.com", "default_category": "culture"},
+    {"id": "en_newyorker", "region": "EN", "name": "The New Yorker", "feed_url": "https://www.newyorker.com/feed/everything", "site_url": "https://newyorker.com", "default_category": "culture"},
+    {"id": "en_pitchfork", "region": "EN", "name": "Pitchfork", "feed_url": "https://pitchfork.com/rss/news/", "site_url": "https://pitchfork.com", "default_category": "culture"},
+
+    {"id": "en_newscientist", "region": "EN", "name": "New Scientist", "feed_url": "https://www.newscientist.com/feed/home/", "site_url": "https://newscientist.com", "default_category": "science"},
+    {"id": "en_nature", "region": "EN", "name": "Nature", "feed_url": "https://www.nature.com/nature.rss", "site_url": "https://nature.com", "default_category": "science"},
+    {"id": "en_sciam", "region": "EN", "name": "Scientific American", "feed_url": "https://rss.sciam.com/ScientificAmerican-Global", "site_url": "https://scientificamerican.com", "default_category": "science"},
+    {"id": "en_quanta", "region": "EN", "name": "Quanta Magazine", "feed_url": "https://www.quantamagazine.org/feed/", "site_url": "https://quantamagazine.org", "default_category": "science"},
+
+    {"id": "en_polygon", "region": "EN", "name": "Polygon", "feed_url": "https://www.polygon.com/rss/index.xml", "site_url": "https://polygon.com", "default_category": "gaming"},
+    {"id": "en_ign", "region": "EN", "name": "IGN", "feed_url": "https://feeds.feedburner.com/ign/games-all", "site_url": "https://ign.com", "default_category": "gaming"},
+    {"id": "en_eurogamer", "region": "EN", "name": "Eurogamer", "feed_url": "https://www.eurogamer.net/feed", "site_url": "https://eurogamer.net", "default_category": "gaming"},
+
+    {"id": "en_variety", "region": "EN", "name": "Variety", "feed_url": "https://variety.com/feed/", "site_url": "https://variety.com", "default_category": "entertainment"},
+    {"id": "en_thr", "region": "EN", "name": "Hollywood Reporter", "feed_url": "https://www.hollywoodreporter.com/feed/", "site_url": "https://hollywoodreporter.com", "default_category": "entertainment"},
+
+    {"id": "en_dezeen", "region": "EN", "name": "Dezeen", "feed_url": "https://www.dezeen.com/feed/", "site_url": "https://dezeen.com", "default_category": "design"},
+    {"id": "en_designboom", "region": "EN", "name": "designboom", "feed_url": "https://www.designboom.com/feed/", "site_url": "https://designboom.com", "default_category": "design"},
+    {"id": "en_smashing", "region": "EN", "name": "Smashing Magazine", "feed_url": "https://www.smashingmagazine.com/feed/", "site_url": "https://smashingmagazine.com", "default_category": "design"},
+
+    {"id": "en_lifehacker", "region": "EN", "name": "Lifehacker", "feed_url": "https://lifehacker.com/feed/rss", "site_url": "https://lifehacker.com", "default_category": "lifestyle"},
+    {"id": "en_bonappetit", "region": "EN", "name": "Bon Appétit", "feed_url": "https://www.bonappetit.com/feed/rss", "site_url": "https://bonappetit.com", "default_category": "food"},
+    {"id": "en_seriouseats", "region": "EN", "name": "Serious Eats", "feed_url": "https://www.seriouseats.com/feed", "site_url": "https://seriouseats.com", "default_category": "food"},
+
+    {"id": "en_coindesk", "region": "EN", "name": "CoinDesk", "feed_url": "https://www.coindesk.com/arc/outboundfeeds/rss/?outputType=xml", "site_url": "https://coindesk.com", "default_category": "crypto"},
+    {"id": "en_decrypt", "region": "EN", "name": "Decrypt", "feed_url": "https://decrypt.co/feed", "site_url": "https://decrypt.co", "default_category": "crypto"},
+    {"id": "en_cointelegraph", "region": "EN", "name": "Cointelegraph", "feed_url": "https://cointelegraph.com/rss", "site_url": "https://cointelegraph.com", "default_category": "crypto"},
+    {"id": "en_theblock", "region": "EN", "name": "The Block", "feed_url": "https://www.theblock.co/rss.xml", "site_url": "https://theblock.co", "default_category": "crypto"},
+    {"id": "en_bitcoinmagazine", "region": "EN", "name": "Bitcoin Magazine", "feed_url": "https://bitcoinmagazine.com/.rss/full/", "site_url": "https://bitcoinmagazine.com", "default_category": "crypto"},
+
+    {"id": "en_aibase", "region": "EN", "name": "Google AI Blog", "feed_url": "https://blog.google/technology/ai/rss/", "site_url": "https://blog.google/technology/ai", "default_category": "ai"},
+    {"id": "en_openai", "region": "EN", "name": "OpenAI Blog", "feed_url": "https://openai.com/blog/rss.xml", "site_url": "https://openai.com/blog", "default_category": "ai"},
+    {"id": "en_anthropic", "region": "EN", "name": "Anthropic News", "feed_url": "https://www.anthropic.com/news/rss.xml", "site_url": "https://anthropic.com/news", "default_category": "ai"},
+    {"id": "en_aitrends", "region": "EN", "name": "AI News", "feed_url": "https://www.artificialintelligence-news.com/feed/", "site_url": "https://artificialintelligence-news.com", "default_category": "ai"},
+    {"id": "en_marktechpost", "region": "EN", "name": "MarkTechPost", "feed_url": "https://www.marktechpost.com/feed/", "site_url": "https://marktechpost.com", "default_category": "ai"},
+
+    {"id": "en_investopedia", "region": "EN", "name": "Investopedia", "feed_url": "https://www.investopedia.com/feedbuilder/feed/getfeed?feedName=rss_articles", "site_url": "https://investopedia.com", "default_category": "money"},
+    {"id": "en_themotleyfool", "region": "EN", "name": "Motley Fool", "feed_url": "https://www.fool.com/feeds/index.aspx", "site_url": "https://fool.com", "default_category": "money"},
+    {"id": "en_kiplinger", "region": "EN", "name": "Kiplinger", "feed_url": "https://www.kiplinger.com/feeds/all", "site_url": "https://kiplinger.com", "default_category": "money"},
+    {"id": "en_zerohedge", "region": "EN", "name": "ZeroHedge", "feed_url": "https://feeds.feedburner.com/zerohedge/feed", "site_url": "https://zerohedge.com", "default_category": "money"},
+
+    {"id": "en_natgeo", "region": "EN", "name": "National Geographic", "feed_url": "https://www.nationalgeographic.com/pages/topic/latest-stories.rss", "site_url": "https://nationalgeographic.com", "default_category": "science"},
+    {"id": "en_spacenews", "region": "EN", "name": "SpaceNews", "feed_url": "https://spacenews.com/feed/", "site_url": "https://spacenews.com", "default_category": "space"},
+    {"id": "en_spacecom", "region": "EN", "name": "Space.com", "feed_url": "https://www.space.com/feeds/all", "site_url": "https://space.com", "default_category": "space"},
+    {"id": "en_nasa", "region": "EN", "name": "NASA Breaking", "feed_url": "https://www.nasa.gov/news-release/feed/", "site_url": "https://nasa.gov/news", "default_category": "space"},
+
+    {"id": "en_treehugger", "region": "EN", "name": "Treehugger", "feed_url": "https://www.treehugger.com/feeds/latest", "site_url": "https://treehugger.com", "default_category": "climate"},
+    {"id": "en_carbon_brief", "region": "EN", "name": "Carbon Brief", "feed_url": "https://www.carbonbrief.org/feed", "site_url": "https://carbonbrief.org", "default_category": "climate"},
+    {"id": "en_grist", "region": "EN", "name": "Grist", "feed_url": "https://grist.org/feed/", "site_url": "https://grist.org", "default_category": "climate"},
+
+    {"id": "en_statnews", "region": "EN", "name": "STAT", "feed_url": "https://www.statnews.com/feed/", "site_url": "https://statnews.com", "default_category": "health"},
+    {"id": "en_medicalnewstoday", "region": "EN", "name": "Medical News Today", "feed_url": "https://www.medicalnewstoday.com/newsfeeds/all-news.xml", "site_url": "https://medicalnewstoday.com", "default_category": "health"},
+    {"id": "en_healthline", "region": "EN", "name": "Healthline", "feed_url": "https://www.healthline.com/rss/all-news", "site_url": "https://healthline.com", "default_category": "health"},
+
+    {"id": "en_motor1", "region": "EN", "name": "Motor1", "feed_url": "https://www.motor1.com/rss/articles/all/", "site_url": "https://motor1.com", "default_category": "auto"},
+    {"id": "en_caranddriver", "region": "EN", "name": "Car and Driver", "feed_url": "https://www.caranddriver.com/rss/all.xml", "site_url": "https://caranddriver.com", "default_category": "auto"},
+    {"id": "en_jalopnik", "region": "EN", "name": "Jalopnik", "feed_url": "https://jalopnik.com/rss", "site_url": "https://jalopnik.com", "default_category": "auto"},
+
+    {"id": "en_lonelyplanet", "region": "EN", "name": "Lonely Planet", "feed_url": "https://www.lonelyplanet.com/news/feed/atom/", "site_url": "https://lonelyplanet.com", "default_category": "travel"},
+    {"id": "en_nomadicmatt", "region": "EN", "name": "Nomadic Matt", "feed_url": "https://www.nomadicmatt.com/feed/", "site_url": "https://nomadicmatt.com", "default_category": "travel"}
+  ],
+
+  "US": [
+    {"id": "us_nyt", "region": "US", "name": "NYT – Home", "feed_url": "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml", "site_url": "https://nytimes.com", "default_category": "news"},
+    {"id": "us_nyt_world", "region": "US", "name": "NYT – World", "feed_url": "https://rss.nytimes.com/services/xml/rss/nyt/World.xml", "site_url": "https://nytimes.com/section/world", "default_category": "world"},
+    {"id": "us_nyt_us", "region": "US", "name": "NYT – US", "feed_url": "https://rss.nytimes.com/services/xml/rss/nyt/US.xml", "site_url": "https://nytimes.com/section/us", "default_category": "news"},
+    {"id": "us_nyt_tech", "region": "US", "name": "NYT – Technology", "feed_url": "https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml", "site_url": "https://nytimes.com/section/technology", "default_category": "tech"},
+    {"id": "us_nyt_business", "region": "US", "name": "NYT – Business", "feed_url": "https://rss.nytimes.com/services/xml/rss/nyt/Business.xml", "site_url": "https://nytimes.com/section/business", "default_category": "business"},
+    {"id": "us_nyt_sports", "region": "US", "name": "NYT – Sports", "feed_url": "https://rss.nytimes.com/services/xml/rss/nyt/Sports.xml", "site_url": "https://nytimes.com/section/sports", "default_category": "sports"},
+    {"id": "us_nyt_opinion", "region": "US", "name": "NYT – Opinion", "feed_url": "https://rss.nytimes.com/services/xml/rss/nyt/Opinion.xml", "site_url": "https://nytimes.com/section/opinion", "default_category": "culture"},
+
+    {"id": "us_wapo", "region": "US", "name": "Washington Post – World", "feed_url": "https://feeds.washingtonpost.com/rss/world", "site_url": "https://washingtonpost.com/world", "default_category": "world"},
+    {"id": "us_wapo_tech", "region": "US", "name": "Washington Post – Tech", "feed_url": "https://feeds.washingtonpost.com/rss/business/technology", "site_url": "https://washingtonpost.com/business/technology", "default_category": "tech"},
+    {"id": "us_wapo_politics", "region": "US", "name": "Washington Post – Politics", "feed_url": "https://feeds.washingtonpost.com/rss/politics", "site_url": "https://washingtonpost.com/politics", "default_category": "politics"},
+
+    {"id": "us_cnn", "region": "US", "name": "CNN – Top Stories", "feed_url": "http://rss.cnn.com/rss/cnn_topstories.rss", "site_url": "https://cnn.com", "default_category": "news"},
+    {"id": "us_cnn_world", "region": "US", "name": "CNN – World", "feed_url": "http://rss.cnn.com/rss/cnn_world.rss", "site_url": "https://cnn.com/world", "default_category": "world"},
+    {"id": "us_cnn_tech", "region": "US", "name": "CNN – Tech", "feed_url": "http://rss.cnn.com/rss/cnn_tech.rss", "site_url": "https://cnn.com/business/tech", "default_category": "tech"},
+
+    {"id": "us_npr", "region": "US", "name": "NPR – News", "feed_url": "https://feeds.npr.org/1001/rss.xml", "site_url": "https://npr.org", "default_category": "news"},
+    {"id": "us_npr_tech", "region": "US", "name": "NPR – Technology", "feed_url": "https://feeds.npr.org/1019/rss.xml", "site_url": "https://npr.org/sections/technology", "default_category": "tech"},
+    {"id": "us_npr_world", "region": "US", "name": "NPR – World", "feed_url": "https://feeds.npr.org/1004/rss.xml", "site_url": "https://npr.org/sections/world", "default_category": "world"},
+
+    {"id": "us_ap", "region": "US", "name": "AP – Top News", "feed_url": "https://feeds.apnews.com/apf-topnews", "site_url": "https://apnews.com", "default_category": "news"},
+    {"id": "us_usatoday", "region": "US", "name": "USA Today", "feed_url": "https://rssfeeds.usatoday.com/usatoday-NewsTopStories", "site_url": "https://usatoday.com", "default_category": "news"},
+    {"id": "us_axios", "region": "US", "name": "Axios", "feed_url": "https://api.axios.com/feed/", "site_url": "https://axios.com", "default_category": "news"},
+
+    {"id": "us_politico", "region": "US", "name": "Politico", "feed_url": "https://www.politico.com/rss/politicopicks.xml", "site_url": "https://politico.com", "default_category": "politics"},
+    {"id": "us_thehill", "region": "US", "name": "The Hill", "feed_url": "https://thehill.com/feed/", "site_url": "https://thehill.com", "default_category": "politics"},
+
+    {"id": "us_bloomberg", "region": "US", "name": "Bloomberg Markets", "feed_url": "https://feeds.bloomberg.com/markets/news.rss", "site_url": "https://bloomberg.com/markets", "default_category": "business"},
+    {"id": "us_wsj_world", "region": "US", "name": "WSJ – World News", "feed_url": "https://feeds.a.dj.com/rss/RSSWorldNews.xml", "site_url": "https://wsj.com/news/world", "default_category": "world"},
+    {"id": "us_marketwatch", "region": "US", "name": "MarketWatch", "feed_url": "https://feeds.content.dowjones.io/public/rss/mw_topstories", "site_url": "https://marketwatch.com", "default_category": "business"},
+    {"id": "us_cnbc", "region": "US", "name": "CNBC – Top News", "feed_url": "https://www.cnbc.com/id/100003114/device/rss/rss.html", "site_url": "https://cnbc.com", "default_category": "business"},
+
+    {"id": "us_atlantic", "region": "US", "name": "The Atlantic", "feed_url": "https://www.theatlantic.com/feed/all/", "site_url": "https://theatlantic.com", "default_category": "culture"},
+    {"id": "us_vox", "region": "US", "name": "Vox", "feed_url": "https://www.vox.com/rss/index.xml", "site_url": "https://vox.com", "default_category": "news"},
+    {"id": "us_slate", "region": "US", "name": "Slate", "feed_url": "https://slate.com/feeds/all.rss", "site_url": "https://slate.com", "default_category": "culture"},
+
+    {"id": "us_espn", "region": "US", "name": "ESPN – Top", "feed_url": "https://www.espn.com/espn/rss/news", "site_url": "https://espn.com", "default_category": "sports"},
+    {"id": "us_espn_nba", "region": "US", "name": "ESPN – NBA", "feed_url": "https://www.espn.com/espn/rss/nba/news", "site_url": "https://espn.com/nba", "default_category": "sports"},
+    {"id": "us_espn_nfl", "region": "US", "name": "ESPN – NFL", "feed_url": "https://www.espn.com/espn/rss/nfl/news", "site_url": "https://espn.com/nfl", "default_category": "sports"},
+    {"id": "us_bleacher", "region": "US", "name": "Bleacher Report", "feed_url": "https://syndication.bleacherreport.com/amp/articles.rss", "site_url": "https://bleacherreport.com", "default_category": "sports"}
+  ],
+  "VIDEO": [
+    {"id": "yt_mkbhd", "region": "EN", "name": "Marques Brownlee (MKBHD)", "feed_url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCBJycsmduvYEL83R_U4JriQ", "site_url": "https://www.youtube.com/@mkbhd", "default_category": "videos", "kind": "video"},
+    {"id": "yt_lttech", "region": "EN", "name": "Linus Tech Tips", "feed_url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCXuqSBlHAE6Xw-yeJA0Tunw", "site_url": "https://www.youtube.com/@LinusTechTips", "default_category": "videos", "kind": "video"},
+    {"id": "yt_verge", "region": "EN", "name": "The Verge", "feed_url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCddiUEpeqJcYeBxX1IVBKvQ", "site_url": "https://www.youtube.com/@TheVerge", "default_category": "videos", "kind": "video"},
+    {"id": "yt_engadget", "region": "EN", "name": "Engadget", "feed_url": "https://www.youtube.com/feeds/videos.xml?channel_id=UC-6OW5aJYBFM33zXQlBKPNA", "site_url": "https://www.youtube.com/@engadget", "default_category": "videos", "kind": "video"},
+    {"id": "yt_veritasium", "region": "EN", "name": "Veritasium", "feed_url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCHnyfMqiRRG1u-2MsSQLbXA", "site_url": "https://www.youtube.com/@veritasium", "default_category": "videos", "kind": "video"},
+    {"id": "yt_vsauce", "region": "EN", "name": "Vsauce", "feed_url": "https://www.youtube.com/feeds/videos.xml?channel_id=UC6nSFpj9HTCZ5t-N3Rm3-HA", "site_url": "https://www.youtube.com/@Vsauce", "default_category": "videos", "kind": "video"},
+    {"id": "yt_kurzgesagt", "region": "EN", "name": "Kurzgesagt – In a Nutshell", "feed_url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCsXVk37bltHxD1rDPwtNM8Q", "site_url": "https://www.youtube.com/@kurzgesagt", "default_category": "videos", "kind": "video"},
+    {"id": "yt_3blue1brown", "region": "EN", "name": "3Blue1Brown", "feed_url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCYO_jab_esuFRV4b17AJtAw", "site_url": "https://www.youtube.com/@3blue1brown", "default_category": "videos", "kind": "video"},
+    {"id": "yt_fireship", "region": "EN", "name": "Fireship", "feed_url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCsBjURrPoezykLs9EqgamOA", "site_url": "https://www.youtube.com/@Fireship", "default_category": "videos", "kind": "video"},
+    {"id": "yt_techlinked", "region": "EN", "name": "TechLinked", "feed_url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCeeFfhMcJa1kjtfZAGskOCA", "site_url": "https://www.youtube.com/@TechLinked", "default_category": "videos", "kind": "video"},
+    {"id": "yt_coldfusion", "region": "EN", "name": "ColdFusion", "feed_url": "https://www.youtube.com/feeds/videos.xml?channel_id=UC4QZ_LsYcvcq7qOsOhpAX4A", "site_url": "https://www.youtube.com/@ColdFusion", "default_category": "videos", "kind": "video"},
+    {"id": "yt_nasa", "region": "EN", "name": "NASA", "feed_url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCLA_DiR1FfKNvjuUpBHmylQ", "site_url": "https://www.youtube.com/@NASA", "default_category": "videos", "kind": "video"},
+    {"id": "yt_natgeo", "region": "EN", "name": "National Geographic", "feed_url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCpVm7bg6pXKo1Pr6k5kxG9A", "site_url": "https://www.youtube.com/@NatGeo", "default_category": "videos", "kind": "video"},
+    {"id": "yt_bloomberg", "region": "EN", "name": "Bloomberg Originals", "feed_url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCUMZ7gohGI9HcU9VNsr2FJQ", "site_url": "https://www.youtube.com/@business", "default_category": "videos", "kind": "video"},
+    {"id": "yt_wsj", "region": "EN", "name": "Wall Street Journal", "feed_url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCK7tptUDHh-RYDsdxO1-5QQ", "site_url": "https://www.youtube.com/@wsj", "default_category": "videos", "kind": "video"},
+    {"id": "yt_vox", "region": "EN", "name": "Vox", "feed_url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCLXo7UDZvByw2ixzpQCufnA", "site_url": "https://www.youtube.com/@Vox", "default_category": "videos", "kind": "video"},
+    {"id": "yt_johnnyharris", "region": "EN", "name": "Johnny Harris", "feed_url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCmGSJVG3mCRXVOP4yZrU1Dw", "site_url": "https://www.youtube.com/@johnnyharris", "default_category": "videos", "kind": "video"},
+    {"id": "yt_polymatter", "region": "EN", "name": "PolyMatter", "feed_url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCgNg3vwj3xt7QOrcIDaHdFg", "site_url": "https://www.youtube.com/@PolyMatter", "default_category": "videos", "kind": "video"},
+    {"id": "yt_cleoabram", "region": "EN", "name": "Cleo Abram", "feed_url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCZpNX5RWFt1lx_pYMVq8-9g", "site_url": "https://www.youtube.com/@CleoAbram", "default_category": "videos", "kind": "video"},
+    {"id": "yt_twominutepapers", "region": "EN", "name": "Two Minute Papers", "feed_url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCbfYPyITQ-7l4upoX8nvctg", "site_url": "https://www.youtube.com/@TwoMinutePapers", "default_category": "videos", "kind": "video"}
+  ]
+}

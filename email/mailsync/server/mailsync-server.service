@@ -1,0 +1,27 @@
+[Unit]
+Description=Mail Sync WebSocket Server
+After=network.target redis.service dovecot.service
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/var/www/vps-email/mailsync/server
+ExecStart=/usr/bin/node src/index.js
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mailsync-server
+
+# Security
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/vps-email/mailsync/server
+
+[Install]
+WantedBy=multi-user.target
+

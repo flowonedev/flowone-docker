@@ -1,0 +1,23 @@
+{
+  "name": "collab-server",
+  "version": "1.0.0",
+  "description": "Hocuspocus WebSocket server for real-time collaborative editing",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "@hocuspocus/extension-logger": "^2.13.0",
+    "@hocuspocus/server": "^2.13.0",
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.6.0",
+    "yjs": "^13.6.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,639 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-bg: 250 250 250;
+    --color-surface: 255 255 255;
+    --color-text: 24 24 27;
+    --color-text-muted: 113 113 122;
+    --color-border: 228 228 231;
+    --color-primary: 34 197 94;
+    --color-primary-hover: 22 163 74;
+  }
+
+  .dark {
+    --color-bg: 18 18 22;
+    --color-surface: 28 28 34;
+    --color-surface-elevated: 38 38 46;
+    --color-surface-hover: 48 48 58;
+    --color-text: 240 240 245;
+    --color-text-muted: 145 145 158;
+    --color-border: 50 50 62;
+    --color-border-strong: 70 70 85;
+    --color-primary: 52 211 116;
+    --color-primary-hover: 74 222 128;
+  }
+
+  body {
+    @apply bg-surface-50 dark:bg-surface-900 text-surface-900 dark:text-surface-100;
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-surface-300 dark:bg-surface-600 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-surface-400 dark:bg-surface-500;
+  }
+}
+
+@layer components {
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 
+           font-medium text-sm rounded-pill transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-offset-2 
+           dark:focus:ring-offset-surface-900
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary-500 text-white 
+           hover:bg-primary-600 active:bg-primary-700
+           focus:ring-primary-500;
+  }
+
+  .btn-secondary {
+    @apply btn bg-surface-200 dark:bg-[rgb(var(--color-surface-elevated))]
+           text-surface-700 dark:text-surface-100
+           hover:bg-surface-300 dark:hover:bg-[rgb(var(--color-surface-hover))]
+           border border-transparent dark:border-[rgb(var(--color-border))]
+           focus:ring-surface-400;
+  }
+
+  .btn-danger {
+    @apply btn bg-red-500 text-white 
+           hover:bg-red-600 active:bg-red-700
+           focus:ring-red-500;
+  }
+
+  .btn-ghost {
+    @apply btn bg-transparent text-surface-600 dark:text-surface-300
+           hover:bg-surface-100 dark:hover:bg-[rgb(var(--color-surface-hover))]
+           focus:ring-surface-300;
+  }
+
+  .btn-sm {
+    @apply px-3.5 py-1.5 text-xs;
+  }
+
+  .btn-lg {
+    @apply px-6 py-3 text-base;
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-white dark:bg-[rgb(var(--color-surface))] rounded-2xl 
+           border border-surface-200 dark:border-[rgb(var(--color-border))]
+           shadow-sm;
+  }
+
+  .card-header {
+    @apply px-6 py-4 border-b border-surface-100 dark:border-[rgb(var(--color-border))];
+  }
+
+  .card-body {
+    @apply p-6;
+  }
+
+  /* Inputs */
+  .input {
+    @apply w-full px-4 py-2.5 rounded-xl text-sm
+           bg-surface-50 dark:bg-[rgb(var(--color-bg))]
+           border border-surface-200 dark:border-[rgb(var(--color-border-strong))]
+           text-surface-900 dark:text-surface-100
+           placeholder:text-surface-400 dark:placeholder:text-surface-500
+           focus:outline-none focus:ring-2 focus:ring-primary-500/40 
+           focus:border-primary-500 dark:focus:border-primary-400
+           transition-colors duration-200;
+  }
+
+  .input-error {
+    @apply border-red-500 focus:ring-red-500/50 focus:border-red-500;
+  }
+
+  /* Toggle Switch */
+  .toggle {
+    @apply relative inline-flex h-6 w-11 items-center rounded-full
+           bg-surface-300 dark:bg-surface-600
+           transition-colors duration-200 cursor-pointer;
+  }
+
+  .toggle.active {
+    @apply bg-primary-500;
+  }
+
+  .toggle-dot {
+    @apply inline-block h-4 w-4 transform rounded-full 
+           bg-white shadow-sm transition-transform duration-200;
+  }
+
+  .toggle.active .toggle-dot {
+    @apply translate-x-6;
+  }
+
+  .toggle:not(.active) .toggle-dot {
+    @apply translate-x-1;
+  }
+
+  /* Status badges */
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 
+           rounded-pill text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400;
+  }
+
+  .badge-warning {
+    @apply bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400;
+  }
+
+  .badge-danger {
+    @apply bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400;
+  }
+
+  .badge-info {
+    @apply bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400;
+  }
+
+  .badge-neutral {
+    @apply bg-surface-100 dark:bg-[rgb(var(--color-surface-elevated))] 
+           text-surface-600 dark:text-surface-300
+           border border-transparent dark:border-[rgb(var(--color-border))];
+  }
+
+  /* Tables */
+  .table {
+    @apply w-full text-sm;
+  }
+
+  .table thead {
+    @apply text-left text-surface-500 dark:text-surface-300 text-xs uppercase tracking-wider
+           bg-surface-50 dark:bg-[rgb(var(--color-surface-elevated))];
+  }
+
+  .table th {
+    @apply px-4 py-3 font-medium border-b border-surface-200 dark:border-[rgb(var(--color-border-strong))];
+  }
+
+  .table td {
+    @apply px-4 py-3.5 border-t border-surface-100 dark:border-[rgb(var(--color-border))];
+  }
+
+  .table tbody tr {
+    @apply hover:bg-surface-50 dark:hover:bg-[rgb(var(--color-surface-hover))] transition-colors;
+  }
+
+  .table tbody tr:nth-child(even) {
+    @apply bg-surface-50/50 dark:bg-[rgb(var(--color-surface))]/60;
+  }
+
+  /* Sidebar nav items */
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl
+           text-surface-600 dark:text-surface-300 text-sm font-medium
+           hover:bg-surface-100 dark:hover:bg-[rgb(var(--color-surface-hover))]
+           transition-colors duration-150;
+  }
+
+  .nav-item.active {
+    @apply bg-primary-500/15 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400
+           border border-transparent dark:border-primary-500/30;
+  }
+
+  .nav-item .icon {
+    @apply text-xl;
+  }
+
+  /* Material Symbols */
+  .material-symbols-rounded {
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+  }
+
+  .icon-filled {
+    font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
+  }
+
+  /* Stat cards */
+  .stat-card {
+    @apply card p-5 dark:bg-[rgb(var(--color-surface-elevated))];
+  }
+
+  .stat-value {
+    @apply text-3xl font-semibold tracking-tight;
+  }
+
+  .stat-label {
+    @apply text-sm text-surface-500 dark:text-surface-400 mt-1;
+  }
+
+  /* Service status indicator */
+  .status-dot {
+    @apply w-2.5 h-2.5 rounded-full;
+  }
+
+  .status-dot.running {
+    @apply bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)];
+  }
+
+  .status-dot.stopped {
+    @apply bg-red-500;
+  }
+
+  .status-dot.unknown {
+    @apply bg-surface-400;
+  }
+
+  /* Modal overlay */
+  .modal-overlay {
+    @apply fixed inset-0 bg-black/40 dark:bg-black/70 backdrop-blur-sm z-50 
+           flex items-center justify-center p-4;
+  }
+
+  .modal {
+    @apply bg-white dark:bg-[rgb(var(--color-surface-elevated))] rounded-2xl 
+           border border-surface-200 dark:border-[rgb(var(--color-border-strong))]
+           w-full max-w-lg max-h-[90vh] overflow-auto shadow-xl;
+  }
+
+  .modal-lg {
+    @apply max-w-2xl;
+  }
+
+  .modal-header {
+    @apply flex items-center justify-between px-6 py-4
+           border-b border-surface-200 dark:border-[rgb(var(--color-border))];
+  }
+
+  .modal-header h3 {
+    @apply text-lg font-semibold text-surface-900 dark:text-surface-100;
+  }
+
+  .modal-body {
+    @apply px-6 py-5;
+  }
+
+  .modal-footer {
+    @apply flex items-center justify-end gap-3 px-6 py-4
+           border-t border-surface-200 dark:border-[rgb(var(--color-border))]
+           bg-surface-50 dark:bg-[rgb(var(--color-surface))];
+  }
+
+  .btn-close {
+    @apply w-8 h-8 flex items-center justify-center rounded-lg
+           text-surface-500 hover:text-surface-700 dark:hover:text-surface-200
+           hover:bg-surface-100 dark:hover:bg-[rgb(var(--color-surface-hover))]
+           transition-colors;
+  }
+
+  /* Toast notifications */
+  .toast {
+    @apply fixed bottom-4 right-4 z-50 
+           card px-4 py-3 flex items-center gap-3
+           shadow-lg animate-slide-up;
+  }
+
+  /* Page header - responsive */
+  .page-header {
+    @apply flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6;
+  }
+
+  .page-title {
+    @apply text-xl sm:text-2xl font-semibold tracking-tight;
+  }
+
+  /* Responsive tab navigation with scroll indicators */
+  .tabs-container {
+    @apply relative border-b border-surface-200 dark:border-surface-700 mb-6;
+  }
+
+  .tabs-container::before,
+  .tabs-container::after {
+    content: '';
+    @apply absolute top-0 bottom-0 w-12 z-10 pointer-events-none opacity-0 transition-opacity duration-200;
+  }
+
+  .tabs-container::before {
+    @apply left-0;
+    background: linear-gradient(to right, rgb(var(--color-surface-100)) 0%, transparent 100%);
+  }
+
+  .tabs-container::after {
+    @apply right-0;
+    background: linear-gradient(to left, rgb(var(--color-surface-100)) 0%, transparent 100%);
+  }
+
+  .dark .tabs-container::before {
+    background: linear-gradient(to right, rgb(var(--color-surface-950)) 0%, transparent 100%);
+  }
+
+  .dark .tabs-container::after {
+    background: linear-gradient(to left, rgb(var(--color-surface-950)) 0%, transparent 100%);
+  }
+
+  .tabs-container.can-scroll-left::before {
+    @apply opacity-100;
+  }
+
+  .tabs-container.can-scroll-right::after {
+    @apply opacity-100;
+  }
+
+  .tab-nav {
+    @apply flex gap-0 -mb-px overflow-x-auto pb-px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .tab-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab-btn {
+    @apply flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium 
+           border-b-2 transition-colors whitespace-nowrap shrink-0;
+  }
+
+  .tab-btn.active {
+    @apply border-primary-500 text-primary-600 dark:text-primary-400;
+  }
+
+  .tab-btn:not(.active) {
+    @apply border-transparent text-surface-500 hover:text-surface-700 dark:hover:text-surface-300;
+  }
+
+  /* Icon-only tabs on mobile for views with many tabs */
+  .tab-btn .tab-icon {
+    @apply text-base sm:text-lg;
+  }
+
+  .tab-btn .tab-label {
+    @apply hidden md:inline;
+  }
+
+  /* Responsive table wrapper */
+  .table-responsive {
+    @apply overflow-x-auto -mx-4 sm:mx-0;
+  }
+
+  .table-responsive .table {
+    @apply min-w-[600px] sm:min-w-0;
+  }
+
+  /* Responsive card padding */
+  .card-body-responsive {
+    @apply p-4 sm:p-6;
+  }
+
+  .card-header-responsive {
+    @apply px-4 sm:px-6 py-3 sm:py-4 border-b border-surface-100 dark:border-[rgb(var(--color-border))];
+  }
+
+  /* Responsive stat cards */
+  .stat-card {
+    @apply card p-4 sm:p-5 dark:bg-[rgb(var(--color-surface-elevated))];
+  }
+
+  .stat-value {
+    @apply text-2xl sm:text-3xl font-semibold tracking-tight;
+  }
+
+  /* Action button group - wraps on small screens */
+  .action-buttons {
+    @apply flex flex-wrap gap-2;
+  }
+
+  /* Compact buttons for mobile */
+  @media (max-width: 640px) {
+    .btn {
+      @apply px-3 py-2 text-xs;
+    }
+    .btn-sm {
+      @apply px-2.5 py-1 text-xs;
+    }
+  }
+
+  /* ──────────────────────────────────────────────────────────────
+     Legacy-skin helpers (Phase 1 of the Legacy Skin On V2 plan).
+     These restore visual richness the legacy SitesView /
+     SiteDetailView had: branded gradient progress bars, animated
+     create-saga step nodes, and skeleton shimmer placeholders.
+     Pure presentation - no data/logic side effects.
+     ────────────────────────────────────────────────────────────── */
+
+  /* Gradient progress bar fill (used by JobProgressModal +
+     EmailsTab migration bars). The fill scales width transitions
+     smoothly so step-by-step % updates feel alive. */
+  .progress-track {
+    @apply h-2 w-full rounded-full overflow-hidden
+           bg-surface-200 dark:bg-[rgb(var(--color-surface-elevated))];
+  }
+
+  .progress-bar-fill {
+    @apply h-full rounded-full transition-all duration-500 ease-out;
+    background-image: linear-gradient(90deg,
+      rgb(var(--color-primary)) 0%,
+      rgb(34 197 94) 100%);
+  }
+
+  /* Step-node circular indicator used in the create choreography.
+     The four state classes mirror the legacy step list look:
+     pending = muted number, active = pulsing primary, completed =
+     green check, warning = amber, skipped = muted dash. */
+  .step-node {
+    @apply relative shrink-0 w-8 h-8 rounded-full flex items-center
+           justify-center text-xs font-semibold
+           border-2 transition-all duration-300;
+  }
+
+  .step-node.pending {
+    @apply bg-surface-100 dark:bg-[rgb(var(--color-surface-elevated))]
+           border-surface-300 dark:border-[rgb(var(--color-border-strong))]
+           text-surface-500;
+  }
+
+  .step-node.active {
+    @apply bg-primary-500 border-primary-500 text-white
+           shadow-lg shadow-primary-500/30 animate-pulse;
+  }
+
+  .step-node.completed {
+    @apply bg-green-500 border-green-500 text-white;
+  }
+
+  .step-node.warning {
+    @apply bg-amber-500 border-amber-500 text-white;
+  }
+
+  .step-node.failed {
+    @apply bg-red-500 border-red-500 text-white;
+  }
+
+  .step-node.skipped {
+    @apply bg-surface-100 dark:bg-[rgb(var(--color-surface-elevated))]
+           border-surface-300 dark:border-[rgb(var(--color-border-strong))]
+           text-surface-400;
+  }
+
+  /* Vertical connector line between step nodes. */
+  .step-connector {
+    @apply w-px flex-1 my-1 bg-surface-200 dark:bg-[rgb(var(--color-border))];
+  }
+
+  .step-connector.completed {
+    @apply bg-green-400 dark:bg-green-500/60;
+  }
+
+  /* Row container for one step in the legacy-style step list. */
+  .step-row {
+    @apply flex items-start gap-3 p-3 rounded-xl transition-colors;
+  }
+
+  .step-row.active {
+    @apply bg-primary-50 dark:bg-primary-500/10;
+  }
+
+  .step-row.completed {
+    @apply bg-green-50/60 dark:bg-green-500/5;
+  }
+
+  .step-row.failed {
+    @apply bg-red-50 dark:bg-red-500/10;
+  }
+}
+
+@layer utilities {
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Loading spinner */
+  .spinner {
+    @apply w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin;
+  }
+
+  .spinner-sm {
+    @apply w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin;
+  }
+
+  .spinner-lg {
+    @apply w-8 h-8 border-2 border-current border-t-transparent rounded-full animate-spin;
+  }
+
+  /* Scrollbar utilities */
+  .scrollbar-thin::-webkit-scrollbar {
+    @apply w-1 h-1;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Responsive grid utilities for common patterns */
+  .grid-responsive-2 {
+    @apply grid grid-cols-1 sm:grid-cols-2 gap-4;
+  }
+
+  .grid-responsive-3 {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4;
+  }
+
+  .grid-responsive-4 {
+    @apply grid grid-cols-2 md:grid-cols-4 gap-4;
+  }
+
+  /* Truncate text with ellipsis */
+  .truncate-responsive {
+    @apply truncate max-w-[120px] sm:max-w-[200px] md:max-w-none;
+  }
+
+  /* ──────────────────────────────────────────────────────────────
+     Skeleton shimmer (Phase 1 of the Legacy Skin plan).
+     Use as a wrapper class on placeholder blocks while content is
+     loading. Pair with width/height utilities, e.g.
+       <div class="skeleton h-4 w-32 rounded"></div>
+     Animation is a low-CPU 1.4s background-position sweep that
+     respects the user's reduced-motion preference.
+     ────────────────────────────────────────────────────────────── */
+  .skeleton {
+    @apply relative overflow-hidden
+           bg-surface-200 dark:bg-[rgb(var(--color-surface-elevated))]
+           rounded;
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.35) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    animation: skeletonShimmer 1.4s ease-in-out infinite;
+  }
+
+  .dark .skeleton {
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.05) 50%,
+      transparent 100%
+    );
+  }
+
+  @keyframes skeletonShimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton { animation: none; }
+  }
+
+  /* Soft glow for live status indicators (legacy "Live" pulse). */
+  .pulse-dot {
+    @apply inline-block w-2 h-2 rounded-full animate-pulse;
+  }
+}

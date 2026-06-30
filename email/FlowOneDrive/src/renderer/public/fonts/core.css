@@ -1,0 +1,12 @@
+/*
+ * Core fonts for FlowOne Drive (Electron).
+ * All fonts are self-hosted -- no external CDN dependency.
+ *
+ * - Material Symbols Rounded (icons)
+ * - Outfit (main UI font)
+ * - JetBrains Mono (monospace)
+ */
+
+@import url('./material-symbols-rounded/font.css');
+@import url('./outfit/font.css');
+@import url('./jetbrains-mono/font.css');

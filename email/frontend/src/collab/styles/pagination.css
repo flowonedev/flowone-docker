@@ -1,0 +1,425 @@
+/**
+ * Pagination Styles
+ * 
+ * Float-based page break styling for the Tiptap paginated editor.
+ * Inspired by Tiptap's Agent Editor approach.
+ */
+
+/* CSS Variables for customization - LIGHT THEME ONLY */
+/* Uses Word-standard 1-inch margins on all sides for DOCX compatibility */
+:root {
+  --page-width: 794px;
+  --page-height: 1123px;
+  --page-margin-top: 96px;
+  --page-margin-bottom: 96px;
+  --page-margin-left: 96px;
+  --page-margin-right: 96px;
+  --page-content-height: 931px;
+  --page-footer-height: 48px;
+  --page-header-height: 48px;
+  --page-gap-height: 48px;
+  --pagination-bg: #eaeaea;
+  --pagination-border: #e5e7eb;
+  --pagination-text: #6b7280;
+}
+
+/* Paginated Editor Container */
+.tiptap-pages-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-height: 100%;
+  background: #eaeaea;
+  padding: 24px 0;
+}
+
+/* The main editor element with page styling */
+.tiptap-pages {
+  position: relative;
+  width: var(--page-width);
+  min-width: var(--page-width);
+  min-height: var(--page-height);
+  background: #ffffff;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+  border-radius: 2px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  /* Height is extended dynamically via JS in Pagination extension for multi-page docs */
+}
+
+
+/* ProseMirror editor within pages */
+.tiptap-pages .ProseMirror {
+  padding: var(--page-margin-top) var(--page-margin-right) var(--page-margin-bottom) var(--page-margin-left);
+  /* Base min-height for single page, JS will override for multi-page docs */
+  min-height: var(--page-height);
+  box-sizing: border-box;
+  outline: none;
+  background: #ffffff;
+}
+
+/* ============================================
+   Page Break Widget Styles
+   ============================================ */
+
+/* Page break container - extends beyond content padding */
+.tiptap-page-break {
+  display: block;
+  position: relative;
+  width: calc(100% + 192px); /* Add back left+right padding (96+96) */
+  margin-left: -96px; /* Offset left padding */
+  margin-right: -96px; /* Offset right padding */
+  z-index: 10;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Page footer chrome area */
+.tiptap-page-footer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 48px;
+  padding: 0 96px;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+/* Page number in footer */
+.tiptap-page-number {
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  padding-bottom: 12px;
+}
+
+/* Gap between pages - matches editor area background */
+.tiptap-pagination-gap {
+  height: 48px;
+  background-color: #eaeaea;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Cover parent shadow bleeding on the sides */
+  position: relative;
+  box-shadow: 
+    -12px 0 0 0 #eaeaea,
+    12px 0 0 0 #eaeaea;
+}
+
+/* Page header chrome area */
+.tiptap-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  height: 48px;
+  padding: 0 96px;
+  background: #ffffff;
+  box-sizing: border-box;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* ============================================
+   First Page Styling
+   ============================================ */
+
+/* First page header (before first content) */
+.tiptap-first-page-header {
+  position: relative;
+  height: 0;
+  margin-top: -10px;
+}
+
+/* ============================================
+   Editor Content Adjustments
+   ============================================ */
+
+/* Keep headings with following content */
+.tiptap-pages .ProseMirror h1,
+.tiptap-pages .ProseMirror h2,
+.tiptap-pages .ProseMirror h3,
+.tiptap-pages .ProseMirror h4,
+.tiptap-pages .ProseMirror h5,
+.tiptap-pages .ProseMirror h6 {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+/* Avoid breaking inside certain elements */
+.tiptap-pages .ProseMirror table,
+.tiptap-pages .ProseMirror figure,
+.tiptap-pages .ProseMirror blockquote,
+.tiptap-pages .ProseMirror pre {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* ============================================
+   Responsive / Mobile
+   ============================================ */
+
+@media (max-width: 600px) {
+  .tiptap-pages-wrapper {
+    padding: 0;
+    background: #ffffff;
+  }
+  
+  .tiptap-pages {
+    width: 100%;
+    min-width: auto;
+    min-height: auto;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    box-shadow: none;
+  }
+  
+  .tiptap-pages .ProseMirror {
+    padding: 16px;
+    min-height: auto;
+  }
+  
+  /* Hide page breaks on mobile */
+  .tiptap-page-break {
+    display: none;
+  }
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+
+@media print {
+  /* Reset wrapper for print */
+  .tiptap-pages-wrapper {
+    background: white !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+  
+  /* Remove visual decorations from page container */
+  .tiptap-pages {
+    box-shadow: none !important;
+    border: none !important;
+    width: 100% !important;
+  }
+  
+  /* Editor content print styles */
+  .tiptap-pages .ProseMirror {
+    padding: 0 !important;
+    min-height: auto !important;
+  }
+  
+  /* Page break widgets - CRITICAL: must trigger page break */
+  .tiptap-page-break {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+  
+  /* Hide the visual chrome but keep the element for page-break */
+  .tiptap-page-break .tiptap-page-footer,
+  .tiptap-page-break .tiptap-pagination-gap,
+  .tiptap-page-break .tiptap-page-header {
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
+  
+  /* Typography for print */
+  .tiptap-pages .ProseMirror p,
+  .tiptap-pages .ProseMirror li {
+    font-size: 11pt !important;
+    line-height: 1.5 !important;
+    color: black !important;
+    orphans: 3;
+    widows: 3;
+  }
+  
+  /* Reset minimum height in print */
+  .tiptap-pages {
+    min-height: auto !important;
+  }
+  
+  .tiptap-pages .ProseMirror h1,
+  .tiptap-pages .ProseMirror h2,
+  .tiptap-pages .ProseMirror h3,
+  .tiptap-pages .ProseMirror h4,
+  .tiptap-pages .ProseMirror h5,
+  .tiptap-pages .ProseMirror h6 {
+    color: black !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+  
+  .tiptap-pages .ProseMirror table,
+  .tiptap-pages .ProseMirror figure,
+  .tiptap-pages .ProseMirror blockquote,
+  .tiptap-pages .ProseMirror pre {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
+
+/* ============================================
+   Animation for Page Breaks
+   ============================================ */
+
+.tiptap-page-break {
+  animation: fadeInPageBreak 0.2s ease-out;
+}
+
+@keyframes fadeInPageBreak {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ============================================
+   Hard Page Break Styles (User-inserted)
+   ============================================ */
+
+/* Hard page break - explicit user-inserted break */
+.hard-page-break {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 24px 0;
+  padding: 12px 0;
+  user-select: none;
+  cursor: pointer;
+  position: relative;
+  width: calc(100% + 192px);
+  margin-left: -96px;
+  margin-right: -96px;
+  padding-left: 96px;
+  padding-right: 96px;
+  box-sizing: border-box;
+}
+
+/* Lines on either side of the label */
+.hard-page-break__line {
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    #94a3b8 10%, 
+    #94a3b8 90%, 
+    transparent 100%
+  );
+  border-radius: 1px;
+}
+
+/* Page Break label */
+.hard-page-break__label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: #f1f5f9;
+  padding: 6px 16px;
+  border-radius: 4px;
+  border: 1px dashed #cbd5e1;
+  white-space: nowrap;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+/* Hover state for hard page break */
+.hard-page-break:hover {
+  background: rgba(241, 245, 249, 0.5);
+}
+
+.hard-page-break:hover .hard-page-break__label {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+  color: #475569;
+}
+
+/* Selected state (when node is selected in editor) */
+.hard-page-break.ProseMirror-selectednode {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.hard-page-break.ProseMirror-selectednode .hard-page-break__label {
+  background: rgb(var(--color-primary-100));
+  border-color: rgb(var(--color-primary-400));
+  color: rgb(var(--color-primary-700));
+}
+
+.hard-page-break.ProseMirror-selectednode .hard-page-break__line {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgb(var(--color-primary-400)) 10%, 
+    rgb(var(--color-primary-400)) 90%, 
+    transparent 100%
+  );
+}
+
+/* Print styles for hard page breaks */
+@media print {
+  .hard-page-break {
+    display: block !important;
+    width: 100% !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    visibility: hidden;
+  }
+  
+  .hard-page-break__line,
+  .hard-page-break__label {
+    display: none !important;
+  }
+}
+
+/* Mobile - show simplified version */
+@media (max-width: 600px) {
+  .hard-page-break {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+/* ============================================
+   Soft Page Break Styles (Calculated)
+   ============================================ */
+
+/* Soft page break indicator - more subtle than hard breaks */
+.tiptap-page-break--soft .tiptap-page-number::before {
+  content: "~";
+  margin-right: 2px;
+  opacity: 0.6;
+}
+
+/* Hard page break indicator via soft break system */
+.tiptap-page-break--hard .tiptap-pagination-gap {
+  background-color: #e2e8f0;
+}
+
+.tiptap-page-break--hard .tiptap-pagination-gap::after {
+  content: "PAGE BREAK";
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+  letter-spacing: 1px;
+}

@@ -1,0 +1,1795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlowOne ROI Calculator</title>
+<link rel="icon" type="image/png" href="flowone-logo.png">
+<link rel="apple-touch-icon" href="flowone-logo.png">
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<script>
+tailwind.config = {
+    theme: {
+        extend: {
+            fontFamily: {
+                sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+            },
+            colors: {
+                slate: {
+                    850: '#172033',
+                    950: '#0a0f1a',
+                }
+            }
+        }
+    }
+}
+</script>
+<style>
+.material-symbols-rounded {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+.material-symbols-rounded.filled {
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    width: 52px;
+    height: 28px;
+    flex-shrink: 0;
+}
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background: #1e293b;
+    border-radius: 9999px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid #334155;
+}
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background: #64748b;
+    border-radius: 50%;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+input:checked + .toggle-slider {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-color: #10b981;
+}
+input:checked + .toggle-slider:before {
+    transform: translateX(24px);
+    background: white;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+input:focus + .toggle-slider {
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+/* Small Toggle Switch */
+.toggle-switch-sm {
+    position: relative;
+    width: 40px;
+    height: 22px;
+    flex-shrink: 0;
+}
+.toggle-switch-sm input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.toggle-switch-sm .toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background: #1e293b;
+    border-radius: 9999px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid #334155;
+}
+.toggle-switch-sm .toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background: #64748b;
+    border-radius: 50%;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.toggle-switch-sm input:checked + .toggle-slider {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-color: #10b981;
+}
+.toggle-switch-sm input:checked + .toggle-slider:before {
+    transform: translateX(18px);
+    background: white;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+}
+
+/* Number Input */
+.number-input {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border: 1px solid #334155;
+    transition: all 0.3s ease;
+}
+.number-input:hover {
+    border-color: #475569;
+}
+.number-input:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+    outline: none;
+}
+
+/* Animated gradient border */
+.gradient-border {
+    position: relative;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+.gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, #10b981, #0ea5e9, #8b5cf6);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.gradient-border-cyan {
+    position: relative;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+.gradient-border-cyan::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, #0ea5e9, #06b6d4, #8b5cf6);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Savings animation */
+@keyframes pulse-green {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+    50% { box-shadow: 0 0 20px 5px rgba(16, 185, 129, 0.2); }
+}
+.savings-highlight {
+    animation: pulse-green 2s infinite;
+}
+
+/* Language selector */
+.lang-btn {
+    transition: all 0.2s ease;
+    color: #94a3b8;
+}
+.lang-btn.active {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+.lang-btn:not(.active):hover {
+    color: white;
+}
+
+/* Consultative sales tool UI */
+.step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.kpi-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.size-btn, .chip {
+    cursor: pointer;
+    user-select: none;
+    border: 1px solid #334155;
+    background: #0f172a;
+    color: #cbd5e1;
+    transition: all 0.15s ease;
+}
+.size-btn:hover, .chip:hover {
+    border-color: #10b981;
+    color: #fff;
+}
+.size-btn.on, .chip.on {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-color: #10b981;
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.25);
+}
+.stack-select {
+    background: #0f172a;
+    border: 1px solid #334155;
+    color: #fff;
+    transition: all 0.15s ease;
+}
+.stack-select:hover { border-color: #475569; }
+.stack-select:focus { outline: none; border-color: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15); }
+.stack-select option { background: #0f172a; color: #fff; }
+/* Step 2 business packages (one decision each) */
+.pkg-card {
+    cursor: pointer;
+    user-select: none;
+    border: 1px solid rgba(71, 85, 105, 0.45);
+    background: rgba(15, 23, 42, 0.55);
+    transition: all 0.15s ease;
+}
+.pkg-card:hover { border-color: rgba(16, 185, 129, 0.45); background: rgba(16, 185, 129, 0.06); }
+.pkg-card .pkg-check { color: #475569; }
+.pkg-card.on {
+    border-color: rgba(16, 185, 129, 0.55);
+    background: rgba(16, 185, 129, 0.12);
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.12);
+}
+.pkg-card.on .pkg-check { color: #10b981; }
+.pkg-card.core {
+    cursor: default;
+    border-color: rgba(16, 185, 129, 0.35);
+    background: rgba(16, 185, 129, 0.08);
+}
+.pkg-card.core .pkg-check { color: #10b981; }
+
+/* ============================================================
+   Sales Assistant panel (Microsoft 365 / Exchange playbook)
+   ============================================================ */
+/* Docked side panel - toggle tab on the right edge */
+.sa-tab {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+    padding: 16px 10px;
+    border-radius: 14px 0 0 14px;
+    box-shadow: -6px 0 24px rgba(16, 185, 129, 0.35);
+    transform: translateY(-50%);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.sa-tab:hover {
+    transform: translateY(-50%) translateX(-2px);
+    box-shadow: -6px 0 30px rgba(16, 185, 129, 0.55);
+}
+.sa-tab-label {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+/* Slide-in drawer + backdrop */
+.sa-drawer {
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.sa-drawer.open { transform: translateX(0); }
+.sa-backdrop {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+}
+.sa-backdrop.open { opacity: 1; pointer-events: auto; }
+
+/* Section 2 - clickable discovery questions */
+.sa-question {
+    cursor: pointer;
+    user-select: none;
+    border: 1px solid rgba(71, 85, 105, 0.45);
+    background: rgba(15, 23, 42, 0.55);
+    transition: all 0.15s ease;
+}
+.sa-question:hover {
+    border-color: rgba(16, 185, 129, 0.5);
+    background: rgba(16, 185, 129, 0.07);
+    transform: translateY(-1px);
+}
+.sa-question.asked {
+    border-color: rgba(16, 185, 129, 0.6);
+    background: rgba(16, 185, 129, 0.12);
+}
+.sa-question.asked .sa-question-icon { color: #10b981; }
+
+/* Section 3 - objection accordion */
+.sa-objection-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.sa-objection.open .sa-objection-body { grid-template-rows: 1fr; }
+.sa-objection-body > div { overflow: hidden; min-height: 0; }
+.sa-objection-icon { transition: transform 0.3s ease; }
+.sa-objection.open .sa-objection-icon { transform: rotate(180deg); }
+.sa-objection.open .sa-objection-head { background: rgba(16, 185, 129, 0.06); }
+
+/* Section 4 - strong closing question */
+.sa-closing {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.18) 0%, rgba(5, 150, 105, 0.05) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+/* Category subheaders (question groups + filter label) */
+.sa-cat-sub {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #5eead4;
+}
+
+/* Topic filter chips */
+.sa-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    user-select: none;
+    padding: 5px 10px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    border: 1px solid #334155;
+    background: #0f172a;
+    color: #cbd5e1;
+    transition: all 0.15s ease;
+}
+.sa-chip:hover { border-color: #10b981; color: #fff; }
+.sa-chip.on {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-color: #10b981;
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.25);
+}
+.sa-chip .material-symbols-rounded { font-size: 14px; }
+
+/* ============================================================
+   Responsive shell
+   Tall desktops keep the locked single-screen layout (via lg: utilities).
+   On short viewports (most laptops, split-screen, zoom) we release the lock
+   so the whole page scrolls naturally and nothing is ever cut off.
+   ============================================================ */
+@media (min-width: 1024px) and (max-height: 950px) {
+    .fo-app { height: auto !important; overflow: visible !important; }
+    .fo-fill { height: auto !important; }
+    .fo-scroll { overflow: visible !important; }
+}
+</style>
+</head>
+<body class="fo-app font-sans bg-slate-950 text-slate-100 min-h-screen lg:h-screen lg:overflow-hidden">
+
+<!-- Background Pattern -->
+<div class="fixed inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl"></div>
+    <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
+    <div class="absolute top-1/2 right-0 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl"></div>
+</div>
+
+<div class="fo-fill relative z-10 px-4 sm:px-6 py-3 lg:h-full flex flex-col">
+    <div class="max-w-[1920px] w-full mx-auto flex-1 flex flex-col min-h-0">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+                <img src="flowone-logo.png" alt="FlowOne" class="w-10 h-10 rounded-xl object-contain" />
+                <div class="leading-tight">
+                    <h1 class="text-xl font-bold text-white" data-i18n="appTitle">FlowOne</h1>
+                    <p class="text-xs text-slate-400" data-i18n="appSubtitle">ROI Calculator</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="flex gap-1 p-0.5 rounded-full bg-slate-800/70 border border-slate-700">
+                    <button id="langEn" class="lang-btn px-2.5 py-1 rounded-full text-xs font-bold" onclick="setLang('en')">EN</button>
+                    <button id="langHu" class="lang-btn px-2.5 py-1 rounded-full text-xs font-bold" onclick="setLang('hu')">HU</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SALES CALCULATOR ==================== -->
+        <div id="businessCalc" class="flex-1 min-h-0">
+            <div class="fo-fill rounded-2xl bg-slate-900/30 border border-slate-800 p-3 sm:p-5 lg:h-full min-h-0">
+                <div class="fo-fill flex flex-col lg:flex-row gap-4 lg:gap-5 lg:h-full min-h-0">
+
+                    <!-- LEFT: 3-step consultative inputs -->
+                    <div class="fo-fill fo-scroll w-full lg:w-5/12 flex flex-col gap-3 lg:overflow-y-auto lg:pr-1 min-h-0 lg:h-full">
+
+                        <!-- STEP 1: Company size -->
+                        <div class="p-3 rounded-xl bg-slate-800/40 border border-slate-700/50">
+                            <div class="flex items-center gap-2 mb-2.5">
+                                <span class="step-num">1</span>
+                                <span class="text-sm font-semibold text-white" data-i18n="step1">Company size</span>
+                            </div>
+                            <div id="sizeBtns" class="grid grid-cols-3 gap-1.5"></div>
+                        </div>
+
+                        <!-- STEP 2: Business needs -->
+                        <div class="p-3 rounded-xl bg-slate-800/40 border border-slate-700/50">
+                            <div class="flex items-center gap-2 mb-2.5">
+                                <span class="step-num">2</span>
+                                <span class="text-sm font-semibold text-white" data-i18n="step2">Business needs</span>
+                            </div>
+                            <div id="needsGrid" class="space-y-2.5"></div>
+                        </div>
+
+                        <!-- STEP 3: Current software -->
+                        <div class="p-3 rounded-xl bg-slate-800/40 border border-slate-700/50">
+                            <div class="flex items-center gap-2 mb-2.5">
+                                <span class="step-num">3</span>
+                                <span class="text-sm font-semibold text-white" data-i18n="step3">Current software</span>
+                            </div>
+                            <div id="stackGrid" class="grid grid-cols-2 gap-2"></div>
+                            <div class="mt-3 pt-2.5 border-t border-slate-700/60 space-y-2">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-xs text-slate-300" data-i18n="adminLabel">Dedicated System Administrator</span>
+                                    <label class="toggle-switch-sm flex-shrink-0">
+                                        <input type="checkbox" id="admin">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-xs text-slate-300" data-i18n="migrationLabel">Migration Project</span>
+                                    <label class="toggle-switch-sm flex-shrink-0">
+                                        <input type="checkbox" id="migration" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: Results (primary focus) -->
+                    <div class="fo-scroll w-full lg:w-7/12 flex flex-col gap-3 min-h-0 lg:overflow-y-auto lg:pr-1">
+
+                        <!-- 1) THE HEADLINE: annual savings (sell the saving, not the cost) -->
+                        <div class="p-4 sm:p-5 rounded-xl bg-emerald-500/15 border border-emerald-500/50 savings-highlight text-center">
+                            <div class="kpi-label text-emerald-300 mb-2" data-i18n="annualSavings">Annual Savings</div>
+                            <div class="leading-none">
+                                <span class="text-3xl font-extrabold text-emerald-400" id="annualSavings">0 Ft</span>
+                                <span class="text-lg sm:text-xl font-bold text-emerald-300/70" data-i18n="perYearShort">/ yr</span>
+                            </div>
+                        </div>
+
+                        <!-- 2) Break-even -->
+                        <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-3">
+                            <div>
+                                <div class="kpi-label text-emerald-300 mb-1" data-i18n="paysForItself">Pays for itself in</div>
+                                <div class="text-3xl font-extrabold text-emerald-400 leading-none" id="breakEven">&mdash;</div>
+                            </div>
+                            <div id="fastBadge"></div>
+                        </div>
+
+                        <!-- 3) Proof: current vs FlowOne (one-time / monthly / per year) -->
+                        <div class="rounded-xl bg-slate-800/40 border border-slate-700 overflow-hidden">
+                            <div class="grid grid-cols-[1.1fr_1fr_1fr]">
+                                <div class="px-4 py-3"></div>
+                                <div class="px-3 py-3 text-center text-sm font-bold text-rose-300 bg-rose-500/10" data-i18n="colToday">Today</div>
+                                <div class="px-3 py-3 text-center text-sm font-bold text-emerald-300 bg-emerald-500/10 flex items-center justify-center gap-1.5">
+                                    <img src="flowone-logo.png" alt="FlowOne" class="w-4 h-4 object-contain" /> FlowOne
+                                </div>
+
+                                <div class="px-4 py-3.5 border-t border-slate-700/50 flex items-center text-sm font-medium text-slate-300" data-i18n="rowOneTime">One-time</div>
+                                <div class="px-3 py-3.5 border-t border-slate-700/50 text-center text-slate-600 text-xl">&mdash;</div>
+                                <div class="px-3 py-3.5 border-t border-slate-700/50 text-center text-lg font-extrabold text-white bg-emerald-500/5" id="tblOneTime">0 Ft</div>
+
+                                <div class="px-4 py-3.5 border-t border-slate-700/50 text-sm font-medium text-slate-300">
+                                    <div data-i18n="rowMonthly">Monthly</div>
+                                    <div class="text-[11px] text-slate-500 font-normal" id="monthlyNote"></div>
+                                </div>
+                                <div class="px-3 py-3.5 border-t border-slate-700/50 text-center text-base font-bold text-rose-200" id="tblTodayMonthly">0 Ft</div>
+                                <div class="px-3 py-3.5 border-t border-slate-700/50 text-center text-lg font-extrabold text-white bg-emerald-500/5" id="tblMonthly">0 Ft</div>
+
+                                <div class="px-4 py-3.5 border-t border-slate-600 flex items-center text-sm font-bold text-slate-100" data-i18n="rowYearly">Per year</div>
+                                <div class="px-3 py-3.5 border-t border-slate-600 text-center text-xl font-extrabold text-rose-400" id="tblTodayYear">0 Ft</div>
+                                <div class="px-3 py-3.5 border-t border-slate-600 text-center text-xl font-extrabold text-emerald-400 bg-emerald-500/10" id="tblYear">0 Ft</div>
+                            </div>
+                        </div>
+
+                        <!-- 4) Savings over time -->
+                        <div class="p-4 rounded-xl bg-slate-800/50 border border-slate-700">
+                            <div class="flex items-baseline justify-between mb-3 gap-2">
+                                <span class="kpi-label text-slate-300" data-i18n="roiSummary">Savings Over Time</span>
+                                <span class="text-[11px] text-slate-500" data-i18n="cumulativeNote">Net, after the one-time investment</span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-3">
+                                <div class="text-center p-2.5 rounded-lg bg-slate-900/40">
+                                    <div class="text-xs text-slate-400 mb-1" data-i18n="after3">After 3 years</div>
+                                    <div class="text-lg font-extrabold text-emerald-400" id="savings3">0 Ft</div>
+                                </div>
+                                <div class="text-center p-2.5 rounded-lg bg-slate-900/40">
+                                    <div class="text-xs text-slate-400 mb-1" data-i18n="after5">After 5 years</div>
+                                    <div class="text-lg font-extrabold text-emerald-400" id="savings5">0 Ft</div>
+                                </div>
+                                <div class="text-center p-2.5 rounded-lg bg-slate-900/40">
+                                    <div class="text-xs text-slate-400 mb-1" data-i18n="after10">After 10 years</div>
+                                    <div class="text-lg font-extrabold text-emerald-400" id="savings10">0 Ft</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Summary block: many tools -> one platform (hero) -->
+                        <div class="p-4 sm:p-6 rounded-xl bg-slate-800/40 border border-slate-700 flex-1 flex flex-col">
+                            <div class="flex-1 flex items-center">
+                                <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-4 sm:gap-6 items-center w-full">
+                                    <div class="min-w-0">
+                                        <div class="kpi-label text-slate-400 mb-3" data-i18n="currentlyUses">Customer currently uses</div>
+                                        <div class="flex flex-wrap gap-2" id="summaryStack"></div>
+                                    </div>
+                                    <div class="flex items-center justify-center text-emerald-500/70">
+                                        <span class="material-symbols-rounded text-5xl rotate-90 sm:rotate-0">trending_flat</span>
+                                    </div>
+                                    <div class="text-center pt-4 border-t sm:pt-0 sm:pl-6 sm:border-t-0 sm:border-l border-slate-700/60 self-stretch flex flex-col justify-center items-center">
+                                        <div class="inline-flex items-center gap-2 mb-4 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+                                            <img src="flowone-logo.png" alt="FlowOne" class="w-8 h-8 rounded-lg object-contain" />
+                                            <span class="text-2xl font-bold text-white">FlowOne</span>
+                                        </div>
+                                        <div class="flex items-end gap-3">
+                                            <div class="text-center">
+                                                <div class="text-6xl font-extrabold text-slate-200 leading-none" id="replaceCount">0</div>
+                                                <div class="text-xs text-slate-400 mt-1.5" data-i18n="systemsLabel">tools today</div>
+                                            </div>
+                                            <span class="material-symbols-rounded text-3xl text-emerald-500/70 mb-4">arrow_forward</span>
+                                            <div class="text-center">
+                                                <div class="text-6xl font-extrabold text-emerald-400 leading-none">1</div>
+                                                <div class="text-xs text-slate-400 mt-1.5" data-i18n="platformLabel">platform</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 pt-3 border-t border-slate-700/50">
+                                <button id="detailsToggle" type="button" class="text-xs text-slate-500 hover:text-emerald-400 transition-colors">Show price breakdown</button>
+                                <div id="detailsBox" class="hidden mt-2 pt-2 border-t border-slate-700/60"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ==================== SALES ASSISTANT (docked side panel) ==================== -->
+<button id="salesAssistantToggle" type="button" aria-expanded="false" aria-controls="salesAssistantDrawer"
+    class="sa-tab fixed right-0 top-1/2 z-40 flex flex-col items-center gap-2">
+    <span class="material-symbols-rounded text-2xl">support_agent</span>
+    <span class="sa-tab-label" data-i18n="saTitle">Sales Assistant</span>
+</button>
+
+<div id="salesAssistantBackdrop" class="sa-backdrop fixed inset-0 z-40 bg-slate-950/60"></div>
+
+<aside id="salesAssistantDrawer" role="dialog" aria-modal="true" aria-labelledby="salesAssistantTitle"
+    class="sa-drawer fixed top-0 right-0 h-full w-[40vw] min-w-[380px] max-w-[92vw] z-50 bg-slate-900 border-l border-slate-700 flex flex-col shadow-2xl">
+    <header class="flex items-center gap-3 p-4 border-b border-slate-700 flex-shrink-0">
+        <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex-shrink-0">
+            <span class="material-symbols-rounded text-emerald-400 text-2xl">support_agent</span>
+        </span>
+        <span class="flex-1 min-w-0">
+            <span id="salesAssistantTitle" class="block text-sm font-bold text-white" data-i18n="saTitle">Sales Assistant</span>
+            <span class="block text-[11px] text-slate-400" data-i18n="saSubtitle">For Microsoft 365 / Exchange customers</span>
+        </span>
+        <button id="salesAssistantClose" type="button" aria-label="Close"
+            class="flex items-center justify-center w-9 h-9 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors flex-shrink-0">
+            <span class="material-symbols-rounded">close</span>
+        </button>
+    </header>
+    <div id="salesAssistantContent" class="flex-1 overflow-y-auto min-h-0"></div>
+</aside>
+
+<script>
+// ===== Sales tool element refs =====
+const sizeBtns = document.getElementById("sizeBtns");
+const needsGrid = document.getElementById("needsGrid");
+const stackGrid = document.getElementById("stackGrid");
+const adminToggle = document.getElementById("admin");
+const migrationToggle = document.getElementById("migration");
+// Results - cost comparison table
+const tblTodayYearEl = document.getElementById("tblTodayYear");
+const tblTodayMonthlyEl = document.getElementById("tblTodayMonthly");
+const tblOneTimeEl = document.getElementById("tblOneTime");
+const tblMonthlyEl = document.getElementById("tblMonthly");
+const tblYearEl = document.getElementById("tblYear");
+const monthlyNoteEl = document.getElementById("monthlyNote");
+const annualSavingsEl = document.getElementById("annualSavings");
+const breakEvenEl = document.getElementById("breakEven");
+const fastBadgeEl = document.getElementById("fastBadge");
+const savings3El = document.getElementById("savings3");
+const savings5El = document.getElementById("savings5");
+const savings10El = document.getElementById("savings10");
+const summaryStackEl = document.getElementById("summaryStack");
+const replaceCountEl = document.getElementById("replaceCount");
+const detailsToggle = document.getElementById("detailsToggle");
+const detailsBox = document.getElementById("detailsBox");
+// Sales Assistant docked side panel
+const salesAssistantToggle = document.getElementById("salesAssistantToggle");
+const salesAssistantDrawer = document.getElementById("salesAssistantDrawer");
+const salesAssistantBackdrop = document.getElementById("salesAssistantBackdrop");
+const salesAssistantClose = document.getElementById("salesAssistantClose");
+const salesAssistantContent = document.getElementById("salesAssistantContent");
+
+// Language Elements
+const langEn = document.getElementById("langEn");
+const langHu = document.getElementById("langHu");
+
+/* ============================================================
+   INTERNAL CONFIG - FlowOne Business License
+   Sales staff never see these values, multipliers or formulas.
+   Adjust here only.
+   ============================================================ */
+const EUR_TO_HUF = 400;                                   // conversion rate (configurable)
+const VPS_COST_YEARLY_EUR = 800;                          // VPS hosting per year (configurable)
+const VPS_COST_YEARLY_HUF = VPS_COST_YEARLY_EUR * EUR_TO_HUF; // shown only baked into ROI, never exposed
+const INTERNAL_MULTIPLIER = 1;                            // hidden internal margin multiplier (never displayed)
+
+const BASE_PLATFORM = 4000000;                            // Base platform value (Ft)
+
+// Optional services (Ft)
+// Dedicated System Administrator is a managed service that scales with the
+// deployment size, so it stays proportional (a flat fee would dwarf a small
+// company's spend and wreck ROI). When ON it counts as a FlowOne running cost.
+const ADMIN_PER_USER_MONTH = 5000;                        // Ft / user / month (configurable)
+const MIGRATION_COST       = 500000;                      // One-time migration project (added to license)
+
+/* FlowOne systems (mirrors the in-app per-user addon list).
+   price = one-time license amount (Ft), banded by the real SaaS tier it replaces:
+           Light 200k / Standard 400k / Heavy 800k-1.2M
+   saas  = real SaaS Ft the customer pays today (per user/mo, or per company/mo for scope 'flat')
+   scope = 'allstaff' (x all users) | 'seat' (x chosen seats) | 'flat' (per company) */
+const ADDONS = [
+    { id: "ai",          i18nKey: "aiLabel",         icon: "auto_awesome",    color: "text-violet-400",  price: 1000000, saas: 8000,  scope: "allstaff" },
+    { id: "automation",  i18nKey: "automationLabel", icon: "bolt",            color: "text-amber-400",   price: 1200000, saas: 8000,  scope: "flat" },
+    { id: "boardpro",    i18nKey: "boardProLabel",   icon: "dashboard",       color: "text-indigo-400",  price: 400000,  saas: 4000,  scope: "seat" },
+    { id: "calendar",    i18nKey: "calendarLabel",   icon: "calendar_month",  color: "text-sky-400",     price: 0,       saas: 0,     scope: "allstaff" },
+    { id: "drive",       i18nKey: "driveLabel",      icon: "cloud",           color: "text-sky-300",     price: 0,       saas: 0,     scope: "allstaff" },
+    { id: "chat",        i18nKey: "chatLabel",       icon: "forum",           color: "text-emerald-400", price: 800000,  saas: 13200, scope: "allstaff" },
+    { id: "crm",         i18nKey: "crmLabel",        icon: "contacts",        color: "text-blue-400",    price: 1000000, saas: 8000,  scope: "seat" },
+    { id: "emailmkt",    i18nKey: "emailMktLabel",   icon: "campaign",        color: "text-pink-400",    price: 600000,  saas: 8000,  scope: "flat" },
+    { id: "tracking",    i18nKey: "trackingLabel",   icon: "mark_email_read", color: "text-rose-400",    price: 400000,  saas: 6000,  scope: "seat" },
+    { id: "kanban",      i18nKey: "kanbanLabel",     icon: "view_kanban",     color: "text-teal-400",    price: 200000,  saas: 2800,  scope: "seat" },
+    { id: "moodboards",  i18nKey: "moodBoardsLabel", icon: "palette",         color: "text-fuchsia-400", price: 400000,  saas: 5200,  scope: "seat" },
+    { id: "tasks",       i18nKey: "tasksLabel",      icon: "task_alt",        color: "text-green-400",   price: 200000,  saas: 2000,  scope: "allstaff" },
+    { id: "news",        i18nKey: "newsLabel",       icon: "feed",            color: "text-orange-400",  price: 200000,  saas: 2400,  scope: "allstaff" },
+    { id: "projects",    i18nKey: "projectsLabel",   icon: "hub",             color: "text-cyan-400",    price: 800000,  saas: 8000,  scope: "seat" },
+    { id: "reactions",   i18nKey: "reactionsLabel",  icon: "mood",            color: "text-yellow-400",  price: 0,       saas: 0,     scope: "allstaff" },
+    { id: "team",        i18nKey: "teamLabel",       icon: "groups",          color: "text-blue-300",    price: 400000,  saas: 3600,  scope: "allstaff" },
+    { id: "timetracker", i18nKey: "timeTrackerLabel",icon: "timer",           color: "text-lime-400",    price: 400000,  saas: 3600,  scope: "seat" },
+    { id: "search",      i18nKey: "searchLabel",     icon: "search",          color: "text-violet-300",  price: 1200000, saas: 8000,  scope: "allstaff" },
+];
+
+// User scaling - marginal brackets (tax-style, no cliffs). Returns { value, custom }.
+function userScaling(users) {
+    if (users > 500) return { value: null, custom: true };
+    const brackets = [
+        { upTo: 10,  rate: 0 },
+        { upTo: 50,  rate: 50000 },
+        { upTo: 100, rate: 45000 },
+        { upTo: 250, rate: 40000 },
+        { upTo: 500, rate: 35000 },
+    ];
+    let total = 0, lower = 0;
+    for (const b of brackets) {
+        if (users > lower) total += (Math.min(users, b.upTo) - lower) * b.rate;
+        lower = b.upTo;
+    }
+    return { value: total, custom: false };
+}
+
+// Hungarian HUF formatting: "5 600 000 Ft"
+function formatHUF(value) {
+    return new Intl.NumberFormat('hu-HU').format(Math.round(value)) + ' Ft';
+}
+
+// Plain Hungarian-grouped number (no currency suffix): "29 000"
+function formatNumber(value) {
+    return new Intl.NumberFormat('hu-HU').format(Math.round(value));
+}
+
+/* ============================================================
+   SALES TOOL CONFIG (internal - salesperson never sees these)
+   ============================================================ */
+
+// STEP 1 - Company size bands. The salesperson picks a band; we use a
+// representative head-count internally for all the existing formulas.
+const SIZE_BANDS = [
+    { id: "s1", i18nKey: "size1", users: 10,  custom: false },
+    { id: "s2", i18nKey: "size2", users: 30,  custom: false },
+    { id: "s3", i18nKey: "size3", users: 75,  custom: false },
+    { id: "s4", i18nKey: "size4", users: 175, custom: false },
+    { id: "s5", i18nKey: "size5", users: 375, custom: false },
+    { id: "s6", i18nKey: "size6", users: 750, custom: true  },
+];
+
+// STEP 2 - High-level business packages. The salesperson makes ONE decision
+// per package; each package silently activates the relevant FlowOne modules
+// (matched to ADDONS ids). No more "do I click CRM only or all 3?".
+const PACKAGES = [
+    { id: "pkg_core", i18nKey: "pkgCore", descKey: "pkgCoreDesc", icon: "mail",     color: "text-sky-400",     core: true, modules: ["calendar", "drive"] },
+    { id: "pkg_comm", i18nKey: "pkgComm", descKey: "pkgCommDesc", icon: "forum",    color: "text-emerald-400", modules: ["chat", "news", "team", "reactions"] },
+    { id: "pkg_crm",  i18nKey: "pkgCrm",  descKey: "pkgCrmDesc",  icon: "contacts", color: "text-blue-400",    modules: ["crm"] },
+    { id: "pkg_pm",   i18nKey: "pkgPm",   descKey: "pkgPmDesc",   icon: "hub",      color: "text-cyan-400",    modules: ["projects", "tasks", "kanban", "boardpro", "timetracker"] },
+    { id: "pkg_mkt",  i18nKey: "pkgMkt",  descKey: "pkgMktDesc",  icon: "campaign", color: "text-pink-400",    modules: ["emailmkt", "tracking"] },
+    { id: "pkg_auto", i18nKey: "pkgAuto", descKey: "pkgAutoDesc", icon: "bolt",     color: "text-amber-400",   modules: ["ai", "automation", "search"] },
+];
+
+// STEP 3 - Customer's current software. Average market prices (Ft/user/mo)
+// used to estimate current annual spend - salesperson never types a price.
+const STACK = {
+    email: { i18nKey: "stackEmail", scope: "all",  def: "m365", options: [
+        { id: "m365",      i18nKey: "optM365",      perUser: 6400 },
+        { id: "gws",       i18nKey: "optGws",       perUser: 5600 },
+        { id: "other",     i18nKey: "optOther",     perUser: 5200 },
+    ]},
+    crm: { i18nKey: "stackCrm", scope: "seat", def: "salesforce", options: [
+        { id: "salesforce",i18nKey: "optSalesforce",perUser: 28000 },
+        { id: "hubspot",   i18nKey: "optHubspot",   perUser: 12000 },
+        { id: "pipedrive", i18nKey: "optPipedrive", perUser: 6000 },
+        { id: "none",      i18nKey: "optNone",      perUser: 0 },
+    ]},
+    pm: { i18nKey: "stackPm", scope: "seat", def: "clickup", options: [
+        { id: "monday",    i18nKey: "optMonday",    perUser: 6000 },
+        { id: "asana",     i18nKey: "optAsana",     perUser: 5200 },
+        { id: "jira",      i18nKey: "optJira",      perUser: 3200 },
+        { id: "clickup",   i18nKey: "optClickup",   perUser: 3200 },
+        { id: "none",      i18nKey: "optNone",      perUser: 0 },
+    ]},
+    comm: { i18nKey: "stackComm", scope: "all", def: "slack", options: [
+        { id: "slack",     i18nKey: "optSlack",     perUser: 6000 },
+        { id: "teams",     i18nKey: "optTeams",     perUser: 1600 },
+        { id: "discord",   i18nKey: "optDiscord",   perUser: 800 },
+        { id: "none",      i18nKey: "optNone",      perUser: 0 },
+    ]},
+};
+
+// Realistic share of staff that actually use role-based tools (CRM / PM).
+const SEAT_RATIO = { crm: 0.4, pm: 0.6 };
+
+// Map module id -> price for fast license lookups.
+const MODULE_PRICE = {};
+ADDONS.forEach(a => { MODULE_PRICE[a.id] = a.price; });
+
+// Live sales-tool state
+let selectedSize = "s2";
+const selectedNeeds = new Set(["pkg_core"]);                                   // core package (Email, Calendar & Drive) on by default
+const selectedStack = { email: "m365", crm: "salesforce", pm: "clickup", comm: "slack" };
+
+/* ============================================================
+   SALES ASSISTANT CONTENT (Microsoft 365 / Exchange playbook)
+   Content is i18n-key driven so EN/HU stay in sync with applyStaticTranslations.
+   ============================================================ */
+// Topic categories used by the filter chips + question/objection grouping.
+const SALES_CATEGORIES = [
+    { id: "cost",        labelKey: "saCatCost",        icon: "payments" },
+    { id: "security",    labelKey: "saCatSecurity",    icon: "shield" },
+    { id: "reliability", labelKey: "saCatReliability", icon: "verified_user" },
+    { id: "migration",   labelKey: "saCatMigration",   icon: "swap_horiz" },
+    { id: "ownership",   labelKey: "saCatOwnership",   icon: "vpn_key" },
+    { id: "features",    labelKey: "saCatFeatures",    icon: "extension" },
+];
+
+// SECTION 1 - reasons checklist
+const SALES_REASONS = [
+    "saReason1", "saReason2", "saReason3", "saReason4", "saReason5", "saReason6",
+    "saReason7", "saReason8", "saReason9", "saReason10", "saReason11", "saReason12",
+];
+
+// SECTION 2 - fact comparison (Microsoft Exchange / 365 vs FlowOne)
+const SALES_FACTS = [
+    { aspect: "saFact1Aspect", ms: "saFact1Ms", fo: "saFact1Fo" },
+    { aspect: "saFact2Aspect", ms: "saFact2Ms", fo: "saFact2Fo" },
+    { aspect: "saFact3Aspect", ms: "saFact3Ms", fo: "saFact3Fo" },
+    { aspect: "saFact4Aspect", ms: "saFact4Ms", fo: "saFact4Fo" },
+    { aspect: "saFact5Aspect", ms: "saFact5Ms", fo: "saFact5Fo" },
+    { aspect: "saFact6Aspect", ms: "saFact6Ms", fo: "saFact6Fo" },
+    { aspect: "saFact7Aspect", ms: "saFact7Ms", fo: "saFact7Fo" },
+    { aspect: "saFact8Aspect", ms: "saFact8Ms", fo: "saFact8Fo" },
+];
+
+// SECTION 3 - discovery questions (grouped by category)
+const SALES_QUESTIONS = [
+    { q: "saQ1",  cat: "cost" },
+    { q: "saQ2",  cat: "cost" },
+    { q: "saQ5",  cat: "cost" },
+    { q: "saQ6",  cat: "cost" },
+    { q: "saQ7",  cat: "cost" },
+    { q: "saQ8",  cat: "cost" },
+    { q: "saQ9",  cat: "security" },
+    { q: "saQ10", cat: "security" },
+    { q: "saQ11", cat: "reliability" },
+    { q: "saQ12", cat: "reliability" },
+    { q: "saQ13", cat: "migration" },
+    { q: "saQ14", cat: "migration" },
+    { q: "saQ4",  cat: "ownership" },
+    { q: "saQ15", cat: "ownership" },
+    { q: "saQ3",  cat: "features" },
+    { q: "saQ16", cat: "features" },
+];
+
+// SECTION 4 - objections + rebuttals (category-tagged, incl. Exchange-specific)
+const SALES_OBJECTIONS = [
+    { q: "saObj2Q",  a: "saObj2A",  cat: "cost" },
+    { q: "saObj4Q",  a: "saObj4A",  cat: "cost" },
+    { q: "saObj5Q",  a: "saObj5A",  cat: "cost" },
+    { q: "saObj6Q",  a: "saObj6A",  cat: "cost" },
+    { q: "saObj18Q", a: "saObj18A", cat: "cost" },
+    { q: "saObj7Q",  a: "saObj7A",  cat: "security" },
+    { q: "saObj8Q",  a: "saObj8A",  cat: "security" },
+    { q: "saObj1Q",  a: "saObj1A",  cat: "reliability" },
+    { q: "saObj9Q",  a: "saObj9A",  cat: "reliability" },
+    { q: "saObj10Q", a: "saObj10A", cat: "reliability" },
+    { q: "saObj3Q",  a: "saObj3A",  cat: "migration" },
+    { q: "saObj11Q", a: "saObj11A", cat: "migration" },
+    { q: "saObj12Q", a: "saObj12A", cat: "migration" },
+    { q: "saObj13Q", a: "saObj13A", cat: "migration" },
+    { q: "saObj14Q", a: "saObj14A", cat: "ownership" },
+    { q: "saObj15Q", a: "saObj15A", cat: "ownership" },
+    { q: "saObj16Q", a: "saObj16A", cat: "features" },
+    { q: "saObj17Q", a: "saObj17A", cat: "features" },
+];
+
+// SECTION 6 - ROI / value proof points (reference the on-screen calculator numbers)
+const SALES_ROI_POINTS = ["saRoi1", "saRoi2", "saRoi3", "saRoi4", "saRoi5"];
+
+// SECTION 5 (bottom) - several strong closing questions
+const SALES_CLOSINGS = ["saClosing1", "saClosing2", "saClosing3", "saClosing4", "saClosing5"];
+
+/* ============================================================
+   i18n - English / Hungarian
+   ============================================================ */
+const I18N = {
+    en: {
+        appTitle: "FlowOne",
+        appSubtitle: "ROI Calculator",
+        // Steps
+        step1: "Company size",
+        step2: "Business needs",
+        step3: "Current software",
+        // Step 1 - sizes
+        size1: "1\u201310 Users",
+        size2: "11\u201350 Users",
+        size3: "51\u2013100 Users",
+        size4: "101\u2013250 Users",
+        size5: "251\u2013500 Users",
+        size6: "500+ (Custom)",
+        // Step 2 - high-level business packages (one decision each)
+        pkgCore: "Email, Calendar & Drive",
+        pkgCoreDesc: "Core \u00b7 included for everyone",
+        pkgComm: "Communication",
+        pkgCommDesc: "Chat, calls, company news & directory",
+        pkgCrm: "Customer Management",
+        pkgCrmDesc: "CRM, client portal & sales pipeline",
+        pkgPm: "Project Management",
+        pkgPmDesc: "Projects, tasks, boards & time tracking",
+        pkgMkt: "Marketing",
+        pkgMktDesc: "Email marketing & lead tracking",
+        pkgAuto: "Automation & AI",
+        pkgAutoDesc: "AI assistant, automations & search",
+        // Step 3 - current software
+        stackEmail: "Email Platform",
+        stackCrm: "CRM",
+        stackPm: "Project Management",
+        stackComm: "Communication",
+        optM365: "Microsoft 365",
+        optGws: "Google Workspace",
+        optOther: "Other",
+        optSalesforce: "Salesforce",
+        optHubspot: "HubSpot",
+        optPipedrive: "Pipedrive",
+        optMonday: "Monday",
+        optAsana: "Asana",
+        optJira: "Jira",
+        optClickup: "ClickUp",
+        optSlack: "Slack",
+        optTeams: "Teams",
+        optDiscord: "Discord",
+        optNone: "None",
+        // Internal module labels (only shown in optional breakdown)
+        aiLabel: "AI Assistant",
+        automationLabel: "Automation Hub",
+        boardProLabel: "Board Pro",
+        calendarLabel: "Calendar",
+        driveLabel: "Drive",
+        chatLabel: "Chat & Calls",
+        crmLabel: "CRM Pro & Client Portal",
+        emailMktLabel: "Email Marketing",
+        trackingLabel: "Lead Tracking",
+        kanbanLabel: "Kanban Boards",
+        moodBoardsLabel: "Mood Boards",
+        tasksLabel: "Tasks",
+        newsLabel: "Company News",
+        projectsLabel: "Project Hub",
+        reactionsLabel: "Reactions",
+        teamLabel: "Team Management",
+        timeTrackerLabel: "Time Tracker",
+        searchLabel: "Universal Search",
+        // Results
+        currentAnnualCost: "Current Annual Software Cost",
+        flowoneInvestment: "FlowOne Investment",
+        annualSavings: "Annual Savings",
+        perYear: "per year",
+        oneTime: "one-time",
+        breakEven: "Break-even",
+        roiSummary: "Savings Over Time",
+        // Guidance captions
+        capToday: "What they pay today",
+        capOneTime: "One-time setup",
+        capEverySave: "Saved every year",
+        runYearNote: "/ yr to run",
+        runIncludesBase: "hosting",
+        runIncludesAdmin: "hosting + administrator",
+        plusMonthly: "then monthly",
+        perYearShort: "/ yr",
+        paysForItself: "Pays for itself in",
+        colToday: "Today",
+        rowOneTime: "One-time",
+        rowMonthly: "Monthly",
+        rowYearly: "Per year",
+        comparisonTitle: "Yearly cost: today vs FlowOne",
+        todayLabel: "Today",
+        flowoneRunLabel: "FlowOne (running)",
+        cumulativeNote: "Net, after the one-time investment",
+        after3: "After 3 years",
+        after5: "After 5 years",
+        after10: "After 10 years",
+        noBreakEven: "No Break-even",
+        years: "years",
+        months: "months",
+        // Summary block
+        currentlyUses: "Customer currently uses",
+        flowoneReplaces: "FlowOne replaces",
+        systemsLabel: "tools today",
+        platformLabel: "platform",
+        none: "No paid tools selected",
+        showBreakdown: "Show price breakdown",
+        hideBreakdown: "Hide price breakdown",
+        // License breakdown (optional)
+        basePlatform: "Base Platform",
+        totalLicense: "Total License",
+        flowoneLicense: "FlowOne License",
+        usersCountLabel: "Users",
+        recurringTitle: "Recurring service",
+        optionalWord: "optional",
+        monthlySuffix: "/ month",
+        yearlySuffix: "/ year",
+        // Misc
+        custom: "Custom",
+        customQuote: "500+ users \u2014 contact sales for a custom quote",
+        adminLabel: "Dedicated System Administrator",
+        migrationLabel: "Migration Project",
+        badgeQuick: "Strong ROI",
+        badge12: "Fast payback",
+        // Sales Assistant panel
+        saTitle: "Sales Assistant",
+        saSubtitle: "For Microsoft 365 / Exchange customers",
+        saSection1Title: "Why FlowOne over Microsoft Exchange / 365?",
+        saSection2Title: "Microsoft Exchange / 365 vs FlowOne",
+        saSection3Title: "Discovery questions",
+        saSection4Title: "Objections & rebuttals",
+        saSection5Title: "Talk to the numbers",
+        saSection6Title: "Closing questions",
+        saFilterLabel: "Filter by topic",
+        saFilterAll: "All",
+        saCatCost: "Cost & Licensing",
+        saCatSecurity: "Security & Compliance",
+        saCatReliability: "Reliability & Support",
+        saCatMigration: "Migration",
+        saCatOwnership: "Lock-in & Ownership",
+        saCatFeatures: "Features & Integration",
+        saFactColMs: "Microsoft",
+        saFactColFo: "FlowOne",
+        // Reasons
+        saReason1: "No recurring per-user monthly license fees",
+        saReason2: "No exposure to Microsoft price increases",
+        saReason3: "A system you fully own",
+        saReason4: "Your own infrastructure and data",
+        saReason5: "One platform instead of many separate systems",
+        saReason6: "Lower total cost of ownership long term",
+        saReason7: "Replace endless subscriptions with a one-time investment",
+        saReason8: "No vendor lock-in \u2014 your data is never held hostage to a renewal",
+        saReason9: "No forced cloud migration or forced version upgrades",
+        saReason10: "Data stays in your jurisdiction, under your own compliance rules",
+        saReason11: "Predictable cost \u2014 no per-seat billing surprises as you grow",
+        saReason12: "One vendor, one support line, one platform to maintain",
+        // Fact comparison
+        saFact1Aspect: "Pricing model",
+        saFact1Ms: "Per-user monthly subscription, forever",
+        saFact1Fo: "One-time license \u2014 you own it",
+        saFact2Aspect: "Price increases",
+        saFact2Ms: "Microsoft sets them, you absorb them",
+        saFact2Fo: "Fixed \u2014 no recurring hikes",
+        saFact3Aspect: "Data ownership",
+        saFact3Ms: "Hosted on Microsoft's cloud",
+        saFact3Fo: "Your own infrastructure",
+        saFact4Aspect: "Lock-in",
+        saFact4Ms: "Stop paying and you lose access",
+        saFact4Fo: "The system stays yours",
+        saFact5Aspect: "Scope",
+        saFact5Ms: "Email + add-ons billed separately",
+        saFact5Fo: "One platform, many tools included",
+        saFact6Aspect: "Security exposure",
+        saFact6Ms: "The world's biggest attack target",
+        saFact6Fo: "Private, self-hosted surface",
+        saFact7Aspect: "Upgrades",
+        saFact7Ms: "Forced version & cloud moves",
+        saFact7Fo: "On your own schedule",
+        saFact8Aspect: "5+ year total cost",
+        saFact8Ms: "Grows every single year",
+        saFact8Fo: "Pays for itself, then saves",
+        // Discovery questions
+        saQ1: "How much do you pay for Microsoft licenses per year today?",
+        saQ2: "How many users are on the system?",
+        saQ3: "Do you use other subscription systems besides Microsoft?",
+        saQ4: "Is keeping company data under your own control important?",
+        saQ5: "What would happen if Microsoft raised prices by 20% next year?",
+        saQ6: "How many separate systems do you pay for today besides email?",
+        saQ7: "How many of the licenses you pay for are actually used every day?",
+        saQ8: "Do your Microsoft costs rise automatically every time you hire?",
+        saQ9: "Where is your company and customer data physically stored today?",
+        saQ10: "Do you have compliance or data-residency requirements to meet?",
+        saQ11: "When Microsoft 365 has an outage, what is your fallback?",
+        saQ12: "Who do you call when something breaks, and how fast is it resolved?",
+        saQ13: "Are you on Exchange Server on-premise, or Exchange Online?",
+        saQ14: "When does your current Microsoft agreement renew?",
+        saQ15: "If you stopped paying Microsoft tomorrow, what happens to your data and email?",
+        saQ16: "Which tools beyond email does your team rely on (chat, CRM, projects, storage)?",
+        // Objections & rebuttals
+        saObj1Q: "Microsoft is more reliable.",
+        saObj1A: "The real question isn't reliability \u2014 it's who owns the system, the data, and the future costs. FlowOne runs on infrastructure you control.",
+        saObj2Q: "We already have a Microsoft 365 subscription.",
+        saObj2A: "Most companies use only a fraction of the services while paying for all of them. FlowOne consolidates several separate systems into one owned platform.",
+        saObj3Q: "Migration is too complicated.",
+        saObj3A: "Migration is a staged, supported process. Mailboxes, folders, contacts and calendars are moved over, run in parallel, and only cut over once verified.",
+        saObj4Q: "Microsoft is cheaper.",
+        saObj4A: "It can be in the short term. Long term, recurring subscription fees almost always add up to a significantly higher total cost than a one-time license.",
+        saObj5Q: "The monthly fee per user is small.",
+        saObj5A: "Per user it looks small \u2014 but multiply it by every user, every month, for years. That total is the number that matters, and FlowOne replaces it with a one-time license.",
+        saObj6Q: "We don't have budget for a one-time purchase.",
+        saObj6A: "It can be planned as a one-off project investment. The calculator shows it typically pays for itself within months \u2014 then it saves every year. The subscription never stops.",
+        saObj7Q: "Microsoft is more secure.",
+        saObj7A: "Microsoft is the single biggest target in the world, and on-premise Exchange suffered mass exploits like ProxyLogon and ProxyShell. A private, self-hosted FlowOne is a far smaller attack surface you patch on your own terms.",
+        saObj8Q: "Our data is safer in Microsoft's cloud.",
+        saObj8A: "\u201cSafer\u201d often just means you don't control it. With FlowOne the data sits on your own infrastructure, in your jurisdiction, under your rules \u2014 exactly what auditors and clients increasingly demand.",
+        saObj9Q: "Microsoft 365 never goes down.",
+        saObj9A: "It does \u2014 there are well-publicised global outages, and when it happens you have no control and no fallback. With your own system you control uptime, maintenance windows and recovery.",
+        saObj10Q: "Who supports it if something breaks?",
+        saObj10A: "One vendor, one support line \u2014 us. No ticket queue sitting behind millions of other tenants.",
+        saObj11Q: "We run Exchange Server on-premise and it's fine.",
+        saObj11A: "Exchange Server 2016/2019 is reaching end of support, and Microsoft is steering everyone toward the subscription-based Exchange Online / Subscription Edition. You face a forced move either way \u2014 FlowOne is the move that ends the subscription instead of starting a new one.",
+        saObj12Q: "Switching email is too risky and disruptive.",
+        saObj12A: "The cutover is staged and reversible: the new system runs in parallel, data is verified, and only then do you switch. Day-to-day work isn't interrupted.",
+        saObj13Q: "Our team only knows Outlook.",
+        saObj13A: "The interface is familiar and the workflow is the same. Training is minimal, and we support the team through the transition.",
+        saObj14Q: "We'd be forced onto the cloud eventually anyway.",
+        saObj14A: "That's exactly the trap FlowOne removes. Instead of renting forever, you own the system outright and decide your own roadmap.",
+        saObj15Q: "We're already locked into the Microsoft ecosystem.",
+        saObj15A: "That lock-in is the cost. FlowOne breaks it: your data, your server, your rules \u2014 and no renewal that can be revoked.",
+        saObj16Q: "Microsoft 365 has more features.",
+        saObj16A: "Most companies use a fraction of them while paying for all. FlowOne bundles the tools you actually use \u2014 mail, calendar, drive, chat, CRM, projects \u2014 into one owned platform.",
+        saObj17Q: "We use Teams / SharePoint / OneDrive heavily.",
+        saObj17A: "FlowOne covers the same needs \u2014 chat, files, collaboration \u2014 in one integrated platform, without stacking up separate per-service subscriptions.",
+        saObj18Q: "Email comes bundled with our other Microsoft licenses.",
+        saObj18A: "Bundled doesn't mean free \u2014 it's baked into a per-user fee you pay forever. FlowOne replaces that recurring cost with a one-time, owned platform.",
+        // ROI / value proof points
+        saRoi1: "Point at the \u201cAnnual Savings\u201d figure \u2014 that's money they keep every single year, not a one-off.",
+        saRoi2: "The \u201cPays for itself in\u201d number shows when the one-time investment is fully recovered \u2014 everything after that is saving.",
+        saRoi3: "The 3, 5 and 10-year totals are the real story \u2014 subscriptions only get more expensive over time.",
+        saRoi4: "Every tool they pay for separately today is folded into one platform \u2014 fewer invoices, fewer vendors, one bill.",
+        saRoi5: "The longer the horizon, the bigger the gap \u2014 ownership compounds while subscriptions just accumulate.",
+        // Closing questions
+        saClosing1: "You've already seen what this costs you today \u2014 want me to put together the migration plan so you can decide with the full picture in front of you?",
+        saClosing2: "We already handle other things for you; moving off the Microsoft bill is just one more we take care of. Want me to get it started?",
+        saClosing3: "Instead of renewing with Microsoft again next cycle, would it make more sense to put that same budget once into something you own?",
+        saClosing4: "Want me to line this up the same way we've handled everything else \u2014 no downtime, nothing for you to manage?",
+        saClosing5: "If these numbers look right to you, what would be the natural next step on your end?",
+    },
+    hu: {
+        appTitle: "FlowOne",
+        appSubtitle: "ROI Kalkul\u00e1tor",
+        // Steps
+        step1: "C\u00e9gm\u00e9ret",
+        step2: "\u00dczleti ig\u00e9nyek",
+        step3: "Jelenlegi szoftverek",
+        // Step 1 - sizes
+        size1: "1\u201310 felhaszn\u00e1l\u00f3",
+        size2: "11\u201350 felhaszn\u00e1l\u00f3",
+        size3: "51\u2013100 felhaszn\u00e1l\u00f3",
+        size4: "101\u2013250 felhaszn\u00e1l\u00f3",
+        size5: "251\u2013500 felhaszn\u00e1l\u00f3",
+        size6: "500+ (Egyedi)",
+        // Step 2 - magas szint\u0171 \u00fczleti csomagok (egy d\u00f6nt\u00e9s csomagonk\u00e9nt)
+        pkgCore: "E-mail, Napt\u00e1r \u00e9s Drive",
+        pkgCoreDesc: "Alapcsomag \u00b7 mindenkinek j\u00e1r",
+        pkgComm: "Kommunik\u00e1ci\u00f3",
+        pkgCommDesc: "Chat, h\u00edv\u00e1sok, c\u00e9ges h\u00edrek \u00e9s n\u00e9vjegyz\u00e9k",
+        pkgCrm: "\u00dcgyf\u00e9lkezel\u00e9s",
+        pkgCrmDesc: "CRM, \u00fcgyf\u00e9lport\u00e1l \u00e9s \u00e9rt\u00e9kes\u00edt\u00e9si pipeline",
+        pkgPm: "Projektmenedzsment",
+        pkgPmDesc: "Projektek, feladatok, t\u00e1bl\u00e1k \u00e9s id\u0151k\u00f6vet\u00e9s",
+        pkgMkt: "Marketing",
+        pkgMktDesc: "E-mail marketing \u00e9s lead k\u00f6vet\u00e9s",
+        pkgAuto: "Automatiz\u00e1l\u00e1s \u00e9s AI",
+        pkgAutoDesc: "AI asszisztens, automatiz\u00e1l\u00e1sok \u00e9s keres\u00e9s",
+        // Step 3 - current software
+        stackEmail: "E-mail platform",
+        stackCrm: "CRM",
+        stackPm: "Projektmenedzsment",
+        stackComm: "Kommunik\u00e1ci\u00f3",
+        optM365: "Microsoft 365",
+        optGws: "Google Workspace",
+        optOther: "Egy\u00e9b",
+        optSalesforce: "Salesforce",
+        optHubspot: "HubSpot",
+        optPipedrive: "Pipedrive",
+        optMonday: "Monday",
+        optAsana: "Asana",
+        optJira: "Jira",
+        optClickup: "ClickUp",
+        optSlack: "Slack",
+        optTeams: "Teams",
+        optDiscord: "Discord",
+        optNone: "Nincs",
+        // Internal module labels
+        aiLabel: "AI Asszisztens",
+        automationLabel: "Automatiz\u00e1l\u00e1si K\u00f6zpont",
+        boardProLabel: "T\u00e1bla Pro",
+        calendarLabel: "Napt\u00e1r",
+        driveLabel: "Drive",
+        chatLabel: "Cseveg\u00e9s \u00e9s H\u00edv\u00e1sok",
+        crmLabel: "CRM Pro \u00e9s \u00dcgyf\u00e9lport\u00e1l",
+        emailMktLabel: "E-mail Marketing",
+        trackingLabel: "Lead k\u00f6vet\u00e9s",
+        kanbanLabel: "Kanban T\u00e1bl\u00e1k",
+        moodBoardsLabel: "Hangulatt\u00e1bl\u00e1k",
+        tasksLabel: "Feladatok",
+        newsLabel: "C\u00e9ges h\u00edrek",
+        projectsLabel: "Projekt K\u00f6zpont",
+        reactionsLabel: "Reakci\u00f3k",
+        teamLabel: "Csapatkezel\u00e9s",
+        timeTrackerLabel: "Id\u0151k\u00f6vet\u0151",
+        searchLabel: "Univerz\u00e1lis Keres\u00e9s",
+        // Results
+        currentAnnualCost: "Jelenlegi \u00e9ves szoftverk\u00f6lts\u00e9g",
+        flowoneInvestment: "FlowOne beruh\u00e1z\u00e1s",
+        annualSavings: "\u00c9ves megtakar\u00edt\u00e1s",
+        perYear: "\u00e9vente",
+        oneTime: "egyszeri",
+        breakEven: "Megt\u00e9r\u00fcl\u00e9s",
+        roiSummary: "Megtakar\u00edt\u00e1s id\u0151vel",
+        // Guidance captions
+        capToday: "Amit ma fizetnek",
+        capOneTime: "Egyszeri bevezet\u00e9s",
+        capEverySave: "\u00c9vente megtakar\u00edtva",
+        runYearNote: "/ \u00e9v \u00fczemeltet\u00e9s",
+        runIncludesBase: "\u00fczemeltet\u00e9s",
+        runIncludesAdmin: "\u00fczemeltet\u00e9s + rendszergazda",
+        plusMonthly: "majd havonta",
+        perYearShort: "/ \u00e9v",
+        paysForItself: "Megt\u00e9r\u00fcl\u00e9s ideje",
+        colToday: "Ma",
+        rowOneTime: "Egyszeri",
+        rowMonthly: "Havi d\u00edj",
+        rowYearly: "\u00c9ves k\u00f6lts\u00e9g",
+        comparisonTitle: "\u00c9ves k\u00f6lts\u00e9g: ma vs FlowOne",
+        todayLabel: "Ma",
+        flowoneRunLabel: "FlowOne (\u00fczemeltet\u00e9s)",
+        cumulativeNote: "Nett\u00f3, az egyszeri beruh\u00e1z\u00e1s ut\u00e1n",
+        after3: "3 \u00e9v ut\u00e1n",
+        after5: "5 \u00e9v ut\u00e1n",
+        after10: "10 \u00e9v ut\u00e1n",
+        noBreakEven: "Nincs megt\u00e9r\u00fcl\u00e9s",
+        years: "\u00e9v",
+        months: "h\u00f3nap",
+        // Summary block
+        currentlyUses: "Az \u00fcgyf\u00e9l jelenleg ezt haszn\u00e1lja",
+        flowoneReplaces: "A FlowOne kiv\u00e1ltja",
+        systemsLabel: "rendszer ma",
+        platformLabel: "platform",
+        none: "Nincs fizet\u0151s eszk\u00f6z kiv\u00e1lasztva",
+        showBreakdown: "\u00c1rr\u00e9szletez\u00e9s mutat\u00e1sa",
+        hideBreakdown: "\u00c1rr\u00e9szletez\u00e9s elrejt\u00e9se",
+        // License breakdown (optional)
+        basePlatform: "Alap platform",
+        totalLicense: "Teljes licenc",
+        flowoneLicense: "FlowOne licenc",
+        usersCountLabel: "Felhaszn\u00e1l\u00f3",
+        recurringTitle: "Folyamatos szolg\u00e1ltat\u00e1s",
+        optionalWord: "opcion\u00e1lis",
+        monthlySuffix: "/ h\u00f3",
+        yearlySuffix: "/ \u00e9v",
+        // Misc
+        custom: "Egyedi",
+        customQuote: "500+ felhaszn\u00e1l\u00f3 \u2014 egyedi aj\u00e1nlat\u00e9rt keresse az \u00e9rt\u00e9kes\u00edt\u00e9st",
+        adminLabel: "Dedik\u00e1lt rendszergazda",
+        migrationLabel: "Migr\u00e1ci\u00f3s Projekt",
+        badgeQuick: "Kedvez\u0151 megt\u00e9r\u00fcl\u00e9s",
+        badge12: "Gyors megt\u00e9r\u00fcl\u00e9s",
+        // Sales Assistant panel
+        saTitle: "\u00c9rt\u00e9kes\u00edt\u00e9si Seg\u00e9dlet",
+        saSubtitle: "Microsoft 365 / Exchange \u00fcgyfelekhez",
+        saSection1Title: "Mi\u00e9rt FlowOne a Microsoft Exchange / 365 helyett?",
+        saSection2Title: "Microsoft Exchange / 365 vs FlowOne",
+        saSection3Title: "Felder\u00edt\u0151 k\u00e9rd\u00e9sek",
+        saSection4Title: "Kifog\u00e1sok \u00e9s v\u00e1laszok",
+        saSection5Title: "Besz\u00e9ljenek a sz\u00e1mok",
+        saSection6Title: "Z\u00e1r\u00f3 k\u00e9rd\u00e9sek",
+        saFilterLabel: "Sz\u0171r\u00e9s t\u00e9ma szerint",
+        saFilterAll: "Mind",
+        saCatCost: "K\u00f6lts\u00e9g \u00e9s licenc",
+        saCatSecurity: "Biztons\u00e1g \u00e9s megfelel\u0151s\u00e9g",
+        saCatReliability: "Megb\u00edzhat\u00f3s\u00e1g \u00e9s t\u00e1mogat\u00e1s",
+        saCatMigration: "Migr\u00e1ci\u00f3",
+        saCatOwnership: "F\u00fcggetlens\u00e9g \u00e9s tulajdon",
+        saCatFeatures: "Funkci\u00f3k \u00e9s integr\u00e1ci\u00f3",
+        saFactColMs: "Microsoft",
+        saFactColFo: "FlowOne",
+        // Reasons
+        saReason1: "Nincs folyamatos felhaszn\u00e1l\u00f3nk\u00e9nti havi licencd\u00edj",
+        saReason2: "Nincs kiszolg\u00e1ltatotts\u00e1g Microsoft \u00e1remel\u00e9seknek",
+        saReason3: "Saj\u00e1t tulajdon\u00fa rendszer",
+        saReason4: "Saj\u00e1t infrastrukt\u00fara \u00e9s adatok",
+        saReason5: "Egy platform t\u00f6bb k\u00fcl\u00f6n\u00e1ll\u00f3 rendszer helyett",
+        saReason6: "Alacsonyabb teljes beker\u00fcl\u00e9si k\u00f6lts\u00e9g hossz\u00fa t\u00e1von",
+        saReason7: "Egyszeri beruh\u00e1z\u00e1s helyett v\u00e9gtelen el\u0151fizet\u00e9sek kiv\u00e1lt\u00e1sa",
+        saReason8: "Nincs gy\u00e1rt\u00f3i f\u00fcgg\u0151s\u00e9g \u2014 az adatait soha nem tartja t\u00faszk\u00e9nt egy meg\u00faj\u00edt\u00e1s",
+        saReason9: "Nincs k\u00e9nyszer\u00edtett felh\u0151migr\u00e1ci\u00f3 vagy k\u00e9nyszer\u00edtett verzi\u00f3friss\u00edt\u00e9s",
+        saReason10: "Az adatok a saj\u00e1t joghat\u00f3s\u00e1g\u00e1ban maradnak, a saj\u00e1t megfelel\u0151s\u00e9gi szab\u00e1lyai szerint",
+        saReason11: "Kisz\u00e1m\u00edthat\u00f3 k\u00f6lts\u00e9g \u2014 nincs meglepet\u00e9s a felhaszn\u00e1l\u00f3nk\u00e9nti sz\u00e1ml\u00e1z\u00e1sban, ahogy n\u0151 a c\u00e9g",
+        saReason12: "Egy gy\u00e1rt\u00f3, egy t\u00e1mogat\u00e1si vonal, egy karbantartand\u00f3 platform",
+        // Fact comparison
+        saFact1Aspect: "\u00c1raz\u00e1si modell",
+        saFact1Ms: "Felhaszn\u00e1l\u00f3nk\u00e9nti havi el\u0151fizet\u00e9s, \u00f6r\u00f6kk\u00e9",
+        saFact1Fo: "Egyszeri licenc \u2014 az \u00d6n\u00e9",
+        saFact2Aspect: "\u00c1remel\u00e9sek",
+        saFact2Ms: "A Microsoft d\u00f6nt, \u00d6n fizeti",
+        saFact2Fo: "Fix \u2014 nincs ism\u00e9tl\u0151d\u0151 emel\u00e9s",
+        saFact3Aspect: "Adattulajdon",
+        saFact3Ms: "A Microsoft felh\u0151j\u00e9n t\u00e1rolva",
+        saFact3Fo: "Saj\u00e1t infrastrukt\u00fara",
+        saFact4Aspect: "F\u00fcgg\u0151s\u00e9g",
+        saFact4Ms: "Ha nem fizet, elveszti a hozz\u00e1f\u00e9r\u00e9st",
+        saFact4Fo: "A rendszer az \u00d6n\u00e9 marad",
+        saFact5Aspect: "Lefedetts\u00e9g",
+        saFact5Ms: "E-mail + k\u00fcl\u00f6n sz\u00e1ml\u00e1zott b\u0151v\u00edtm\u00e9nyek",
+        saFact5Fo: "Egy platform, sok eszk\u00f6zzel",
+        saFact6Aspect: "Biztons\u00e1gi kitetts\u00e9g",
+        saFact6Ms: "A vil\u00e1g legnagyobb t\u00e1mad\u00e1si c\u00e9lpontja",
+        saFact6Fo: "Priv\u00e1t, saj\u00e1t \u00fczemeltet\u00e9s\u0171 fel\u00fclet",
+        saFact7Aspect: "Friss\u00edt\u00e9sek",
+        saFact7Ms: "K\u00e9nyszer\u00edtett verzi\u00f3- \u00e9s felh\u0151v\u00e1lt\u00e1s",
+        saFact7Fo: "A saj\u00e1t \u00fctemez\u00e9se szerint",
+        saFact8Aspect: "5+ \u00e9ves \u00f6sszk\u00f6lts\u00e9g",
+        saFact8Ms: "\u00c9vr\u0151l \u00e9vre n\u0151",
+        saFact8Fo: "Megt\u00e9r\u00fcl, majd megtakar\u00edt",
+        // Discovery questions
+        saQ1: "Mennyit fizetnek jelenleg Microsoft licencekre \u00e9vente?",
+        saQ2: "H\u00e1ny felhaszn\u00e1l\u00f3 haszn\u00e1lja a rendszert?",
+        saQ3: "Haszn\u00e1lnak a Microsofton k\u00edv\u00fcl m\u00e1s el\u0151fizet\u00e9ses rendszereket is?",
+        saQ4: "Fontos, hogy a v\u00e1llalati adatok saj\u00e1t kezel\u00e9sben maradjanak?",
+        saQ5: "Mi t\u00f6rt\u00e9nne, ha a Microsoft j\u00f6v\u0151re 20%-kal emeln\u00e9 az \u00e1rakat?",
+        saQ6: "H\u00e1ny k\u00fcl\u00f6n rendszer\u00e9rt fizetnek jelenleg az emailen k\u00edv\u00fcl?",
+        saQ7: "H\u00e1ny megv\u00e1s\u00e1rolt licencet haszn\u00e1lnak t\u00e9nylegesen minden nap?",
+        saQ8: "A Microsoft-k\u00f6lts\u00e9gek automatikusan n\u0151nek minden \u00faj bel\u00e9p\u0151vel?",
+        saQ9: "Hol t\u00e1rolj\u00e1k fizikailag jelenleg a c\u00e9ges \u00e9s \u00fcgyf\u00e9ladatokat?",
+        saQ10: "Vannak megfelel\u0151s\u00e9gi vagy adat-honoss\u00e1gi k\u00f6vetelm\u00e9nyeik?",
+        saQ11: "Ha a Microsoft 365 le\u00e1ll, mi a tartal\u00e9k megold\u00e1suk?",
+        saQ12: "Kit h\u00edvnak, ha valami elromlik, \u00e9s milyen gyorsan old\u00f3dik meg?",
+        saQ13: "Helyben (on-premise) futtatott Exchange Servert vagy Exchange Online-t haszn\u00e1lnak?",
+        saQ14: "Mikor \u00fajul meg a jelenlegi Microsoft-szerz\u0151d\u00e9s\u00fck?",
+        saQ15: "Ha holnap le\u00e1ll\u00edtan\u00e1k a Microsoft-fizet\u00e9st, mi lenne az adataikkal \u00e9s e-mailjeikkel?",
+        saQ16: "Az emailen k\u00edv\u00fcl milyen eszk\u00f6z\u00f6kre t\u00e1maszkodik a csapat (chat, CRM, projektek, t\u00e1rhely)?",
+        // Objections & rebuttals
+        saObj1Q: "Microsoft megb\u00edzhat\u00f3bb.",
+        saObj1A: "Az igazi k\u00e9rd\u00e9s nem a megb\u00edzhat\u00f3s\u00e1g \u2014 hanem hogy ki birtokolja a rendszert, az adatokat \u00e9s a j\u00f6v\u0151beni k\u00f6lts\u00e9geket. A FlowOne az \u00d6n \u00e1ltal fel\u00fcgyelt infrastrukt\u00far\u00e1n fut.",
+        saObj2Q: "M\u00e1r van Microsoft 365 el\u0151fizet\u00e9s\u00fcnk.",
+        saObj2A: "A legt\u00f6bb c\u00e9g a szolg\u00e1ltat\u00e1soknak csak t\u00f6red\u00e9k\u00e9t haszn\u00e1lja, mik\u00f6zben mind\u00e9rt fizet. A FlowOne t\u00f6bb k\u00fcl\u00f6n\u00e1ll\u00f3 rendszert egyetlen, saj\u00e1t tulajdon\u00fa platformba von \u00f6ssze.",
+        saObj3Q: "A migr\u00e1ci\u00f3 t\u00fal bonyolult.",
+        saObj3A: "A migr\u00e1ci\u00f3 \u00fctemezett, t\u00e1mogatott folyamat. A postafi\u00f3kok, mapp\u00e1k, n\u00e9vjegyek \u00e9s napt\u00e1rak \u00e1tk\u00f6lt\u00f6znek, p\u00e1rhuzamosan futnak, \u00e9s csak ellen\u0151rz\u00e9s ut\u00e1n v\u00e1ltunk \u00e1t.",
+        saObj4Q: "A Microsoft olcs\u00f3bb.",
+        saObj4A: "R\u00f6vid t\u00e1von lehet. Hossz\u00fa t\u00e1von a folyamatos el\u0151fizet\u00e9si d\u00edjak szinte mindig jelent\u0151sen magasabb \u00f6sszk\u00f6lts\u00e9get adnak ki, mint egy egyszeri licenc.",
+        saObj5Q: "A felhaszn\u00e1l\u00f3nk\u00e9nti havi d\u00edj kicsi.",
+        saObj5A: "Felhaszn\u00e1l\u00f3nk\u00e9nt kicsinek t\u0171nik \u2014 de szorozza meg minden felhaszn\u00e1l\u00f3val, minden h\u00f3napban, \u00e9vekig. Ez az \u00f6sszeg sz\u00e1m\u00edt, \u00e9s a FlowOne egyszeri licencre cser\u00e9li.",
+        saObj6Q: "Nincs keret\u00fcnk egyszeri beszerz\u00e9sre.",
+        saObj6A: "Tervezhet\u0151 egyszeri projektberuh\u00e1z\u00e1sk\u00e9nt. A kalkul\u00e1tor szerint jellemz\u0151en h\u00f3napok alatt megt\u00e9r\u00fcl \u2014 ut\u00e1na \u00e9vr\u0151l \u00e9vre megtakar\u00edt. Az el\u0151fizet\u00e9s viszont soha nem \u00e1ll le.",
+        saObj7Q: "A Microsoft biztons\u00e1gosabb.",
+        saObj7A: "A Microsoft a vil\u00e1g legnagyobb c\u00e9lpontja, a helyben fut\u00f3 Exchange-et pedig t\u00f6meges t\u00e1mad\u00e1sok \u00e9rt\u00e9k, mint a ProxyLogon \u00e9s a ProxyShell. Egy priv\u00e1t, saj\u00e1t \u00fczemeltet\u00e9s\u0171 FlowOne sokkal kisebb t\u00e1mad\u00e1si fel\u00fclet, amelyet \u00d6n a saj\u00e1t felt\u00e9telei szerint friss\u00edt.",
+        saObj8Q: "Az adataink biztons\u00e1gosabbak a Microsoft felh\u0151j\u00e9ben.",
+        saObj8A: "A \u201ebiztons\u00e1gosabb\u201d gyakran csak azt jelenti, hogy nem \u00d6n fel\u00fcgyeli. A FlowOne-n\u00e1l az adatok a saj\u00e1t infrastrukt\u00far\u00e1j\u00e1n, a saj\u00e1t joghat\u00f3s\u00e1g\u00e1ban, a saj\u00e1t szab\u00e1lyai szerint vannak \u2014 pontosan ezt v\u00e1rj\u00e1k el egyre ink\u00e1bb az auditorok \u00e9s az \u00fcgyfelek.",
+        saObj9Q: "A Microsoft 365 soha nem \u00e1ll le.",
+        saObj9A: "De igen \u2014 vannak j\u00f3l dokument\u00e1lt glob\u00e1lis le\u00e1ll\u00e1sok, \u00e9s amikor megt\u00f6rt\u00e9nik, \u00d6nnek nincs sem r\u00e1hat\u00e1sa, sem tartal\u00e9ka. A saj\u00e1t rendszer\u00e9vel \u00d6n szab\u00e1lyozza a rendelkez\u00e9sre \u00e1ll\u00e1st, a karbantart\u00e1si ablakokat \u00e9s a helyre\u00e1ll\u00edt\u00e1st.",
+        saObj10Q: "Ki t\u00e1mogatja, ha valami elromlik?",
+        saObj10A: "Egy gy\u00e1rt\u00f3, egy t\u00e1mogat\u00e1si vonal \u2014 mi. Nincs v\u00e1r\u00f3lista t\u00f6bb milli\u00f3 m\u00e1sik b\u00e9rl\u0151 m\u00f6g\u00f6tt.",
+        saObj11Q: "Helyben futtatjuk az Exchange Servert, \u00e9s m\u0171k\u00f6dik.",
+        saObj11A: "Az Exchange Server 2016/2019 t\u00e1mogat\u00e1sa lej\u00e1r, a Microsoft pedig mindenkit az el\u0151fizet\u00e9ses Exchange Online / Subscription Edition fel\u00e9 terel. \u00cdgy is, \u00fagy is k\u00e9nyszerv\u00e1lt\u00e1s v\u00e1r \u00d6nre \u2014 a FlowOne az a v\u00e1lt\u00e1s, amely megsz\u00fcnteti az el\u0151fizet\u00e9st, nem pedig \u00fajat ind\u00edt.",
+        saObj12Q: "T\u00fal kock\u00e1zatos \u00e9s zavar\u00f3 e-mailt v\u00e1ltani.",
+        saObj12A: "Az \u00e1t\u00e1ll\u00e1s \u00fctemezett \u00e9s visszaford\u00edthat\u00f3: az \u00faj rendszer p\u00e1rhuzamosan fut, az adatokat ellen\u0151rizz\u00fck, \u00e9s csak ut\u00e1na v\u00e1ltunk. A napi munka nem \u00e1ll meg.",
+        saObj13Q: "A csapatunk csak az Outlookot ismeri.",
+        saObj13A: "A fel\u00fclet ismer\u0151s, a munkafolyamat ugyanaz. A betan\u00edt\u00e1s minim\u00e1lis, \u00e9s v\u00e9gigk\u00eds\u00e9rj\u00fck a csapatot az \u00e1t\u00e1ll\u00e1son.",
+        saObj14Q: "El\u0151bb-ut\u00f3bb \u00fagyis a felh\u0151be k\u00e9nyszer\u00fcln\u00e9nk.",
+        saObj14A: "Pontosan ezt a csapd\u00e1t sz\u00fcnteti meg a FlowOne. Ahelyett, hogy \u00f6r\u00f6kk\u00e9 b\u00e9relne, teljesen birtokolja a rendszert, \u00e9s \u00d6n d\u00f6nt a saj\u00e1t \u00fatvonal\u00e1r\u00f3l.",
+        saObj15Q: "M\u00e1r be vagyunk z\u00e1rva a Microsoft \u00f6kosziszt\u00e9m\u00e1ba.",
+        saObj15A: "Ez a bez\u00e1rts\u00e1g maga a k\u00f6lts\u00e9g. A FlowOne feloldja: az \u00d6n adatai, az \u00d6n szervere, az \u00d6n szab\u00e1lyai \u2014 \u00e9s nincs visszavonhat\u00f3 meg\u00faj\u00edt\u00e1s.",
+        saObj16Q: "A Microsoft 365 t\u00f6bbet tud.",
+        saObj16A: "A legt\u00f6bb c\u00e9g ennek t\u00f6red\u00e9k\u00e9t haszn\u00e1lja, mik\u00f6zben mind\u00e9rt fizet. A FlowOne a t\u00e9nylegesen haszn\u00e1lt eszk\u00f6z\u00f6ket \u2014 levelez\u00e9s, napt\u00e1r, t\u00e1rhely, chat, CRM, projektek \u2014 egyetlen saj\u00e1t platformba fogja \u00f6ssze.",
+        saObj17Q: "Sokat haszn\u00e1ljuk a Teams / SharePoint / OneDrive eszk\u00f6z\u00f6ket.",
+        saObj17A: "A FlowOne ugyanezeket az ig\u00e9nyeket \u2014 chat, f\u00e1jlok, egy\u00fcttm\u0171k\u00f6d\u00e9s \u2014 egyetlen integr\u00e1lt platformban fedi le, an\u00e9lk\u00fcl, hogy k\u00fcl\u00f6n szolg\u00e1ltat\u00e1sonk\u00e9nti el\u0151fizet\u00e9seket halmozna.",
+        saObj18Q: "Az e-mail a t\u00f6bbi Microsoft-licenccel egy\u00fctt j\u00e1r.",
+        saObj18A: "Az, hogy benne van a csomagban, nem jelenti, hogy ingyen van \u2014 egy felhaszn\u00e1l\u00f3nk\u00e9nti d\u00edjba van be\u00e9p\u00edtve, amit \u00f6r\u00f6kk\u00e9 fizet. A FlowOne ezt az ism\u00e9tl\u0151d\u0151 k\u00f6lts\u00e9get egyszeri, saj\u00e1t platformra cser\u00e9li.",
+        // ROI / value proof points
+        saRoi1: "Mutasson r\u00e1 az \u201e\u00c9ves megtakar\u00edt\u00e1s\u201d sz\u00e1mra \u2014 ez az az \u00f6sszeg, amit minden \u00e9vben megtartanak, nem egyszeri t\u00e9tel.",
+        saRoi2: "A \u201eMegt\u00e9r\u00fcl\u00e9s ideje\u201d megmutatja, mikor t\u00e9r\u00fcl meg teljesen az egyszeri beruh\u00e1z\u00e1s \u2014 onnant\u00f3l minden megtakar\u00edt\u00e1s.",
+        saRoi3: "A 3, 5 \u00e9s 10 \u00e9ves \u00f6sszegek a l\u00e9nyeg \u2014 az el\u0151fizet\u00e9sek id\u0151vel csak dr\u00e1gulnak.",
+        saRoi4: "Minden ma k\u00fcl\u00f6n fizetett eszk\u00f6z egyetlen platformba ker\u00fcl \u2014 kevesebb sz\u00e1mla, kevesebb gy\u00e1rt\u00f3, egy d\u00edj.",
+        saRoi5: "Min\u00e9l hosszabb a t\u00e1v, ann\u00e1l nagyobb a k\u00fcl\u00f6nbs\u00e9g \u2014 a tulajdon kamatozik, az el\u0151fizet\u00e9s csak halmoz\u00f3dik.",
+        // Closing questions
+        saClosing1: "M\u00e1r l\u00e1tja, mennyibe ker\u00fcl ez ma \u2014 \u00f6ssze\u00e1ll\u00edtsam a migr\u00e1ci\u00f3s tervet, hogy a teljes k\u00e9p birtok\u00e1ban d\u00f6nthessen?",
+        saClosing2: "M\u00e1s dolgokat is int\u00e9z\u00fcnk \u00d6n\u00f6knek; a Microsoft-sz\u00e1mla kiv\u00e1lt\u00e1sa csak eggyel t\u00f6bb feladat, amit \u00e1tv\u00e1llalunk. Elind\u00edtsam?",
+        saClosing3: "Ahelyett, hogy a k\u00f6vetkez\u0151 ciklusban \u00fajra meghosszabb\u00edtan\u00e1k a Microsoftot, nem lenne \u00e9rtelmesebb ugyanazt az \u00f6sszeget egyszer egy saj\u00e1t rendszerbe tenni?",
+        saClosing4: "Megszervezzem ezt ugyan\u00fagy, ahogy minden m\u00e1st is int\u00e9zt\u00fcnk \u2014 le\u00e1ll\u00e1s n\u00e9lk\u00fcl, an\u00e9lk\u00fcl, hogy \u00d6nnek b\u00e1rmit kezelnie kellene?",
+        saClosing5: "Ha ezek a sz\u00e1mok helyt\u00e1ll\u00f3ak \u00d6n\u00f6kn\u00e9l, mi lenne a term\u00e9szetes k\u00f6vetkez\u0151 l\u00e9p\u00e9s az \u00d6n oldal\u00e1n?",
+    },
+};
+
+let currentLang = (() => {
+    try { return localStorage.getItem('flowone_lang') || 'en'; } catch (e) { return 'en'; }
+})();
+let T = I18N[currentLang] || I18N.en;
+
+function applyStaticTranslations() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (T[key] !== undefined) el.textContent = T[key];
+    });
+}
+
+function setLang(lang) {
+    if (!I18N[lang]) return;
+    currentLang = lang;
+    T = I18N[lang];
+    try { localStorage.setItem('flowone_lang', lang); } catch (e) {}
+    document.documentElement.lang = lang;
+    langEn.classList.toggle('active', lang === 'en');
+    langHu.classList.toggle('active', lang === 'hu');
+    applyStaticTranslations();
+    detailsToggle.textContent = detailsBox.classList.contains('hidden') ? T.showBreakdown : T.hideBreakdown;
+    calculate();
+}
+
+/* ============================================================
+   RENDER - Step 1 / 2 / 3 controls (consultative, business-language)
+   ============================================================ */
+function renderSizeButtons() {
+    sizeBtns.innerHTML = SIZE_BANDS.map(b => `
+        <button type="button" data-size="${b.id}"
+            class="size-btn px-2 py-2 rounded-lg text-xs font-semibold text-center ${b.id === selectedSize ? 'on' : ''}">
+            <span data-i18n="${b.i18nKey}">${b.i18nKey}</span>
+        </button>`).join('');
+    sizeBtns.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            selectedSize = btn.getAttribute('data-size');
+            sizeBtns.querySelectorAll('button').forEach(b =>
+                b.classList.toggle('on', b.getAttribute('data-size') === selectedSize));
+            calculate();
+        });
+    });
+}
+
+function renderNeeds() {
+    needsGrid.innerHTML = PACKAGES.map(p => {
+        const on = p.core || selectedNeeds.has(p.id);
+        return `
+        <button type="button" data-need="${p.id}" ${p.core ? 'data-core="1"' : ''}
+            class="pkg-card w-full flex items-center gap-2.5 p-2.5 rounded-lg text-left ${p.core ? 'core' : (on ? 'on' : '')}">
+            <span class="material-symbols-rounded text-xl ${p.color}">${p.icon}</span>
+            <span class="flex-1 min-w-0">
+                <span class="block text-xs font-semibold text-white leading-tight" data-i18n="${p.i18nKey}">${p.i18nKey}</span>
+                <span class="block text-[10px] text-slate-400 leading-snug" data-i18n="${p.descKey}">${p.descKey}</span>
+            </span>
+            <span class="pkg-check material-symbols-rounded text-lg flex-shrink-0">${on ? 'check_circle' : 'radio_button_unchecked'}</span>
+        </button>`;
+    }).join('');
+    needsGrid.querySelectorAll('button').forEach(btn => {
+        if (btn.getAttribute('data-core')) return;  // core package is always on
+        btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-need');
+            const on = !selectedNeeds.has(id);
+            if (on) selectedNeeds.add(id); else selectedNeeds.delete(id);
+            btn.classList.toggle('on', on);
+            btn.querySelector('.pkg-check').textContent = on ? 'check_circle' : 'radio_button_unchecked';
+            calculate();
+        });
+    });
+}
+
+function renderStack() {
+    stackGrid.innerHTML = Object.keys(STACK).map(key => {
+        const grp = STACK[key];
+        const opts = grp.options.map(o => `<option value="${o.id}" data-i18n="${o.i18nKey}">${o.i18nKey}</option>`).join('');
+        return `
+        <div>
+            <label class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1 block" data-i18n="${grp.i18nKey}">${grp.i18nKey}</label>
+            <select data-stack="${key}" class="stack-select w-full px-2 py-1.5 rounded-lg text-xs font-semibold">${opts}</select>
+        </div>`;
+    }).join('');
+    stackGrid.querySelectorAll('select').forEach(sel => {
+        const key = sel.getAttribute('data-stack');
+        sel.value = selectedStack[key];
+        sel.addEventListener('change', () => { selectedStack[key] = sel.value; calculate(); });
+    });
+}
+
+/* ============================================================
+   RENDER - Sales Assistant playbook (built once; text via i18n)
+   Section headers + items carry data-i18n so applyStaticTranslations
+   keeps EN/HU in sync without re-rendering (preserves open/asked state).
+   ============================================================ */
+function sectionHeader(icon, key) {
+    return `
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <span class="material-symbols-rounded text-emerald-400 text-lg">${icon}</span>
+            <span data-i18n="${key}">${key}</span>
+        </h3>`;
+}
+
+// SECTION 1 - reasons checklist
+function buildReasons() {
+    return SALES_REASONS.map(k => `
+        <li class="flex items-start gap-2.5">
+            <span class="material-symbols-rounded filled text-emerald-400 text-lg flex-shrink-0 mt-0.5">check_circle</span>
+            <span class="text-sm text-slate-200 leading-snug" data-i18n="${k}">${k}</span>
+        </li>`).join('');
+}
+
+// SECTION 2 - Microsoft vs FlowOne fact comparison
+function buildFacts() {
+    const header = `
+        <div class="grid grid-cols-[6rem_1fr_1fr] gap-2 px-1 mb-1.5">
+            <span></span>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-rose-300/80 text-center" data-i18n="saFactColMs">Microsoft</span>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-300/90 text-center" data-i18n="saFactColFo">FlowOne</span>
+        </div>`;
+    const rows = SALES_FACTS.map(f => `
+        <div class="sa-fact grid grid-cols-[6rem_1fr_1fr] gap-2 items-stretch">
+            <span class="flex items-center text-[11px] font-semibold text-slate-400 leading-tight" data-i18n="${f.aspect}">${f.aspect}</span>
+            <span class="px-2.5 py-2 rounded-md bg-rose-500/10 text-xs text-rose-100/90 leading-snug" data-i18n="${f.ms}">${f.ms}</span>
+            <span class="px-2.5 py-2 rounded-md bg-emerald-500/10 text-xs text-emerald-100 leading-snug" data-i18n="${f.fo}">${f.fo}</span>
+        </div>`).join('');
+    return header + `<div class="space-y-1.5">${rows}</div>`;
+}
+
+// Topic filter chips (All + categories) - controls Questions + Objections
+function buildFilterChips() {
+    const all = `<button type="button" class="sa-chip on" data-cat="all"><span data-i18n="saFilterAll">All</span></button>`;
+    const cats = SALES_CATEGORIES.map(c => `
+        <button type="button" class="sa-chip" data-cat="${c.id}">
+            <span class="material-symbols-rounded text-sm">${c.icon}</span><span data-i18n="${c.labelKey}">${c.labelKey}</span>
+        </button>`).join('');
+    return all + cats;
+}
+
+// SECTION 3 - discovery questions grouped by category (each group filterable)
+function buildQuestionGroups() {
+    return SALES_CATEGORIES.map(cat => {
+        const qs = SALES_QUESTIONS.filter(q => q.cat === cat.id);
+        if (!qs.length) return '';
+        const cards = qs.map(q => `
+            <button type="button" class="sa-question flex items-start gap-2.5 p-3 rounded-lg text-left">
+                <span class="sa-question-icon material-symbols-rounded text-emerald-400/80 text-lg flex-shrink-0 mt-0.5">help</span>
+                <span class="text-sm text-slate-200 leading-snug" data-i18n="${q.q}">${q.q}</span>
+            </button>`).join('');
+        return `
+        <div class="sa-group" data-cat="${cat.id}">
+            <div class="sa-cat-sub">
+                <span class="material-symbols-rounded text-sm">${cat.icon}</span>
+                <span data-i18n="${cat.labelKey}">${cat.labelKey}</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">${cards}</div>
+        </div>`;
+    }).join('');
+}
+
+// SECTION 4 - objection accordion (each row filterable by category)
+function buildObjections() {
+    return SALES_OBJECTIONS.map(o => `
+        <div class="sa-objection rounded-lg border border-slate-700/60 bg-slate-900/40 overflow-hidden" data-cat="${o.cat}">
+            <button type="button" class="sa-objection-head w-full flex items-center gap-2.5 p-3 text-left transition-colors">
+                <span class="material-symbols-rounded text-rose-400/80 text-lg flex-shrink-0">chat_bubble</span>
+                <span class="flex-1 text-sm font-semibold text-slate-100" data-i18n="${o.q}">${o.q}</span>
+                <span class="sa-objection-icon material-symbols-rounded text-slate-500 flex-shrink-0">expand_more</span>
+            </button>
+            <div class="sa-objection-body">
+                <div>
+                    <div class="px-3 pb-3 pt-1">
+                        <div class="flex items-start gap-3 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/25">
+                            <span class="material-symbols-rounded text-emerald-400 text-lg flex-shrink-0 mt-0.5">lightbulb</span>
+                            <span class="text-sm text-slate-200 leading-relaxed" data-i18n="${o.a}">${o.a}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>`).join('');
+}
+
+// SECTION 5 - ROI proof points (reference on-screen numbers)
+function buildRoiPoints() {
+    return SALES_ROI_POINTS.map((k, i) => `
+        <li class="flex items-start gap-2.5">
+            <span class="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-bold flex-shrink-0 mt-0.5">${i + 1}</span>
+            <span class="text-sm text-slate-200 leading-snug" data-i18n="${k}">${k}</span>
+        </li>`).join('');
+}
+
+// SECTION 6 - several strong closing questions
+function buildClosings() {
+    return SALES_CLOSINGS.map(k => `
+        <div class="sa-closing relative p-3.5 pl-9 rounded-lg">
+            <span class="material-symbols-rounded filled text-emerald-400/40 text-xl absolute top-2.5 left-2.5 leading-none">format_quote</span>
+            <p class="text-sm font-semibold text-white leading-snug" data-i18n="${k}">${k}</p>
+        </div>`).join('');
+}
+
+function renderSalesAssistant() {
+    salesAssistantContent.innerHTML = `
+        <div class="p-4 space-y-5">
+            <section>
+                ${sectionHeader('verified', 'saSection1Title')}
+                <ul class="space-y-2">${buildReasons()}</ul>
+            </section>
+            <section>
+                ${sectionHeader('balance', 'saSection2Title')}
+                ${buildFacts()}
+            </section>
+            <div class="sa-filter sticky top-0 z-10 -mx-4 px-4 py-2.5 bg-slate-900/95 backdrop-blur border-y border-slate-800">
+                <div class="sa-cat-sub mb-2"><span class="material-symbols-rounded text-sm">filter_list</span><span data-i18n="saFilterLabel">Filter by topic</span></div>
+                <div class="flex flex-wrap gap-1.5">${buildFilterChips()}</div>
+            </div>
+            <section>
+                ${sectionHeader('quiz', 'saSection3Title')}
+                <div class="space-y-4">${buildQuestionGroups()}</div>
+            </section>
+            <section>
+                ${sectionHeader('forum', 'saSection4Title')}
+                <div class="space-y-2">${buildObjections()}</div>
+            </section>
+            <section>
+                ${sectionHeader('insights', 'saSection5Title')}
+                <ul class="space-y-2.5">${buildRoiPoints()}</ul>
+            </section>
+            <section>
+                ${sectionHeader('flag', 'saSection6Title')}
+                <div class="space-y-2">${buildClosings()}</div>
+            </section>
+        </div>`;
+
+    // Topic filter chips show/hide question groups + objections by category (no re-render)
+    const chips = salesAssistantContent.querySelectorAll('.sa-chip');
+    chips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            const cat = chip.getAttribute('data-cat');
+            chips.forEach(c => c.classList.toggle('on', c === chip));
+            salesAssistantContent.querySelectorAll('.sa-group[data-cat], .sa-objection[data-cat]').forEach(el => {
+                el.classList.toggle('hidden', cat !== 'all' && el.getAttribute('data-cat') !== cat);
+            });
+        });
+    });
+    // Discovery questions toggle an "asked" highlight (rep ticks them off in the meeting)
+    salesAssistantContent.querySelectorAll('.sa-question').forEach(btn => {
+        btn.addEventListener('click', () => btn.classList.toggle('asked'));
+    });
+    // Objection accordion - one row open/closed independently
+    salesAssistantContent.querySelectorAll('.sa-objection-head').forEach(head => {
+        head.addEventListener('click', () => head.closest('.sa-objection').classList.toggle('open'));
+    });
+}
+
+/* ============================================================
+   CALCULATE - same pricing/ROI engine, driven by the 3 simple steps
+   ============================================================ */
+function calculate() {
+    const band = SIZE_BANDS.find(b => b.id === selectedSize) || SIZE_BANDS[0];
+    const users = band.users;          // representative head-count for the band (internal)
+    const custom = band.custom;        // 500+ -> custom quote
+    const m = INTERNAL_MULTIPLIER;
+
+    // Business packages -> internal FlowOne modules (deduped). Salesperson never sees these.
+    const activated = new Set();
+    PACKAGES.forEach(p => {
+        if (p.core || selectedNeeds.has(p.id)) p.modules.forEach(id => activated.add(id));
+    });
+
+    // ---------- FlowOne license (one-time, unchanged formula) ----------
+    const lineItems = [{ label: T.basePlatform, amount: Math.round(BASE_PLATFORM * m) }];
+    ADDONS.forEach(a => {
+        if (activated.has(a.id) && a.price > 0) {
+            lineItems.push({ label: T[a.i18nKey], amount: Math.round(a.price * m) });
+        }
+    });
+    const scaling = userScaling(users);
+    if (!custom && scaling.value > 0) {
+        lineItems.push({ label: `${users} ${T.usersCountLabel}`, amount: Math.round(scaling.value * m) });
+    }
+    if (migrationToggle.checked) {
+        lineItems.push({ label: T.migrationLabel, amount: Math.round(MIGRATION_COST * m) });
+    }
+    const licenseTotal = lineItems.reduce((s, i) => s + i.amount, 0);
+
+    // ---------- Current annual software cost (from the customer's real stack) ----------
+    let currentMonthly = 0;
+    const usedTools = [];
+    Object.keys(STACK).forEach(key => {
+        const grp = STACK[key];
+        const opt = grp.options.find(o => o.id === selectedStack[key]);
+        if (!opt || opt.perUser <= 0) return;
+        usedTools.push(T[opt.i18nKey]);
+        const ratio = grp.scope === 'seat' ? (SEAT_RATIO[key] || 1) : 1; // role-based tools = subset of staff
+        currentMonthly += opt.perUser * users * ratio;
+    });
+    const currentAnnualCost = currentMonthly * 12;
+
+    // ---------- ROI ----------
+    // FlowOne's ongoing cost = hosting + (optional) the dedicated admin managed
+    // service. Admin scales per seat so it stays proportional to company size.
+    const adminMonthly = adminToggle.checked ? ADMIN_PER_USER_MONTH * users : 0;
+    const adminAnnual = adminMonthly * 12;
+    const annualFlowOneCost = VPS_COST_YEARLY_HUF + adminAnnual;
+    const annualSavingsRate = currentAnnualCost - annualFlowOneCost;
+    const netSavings = (y) => (currentAnnualCost * y) - (licenseTotal + annualFlowOneCost * y);
+
+    // ---------- Summary block ----------
+    summaryStackEl.innerHTML = usedTools.length
+        ? usedTools.map(t => `<span class="inline-flex items-center px-3.5 py-1.5 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-100 text-sm font-semibold">${t}</span>`).join('')
+        : `<span class="text-sm text-slate-500 italic">${T.none}</span>`;
+    // "X systems -> 1 platform" reflects the customer's actual current tools.
+    replaceCountEl.textContent = String(usedTools.length);
+
+    // ---------- Optional price breakdown (explainability on demand) ----------
+    const breakdownRows = lineItems.map(i => `
+        <div class="flex justify-between items-center py-1 text-xs">
+            <span class="text-slate-400">${i.label}</span>
+            <span class="text-slate-200 font-semibold">${formatHUF(i.amount)}</span>
+        </div>`).join('');
+    const recurringHtml = adminToggle.checked ? `
+        <div class="flex justify-between items-center py-1 text-xs border-t border-slate-700/60 mt-1 pt-1.5">
+            <span class="text-slate-400">${T.adminLabel} <span class="text-slate-600">(${T.optionalWord} \u00b7 ${T.recurringTitle})</span></span>
+            <span class="text-slate-200 font-semibold">${formatNumber(adminMonthly)} Ft ${T.monthlySuffix}</span>
+        </div>` : '';
+    detailsBox.innerHTML = breakdownRows + recurringHtml + `
+        <div class="flex justify-between items-center pt-1.5 mt-1 border-t border-slate-600">
+            <span class="text-white font-semibold text-xs">${custom ? T.flowoneLicense : T.totalLicense}</span>
+            <span class="text-emerald-400 font-extrabold text-sm">${custom ? T.custom : formatHUF(licenseTotal)}</span>
+        </div>`;
+
+    // ---------- Cost comparison table (today vs FlowOne) ----------
+    // Today/running costs are always real, even for a 500+ custom quote.
+    tblTodayYearEl.textContent = formatHUF(currentAnnualCost);
+    tblTodayMonthlyEl.textContent = formatHUF(currentAnnualCost / 12);
+    tblMonthlyEl.textContent = formatHUF(annualFlowOneCost / 12);
+    tblYearEl.textContent = formatHUF(annualFlowOneCost);
+    monthlyNoteEl.textContent = adminToggle.checked ? T.runIncludesAdmin : T.runIncludesBase;
+
+    const oneTimeBase = 'px-3 py-3.5 border-t border-slate-700/50 text-center text-lg font-extrabold bg-emerald-500/5';
+
+    // ---------- Custom (500+) quote ----------
+    if (custom) {
+        tblOneTimeEl.textContent = T.custom;
+        tblOneTimeEl.className = oneTimeBase + ' text-amber-400';
+        annualSavingsEl.textContent = T.custom;
+        annualSavingsEl.className = 'text-3xl font-extrabold text-amber-400';
+        breakEvenEl.textContent = T.custom;
+        breakEvenEl.className = 'text-2xl font-extrabold text-amber-400 leading-none';
+        fastBadgeEl.innerHTML = `<span class="text-[11px] text-amber-400">${T.customQuote}</span>`;
+        [savings3El, savings5El, savings10El].forEach(el => {
+            el.textContent = T.custom;
+            el.className = 'text-lg font-extrabold text-amber-400';
+        });
+        return;
+    }
+
+    // ---------- Results ----------
+    tblOneTimeEl.textContent = formatHUF(licenseTotal);
+    tblOneTimeEl.className = oneTimeBase + ' text-white';
+
+    annualSavingsEl.textContent = formatHUF(Math.max(0, annualSavingsRate));
+    annualSavingsEl.className = annualSavingsRate >= 0
+        ? 'text-3xl font-extrabold text-emerald-400'
+        : 'text-3xl font-extrabold text-rose-400';
+
+    // Break-even (months, or years + months from 24 months)
+    if (annualSavingsRate <= 0) {
+        breakEvenEl.textContent = T.noBreakEven;
+        breakEvenEl.className = 'text-2xl font-extrabold text-rose-400 leading-none';
+        fastBadgeEl.innerHTML = '';
+    } else {
+        const months = Math.ceil(licenseTotal / annualSavingsRate * 12);
+        if (months < 24) {
+            breakEvenEl.textContent = `${months} ${T.months}`;
+            breakEvenEl.className = 'text-3xl font-extrabold text-emerald-400 leading-none';
+        } else {
+            const y = Math.floor(months / 12), mo = months % 12;
+            breakEvenEl.textContent = mo === 0 ? `${y} ${T.years}` : `${y} ${T.years} ${mo} ${T.months}`;
+            breakEvenEl.className = 'text-2xl font-extrabold text-emerald-400 leading-none';
+        }
+        if (months <= 12) {
+            fastBadgeEl.innerHTML = `<span class="inline-block px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500 text-white">${T.badge12}</span>`;
+        } else if (months <= 18) {
+            fastBadgeEl.innerHTML = `<span class="inline-block px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">${T.badgeQuick}</span>`;
+        } else {
+            fastBadgeEl.innerHTML = '';
+        }
+    }
+
+    [[savings3El, 3], [savings5El, 5], [savings10El, 10]].forEach(([el, y]) => {
+        const v = netSavings(y);
+        el.textContent = formatHUF(v);
+        el.className = v >= 0 ? 'text-lg font-extrabold text-emerald-400' : 'text-lg font-extrabold text-rose-400';
+    });
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+renderSizeButtons();
+renderNeeds();
+renderStack();
+renderSalesAssistant();
+
+adminToggle.addEventListener('change', calculate);
+migrationToggle.addEventListener('change', calculate);
+detailsToggle.addEventListener('click', () => {
+    const hidden = detailsBox.classList.toggle('hidden');
+    detailsToggle.textContent = hidden ? T.showBreakdown : T.hideBreakdown;
+});
+
+// Sales Assistant docked side panel - slide in/out from the right (default closed)
+function setSalesAssistant(open) {
+    salesAssistantDrawer.classList.toggle('open', open);
+    salesAssistantBackdrop.classList.toggle('open', open);
+    salesAssistantToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+salesAssistantToggle.addEventListener('click', () => setSalesAssistant(true));
+salesAssistantClose.addEventListener('click', () => setSalesAssistant(false));
+salesAssistantBackdrop.addEventListener('click', () => setSalesAssistant(false));
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setSalesAssistant(false); });
+
+// Apply saved/default language, translate labels, then calculate
+setLang(currentLang);
+</script>
+
+</body>
+</html>

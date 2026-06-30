@@ -1,0 +1,427 @@
+{
+  "allThreadsPanel": {
+    "allThreads": "All Threads",
+    "noThreadsYet": "No threads yet",
+    "whenYouReplyToA": "When you reply to a message in a thread, it will appear here"
+  },
+  "callControls": {
+    "callstoreisaudiomutedUnmuteMute": "callStore.isAudioMuted ? 'Unmute' : 'Mute'",
+    "callstoreisscreensharingStopSharingShareScreen": "callStore.isScreenSharing ? 'Stop sharing' : 'Share screen'",
+    "callstoreisspeakeronSwitchToEarpieceSwitch": "callStore.isSpeakerOn ? 'Switch to earpiece' : 'Switch to speaker'",
+    "callstoreisvideoonTurnOffCameraTurn": "callStore.isVideoOn ? 'Turn off camera' : 'Turn on camera'",
+    "endCall": "End call",
+    "flipCamera": "Flip camera"
+  },
+  "callOverlay": {
+    "calling": "Calling...",
+    "minimize": "Minimize",
+    "youAreSharingYourScreen": "You are sharing your screen"
+  },
+  "callPip": {
+    "endCall": "End call",
+    "expand": "Expand"
+  },
+  "channelBrowser": {
+    "availableChannels": "Available Channels",
+    "browseChannels": "Browse Channels",
+    "default": "DEFAULT",
+    "joinedChannel": "Joined channel",
+    "noChannelsYet": "No channels yet",
+    "searchChannels": "Search channels...",
+    "yourChannels": "Your Channels"
+  },
+  "channelCreateModal": {
+    "anyoneInYourOrganizationCan": "Anyone in your organization can find and join",
+    "back": "Back",
+    "channelCreated": "Channel created",
+    "channelName": "Channel Name",
+    "channelNameIsRequired": "Channel name is required",
+    "createChannel": "Create Channel",
+    "defaultChannel": "Default Channel",
+    "describeThePurposeOfThis": "Describe the purpose of this channel...",
+    "egProjectupdates": "e.g. project-updates",
+    "newTeamMembersAutojoinThis": "New team members auto-join this channel",
+    "optional": "(optional)",
+    "publicChannel": "Public Channel",
+    "purpose": "Purpose",
+    "topic": "Topic",
+    "whatIsThisChannelAbout": "What is this channel about?"
+  },
+  "chat": {
+    "savedResponsedatadatasavedcountFilesToDrive": "Saved ${response.data.data.saved_count} files to Drive"
+  },
+  "chatAttachmentsPanel": {
+    "chatFiles": "Chat Files",
+    "copy": "Copy",
+    "linkCopied": "Link copied!",
+    "open": "Open",
+    "saveAllToDrive": "Save All to Drive",
+    "savedResultsavedcountFilesTo": "Saved ${result.savedCount} files to",
+    "searchFiles": "Search files..."
+  },
+  "chatConversation": {
+    "archiveConversation": "Archive conversation",
+    "chatAppearance": "Chat Appearance",
+    "chatConfig": "Chat Config",
+    "conversationMap": "Conversation Map",
+    "mediaLinksDocs": "Media, Links & Docs",
+    "noParticipantsToCall": "No participants to call",
+    "noPinnedMessagesYet": "No pinned messages yet",
+    "pinImportantMessagesToFind": "Pin important messages to find them quickly",
+    "pinnedMessages": "Pinned Messages",
+    "saveAllToDrive": "Save all to Drive",
+    "savedResultsavedcountFilesToDrive": "Saved ${result.savedCount} files to Drive in",
+    "searchInConversation": "Search in conversation",
+    "startHuddle": "Start Huddle",
+    "startMeeting": "Start meeting",
+    "unpin": "Unpin",
+    "videoCall": "Video call",
+    "viewTogetherModeEnabledOpen": "View Together mode enabled. Open any media to share the view.",
+    "viewTogetherSessionEnded": "View Together session ended",
+    "voiceCall": "Voice call"
+  },
+  "chatEmbedPicker": {
+    "browseCards": "Browse cards",
+    "search": "Search...",
+    "shareEntireBoard": "Share entire board",
+    "shareThisFolder": "Share this folder"
+  },
+  "chatImageGallery": {
+    "closeEsc": "Close (Esc)",
+    "download": "Download",
+    "following": "Following",
+    "next": "Next",
+    "previous": "Previous",
+    "viewTogether": "View Together",
+    "zoomIn": "Zoom in (+)",
+    "zoomOut": "Zoom out (-)"
+  },
+  "chatInput": {
+    "addEmoji": "Add emoji",
+    "attachAFile": "Attach a file",
+    "attachFile": "Attach file",
+    "chooseAGif": "Choose a GIF",
+    "conversationMuted": "Conversation muted",
+    "conversationUnmuted": "Conversation unmuted",
+    "failedToSendVoiceMessage": "Failed to send voice message",
+    "failedToSetStatus": "Failed to set status",
+    "failedToSetTopic": "Failed to set topic",
+    "failedToUploadFiles": "Failed to upload files",
+    "filenameIsTooLargeMax": "${file.name} is too large (max 50MB)",
+    "localChatHistoryCleared": "Local chat history cleared",
+    "messageScheduled": "Message scheduled",
+    "pendingfileslengthAddAMessageOptional": "pendingFiles.length ? 'Add a message (optional)...' : 'Type a message...'",
+    "pendingfileslengthSendPendingfileslengthFilesSend": "pendingFiles.length ? `Send ${pendingFiles.length} file(s)` : 'Send message (Enter)'",
+    "recordVoiceMessage": "Record voice message",
+    "reminderMessage": "Reminder: ${message}",
+    "reminderSetForLabel": "Reminder set for ${label}:",
+    "scheduleMessage": "Schedule message",
+    "screenshotAdded": "Screenshot added",
+    "sendAVoiceClip": "Send a voice clip",
+    "sendGif": "Send GIF",
+    "shareContent": "Share content",
+    "showActions": "Show actions",
+    "statusSetToAway": "Status set to Away",
+    "theTopicCommandOnlyWorks": "The /topic command only works in channels",
+    "usageRemind30mCheckEmail": "Usage: /remind 30m Check email (supports m=minutes, h=hours, d=days)"
+  },
+  "chatInvitations": {
+    "invitationAcceptedYouCanNow": "Invitation accepted! You can now chat.",
+    "invitationDeclined": "Invitation declined"
+  },
+  "chatInviteView": {
+    "couldNotProcessInvitation": "Could not process this invitation",
+    "invitationAcceptedYouCanNow": "Invitation accepted! You can now chat.",
+    "invalidInvitationLinkNoToken": "Invalid invitation link - no token provided",
+    "invitationProblem": "Invitation Problem",
+    "processingInvitation": "Processing Invitation",
+    "redirectingToConversation": "Redirecting to your conversation...",
+    "settingUpConversation": "Setting up your conversation...",
+    "goToChat": "Go to Chat",
+    "youAreConnected": "You're Connected!",
+    "youAlreadyAcceptedThisInvitation": "You already accepted this invitation."
+  },
+  "chatMessage": {
+    "delete": "Delete",
+    "deleteMessage": "Delete Message",
+    "download": "Download",
+    "edit": "Edit",
+    "groupnamesjoin": "group.names.join(', ')",
+    "more": "More",
+    "moreEmojis": "More emojis",
+    "pinned": "Pinned",
+    "react": "React",
+    "reply": "Reply",
+    "saveToDrive": "Save to Drive",
+    "thread": "Thread"
+  },
+  "chatSettingsModal": {
+    "cancel": "Cancel",
+    "chatAppearance": "Chat Appearance",
+    "customImage": "Custom Image",
+    "presetBackgrounds": "Preset Backgrounds",
+    "presetname": "preset.name",
+    "preview": "Preview",
+    "uploadImage": "Upload Image"
+  },
+  "chatSidebar": {
+    "allThreads": "All Threads",
+    "chatDeleted": "Chat deleted",
+    "conversationArchived": "Conversation archived",
+    "deleteChat": "Delete Chat",
+    "getdmstatustextconv": "getDmStatusText(conv)",
+    "messages": "Messages",
+    "muted": "Muted",
+    "newMessage": "New Message",
+    "pinned": "Pinned",
+    "savedMessages": "Saved Messages",
+    "scheduledMessages": "Scheduled Messages",
+    "searchConversations": "Search conversations...",
+    "setStatus": "Set Status",
+    "tapToViewInNotifications": "Tap to view in notifications"
+  },
+  "chatView": {
+    "chat": "Chat",
+    "newConversation": "New Conversation",
+    "startAConversationWithYourColleagues": "Start a conversation with your colleagues. Messages are delivered instantly and securely.",
+    "welcomeToChat": "Welcome to Chat"
+  },
+  "collabDocumentViewer": {
+    "closeEsc": "Close (Esc)",
+    "download": "Download",
+    "downloadInstead": "Download Instead",
+    "following": "Following",
+    "nextPage": "Next page",
+    "previousPage": "Previous page",
+    "thisFileTypeCannotBe": "This file type cannot be previewed",
+    "viewTogether": "View Together",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out"
+  },
+  "collabPreviewModal": {
+    "download": "Download",
+    "thisFileTypeCannotBe": "This file type cannot be previewed in the browser."
+  },
+  "collabSpreadsheetViewer": {
+    "clickACellToSelect": "Click a cell to select",
+    "closeEsc": "Close (Esc)",
+    "download": "Download",
+    "following": "Following",
+    "otherpositionusernameOthercursorusernameSelected": "(otherPosition?.user?.name || otherCursor?.user?.name) + ' selected'",
+    "thisSheetIsEmpty": "This sheet is empty",
+    "viewTogether": "View Together"
+  },
+  "conversationMindMap": {
+    "buildingConversationMap": "Building conversation map...",
+    "collapse": "Collapse",
+    "collapseAllStacks": "Collapse all stacks",
+    "collapseStack": "Collapse stack",
+    "conversationMap": "Conversation Map",
+    "expand": "Expand",
+    "expandAllStacks": "Expand all stacks",
+    "hasThread": "Has thread",
+    "message": "Message",
+    "resetView": "Reset view",
+    "stackedGroup": "Stacked group",
+    "threadReply": "Thread reply"
+  },
+  "embedBoard": {
+    "archived": "(archived)",
+    "boardNotAvailable": "Board not available"
+  },
+  "embedBoardCard": {
+    "cardNotAvailable": "Card not available"
+  },
+  "embedCalendarEvent": {
+    "eventNotAvailable": "Event not available"
+  },
+  "embedCollabDoc": {
+    "documentNotAvailable": "Document not available"
+  },
+  "embedDriveFile": {
+    "fileNotAvailable": "File not available"
+  },
+  "embedDriveFolder": {
+    "folderNotAvailable": "Folder not available"
+  },
+  "embedMoodBoard": {
+    "archived": "(archived)",
+    "moodBoardNotAvailable": "Mood board not available"
+  },
+  "floatingChatWidget": {
+    "addPeople": "Add people",
+    "appearance": "Appearance",
+    "archive": "Archive",
+    "close": "Close",
+    "failedToSendInvitation": "Failed to send invitation",
+    "invitationSentToInviteemailvalue": "Invitation sent to ${inviteEmail.value}",
+    "inviteToChat": "Invite to Chat",
+    "ismaximizedExitZenModeZen": "isMaximized ? 'Exit Zen Mode' : 'Zen Mode'",
+    "mediaDocs": "Media & Docs",
+    "messages": "Messages",
+    "nameexamplecom": "name{'@'}example.com",
+    "newMessage": "New Message",
+    "noParticipantsToCall": "No participants to call",
+    "noPinnedMessages": "No pinned messages",
+    "pinned": "Pinned",
+    "pinnedMessages": "Pinned messages",
+    "pleaseEnterAValidEmail": "Please enter a valid email address",
+    "saveToDrive": "Save to Drive",
+    "savedResultsavedcountFilesToDrive": "Saved ${result.savedCount} files to Drive",
+    "search": "Search...",
+    "tapToViewInNotifications": "Tap to view in notifications",
+    "videoCall": "Video call",
+    "viewTogetherModeEnabledOpen": "View Together mode enabled. Open any media to share the view.",
+    "viewTogetherSessionEnded": "View Together session ended",
+    "voiceCall": "Voice call"
+  },
+  "gifPicker": {
+    "15169GifwidthGifheight": "1.5 ? '16/9' : gif.width / gif.height",
+    "noGifsFound": "No GIFs found",
+    "poweredBy": "Powered by",
+    "searchGifs": "Search GIFs..."
+  },
+  "groupChatModal": {
+    "back": "Back",
+    "colleaguecompanycom": "colleague{'@'}company.com",
+    "egMarketingTeam": "e.g. Marketing Team",
+    "emailIsRequired": "Email is required",
+    "failedToCreateGroup": "Failed to create group",
+    "failedToLoadGroupData": "Failed to load group data",
+    "group": "Group",
+    "groupCreated": "Group created",
+    "groupNameIsRequired": "Group name is required",
+    "groupUpdated": "Group updated",
+    "hiIdLikeToInvite": "Hi! I'd like to invite you to join our group chat...",
+    "invitationSentToInviteemailvalue": "Invitation sent to ${inviteEmail.value}",
+    "invitationsSentThisSession": "Invitations sent this session",
+    "noColleagueGroupsFound": "No colleague groups found",
+    "noColleaguesFound": "No colleagues found",
+    "pleaseEnterAValidEmail": "Please enter a valid email address",
+    "searchColleagues": "Search colleagues...",
+    "selectAtLeastOneMember": "Select at least one member",
+    "whatsThisGroupAbout": "What's this group about?"
+  },
+  "huddleBar": {
+    "huddleInProgress": "Huddle in progress",
+    "huddlestoreisdeafenedUndeafenDeafen": "huddleStore.isDeafened ? 'Undeafen' : 'Deafen'",
+    "huddlestoreismutedUnmuteMute": "huddleStore.isMuted ? 'Unmute' : 'Mute'",
+    "inHuddle": "In huddle",
+    "leaveHuddle": "Leave huddle",
+    "pdisplayname": "p.display_name"
+  },
+  "incomingCallModal": {
+    "accept": "Accept",
+    "decline": "Decline"
+  },
+  "meetingJoinView": {
+    "failedToLoadMeetingDetails": "Failed to load meeting details.",
+    "failedToJoinMeetingPlease": "Failed to join meeting. Please try again.",
+    "fetchingMeetingDetails": "Fetching meeting details...",
+    "goToHome": "Go to Home",
+    "happeningNow": "Happening now",
+    "invalidMeetingLinkNoToken": "Invalid meeting link — no token provided",
+    "joinMeeting": "Join Meeting",
+    "joining": "Joining...",
+    "joiningMeeting": "Joining meeting...",
+    "joinUpTo5MinutesBeforeStart": "You can join up to 5 minutes before the start time",
+    "meetingChatIsNotAvailable": "Meeting chat is not available. Redirecting to chat.",
+    "meetingDoesNotExistOrExpired": "This meeting does not exist or the link has expired.",
+    "meetingEnded": "Meeting ended",
+    "meetingNotAvailable": "Meeting Not Available",
+    "meetingNotFound": "Meeting not found",
+    "meetingTimeRange": "{date} at {start} - {end}",
+    "onlineMeeting": "Online Meeting",
+    "organizedBy": "Organized by {email}",
+    "pleaseLogInToJoinMeeting": "Please log in to join this meeting.",
+    "loadingMeeting": "Loading Meeting",
+    "notStartedYet": "Not started yet",
+    "thisMeetingHasEnded": "This meeting has ended"
+  },
+  "newConversationModal": {
+    "channel": "Channel",
+    "date": "Date",
+    "end": "End",
+    "failedToCreateMeeting": "Failed to create meeting",
+    "failedToScheduleMeeting": "Failed to schedule meeting",
+    "groupChat": "Group Chat",
+    "meeting": "Meeting",
+    "meetingCreated": "Meeting created",
+    "meetingScheduled": "Meeting scheduled",
+    "meetingTitleOptional": "Meeting title (optional)",
+    "namedGroup": "Named group",
+    "planMeeting": "Plan meeting",
+    "pleaseFillInDateStart": "Please fill in date, start time, and end time",
+    "schedule": "Schedule",
+    "searchColleagues": "Search colleagues...",
+    "selectAtLeastOneParticipant": "Select at least one participant",
+    "start": "Start",
+    "startNow": "Start now",
+    "title": "Title",
+    "topicbased": "Topic-based"
+  },
+  "participantTile": {
+    "muted": "Muted",
+    "ringing": "Ringing...",
+    "sharingScreen": "Sharing screen"
+  },
+  "pollMessage": {
+    "poll": "Poll"
+  },
+  "savedMessages": {
+    "noSavedMessages": "No saved messages",
+    "removeBookmark": "Remove bookmark",
+    "savedMessages": "Saved Messages"
+  },
+  "scheduleMessagePicker": {
+    "custom": "Custom",
+    "scheduleMessage": "Schedule Message"
+  },
+  "scheduledMessagesList": {
+    "noScheduledMessages": "No scheduled messages",
+    "scheduledMessageCancelled": "Scheduled message cancelled",
+    "scheduledMessages": "Scheduled Messages"
+  },
+  "slashCommandAutocomplete": {
+    "commands": "Commands"
+  },
+  "statusPicker": {
+    "clearStatus": "Clear status",
+    "presence": "Presence",
+    "quickSet": "Quick Set",
+    "setStatus": "Set Status",
+    "whatsYourStatus": "What's your status?"
+  },
+  "threadPanel": {
+    "beTheFirstToReply": "Be the first to reply",
+    "deleteThread": "Delete Thread",
+    "noRepliesYet": "No replies yet",
+    "replyInThread": "Reply in thread...",
+    "thread": "Thread",
+    "threadDeleted": "Thread deleted"
+  },
+  "viewTogetherBanner": {
+    "chatstorefollowmodeStopFollowingFollowTheir": "chatStore.followMode ? 'Stop following' : 'Follow their view'",
+    "chatstoresyncscrollmodeStopSyncScrollEnable": "chatStore.syncScrollMode ? 'Stop sync scroll' : 'Enable sync scroll - others will follow your scroll'",
+    "endViewTogether": "End View Together",
+    "syncScroll": "Sync Scroll",
+    "viewTogether": "View Together"
+  },
+  "voiceRecorder": {
+    "cancelRecording": "Cancel recording",
+    "ispausedResumePause": "isPaused ? 'Resume' : 'Pause'",
+    "sendVoiceMessage": "Send voice message"
+  },
+  "webhookManager": {
+    "avatarUrlOptional": "Avatar URL (optional)",
+    "createOneToReceiveMessages": "Create one to receive messages from external services",
+    "deleteThisWebhookTheUrl": "Delete this webhook? The URL will stop working immediately.",
+    "deleteWebhook": "Delete webhook",
+    "egGithubJenkinsSentry": "e.g. GitHub, Jenkins, Sentry...",
+    "httpsexamplecomiconpng": "https://example.com/icon.png",
+    "incomingWebhooks": "Incoming Webhooks",
+    "name": "Name",
+    "newWebhook": "New Webhook",
+    "noWebhooksYet": "No webhooks yet"
+  }
+}

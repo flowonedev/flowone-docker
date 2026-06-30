@@ -1,0 +1,72 @@
+---
+description: Enforces modular architecture, file size limits, and complexity control across the entire project
+alwaysApply: true
+---
+
+# Modularity & Architecture Enforcement
+
+## File Size Governance
+
+| Threshold | Lines | Action |
+|-----------|-------|--------|
+| Preferred | < 400 | OK |
+| Soft warn | 500 | Note it in response |
+| Refactor | 700 | Propose a split |
+| Mandatory | 900 | Must split before adding more code |
+| Absolute | 1200 | Refuse to add code; split first |
+
+When a file exceeds 700 lines, list its responsibilities and propose specific modules.
+
+## Function Limits
+
+- Preferred: < 40 lines
+- Warning: > 60 lines
+- Must refactor: > 100 lines
+- Max nesting depth: 3
+- Max branches per function: 8
+
+## Dependency Limits
+
+- Max imports per file: 10 (preferred < 6)
+- If exceeded, introduce a service layer or utilities module
+
+## Single Responsibility Principle
+
+Before adding code, ask: "Does this belong in this module?"
+If not, create a new module. Never grow a module just because it already exists.
+
+## Store Design (Pinia/Vue)
+
+1 store = 1 system. Stores handle state + orchestration only.
+
+Stores must NOT contain: heavy algorithms, large utilities, networking logic, or file system logic. Move those into `services/`.
+
+## Project Structure
+
+```
+stores/       State + orchestration
+services/     Business logic, API calls, networking
+utils/        Pure functions, algorithms, math
+components/   UI components
+composables/  Reusable Vue composition logic
+```
+
+## Algorithm Isolation
+
+Extract complex logic into dedicated utility files (e.g. `booleanOps.js`, `geometryUtils.js`, `zIndexUtils.js`). Stores orchestrate; they do not compute.
+
+## Naming
+
+Name modules by domain, not generic terms.
+
+Good: `moodBoardItemsStore`, `canvasViewportService`, `boardExportService`
+Bad: `helpers.js`, `utils2.js`, `miscFunctions.js`, `store2.js`
+
+## Self-Check Before Finishing
+
+Before completing a response, evaluate:
+- Is this modular?
+- Does this create long-term technical debt?
+- Would this scale to a 100k-line codebase?
+
+If any answer is no, redesign before delivering.

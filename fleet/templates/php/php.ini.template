@@ -1,0 +1,52 @@
+; PHP Configuration
+; Template for Fleet Manager deployment
+; Variables: {{PHP_MEMORY_LIMIT}}, {{PHP_MAX_UPLOAD}}, {{PHP_TIMEZONE}}
+; Path: /usr/local/lsws/lsphp83/etc/php/8.3/litespeed/php.ini (or include override)
+
+[PHP]
+; Resource Limits
+memory_limit = {{PHP_MEMORY_LIMIT}}
+max_execution_time = 300
+max_input_time = 300
+max_input_vars = 10000
+
+; File Uploads
+upload_max_filesize = {{PHP_MAX_UPLOAD}}
+post_max_size = {{PHP_MAX_UPLOAD}}
+file_uploads = On
+
+; Error Handling
+error_reporting = E_ALL & ~E_DEPRECATED & ~E_STRICT
+display_errors = Off
+display_startup_errors = Off
+log_errors = On
+error_log = /var/log/php_errors.log
+
+; Date
+date.timezone = {{PHP_TIMEZONE}}
+
+; Session
+session.save_handler = files
+session.save_path = /var/lib/php/sessions
+session.gc_maxlifetime = 1440
+session.cookie_httponly = 1
+session.cookie_secure = 1
+
+; OPcache
+opcache.enable = 1
+opcache.memory_consumption = 256
+opcache.interned_strings_buffer = 16
+opcache.max_accelerated_files = 10000
+opcache.revalidate_freq = 2
+opcache.save_comments = 1
+
+; Security
+expose_php = Off
+allow_url_fopen = On
+allow_url_include = Off
+
+; Miscellaneous
+short_open_tag = Off
+realpath_cache_size = 4096k
+realpath_cache_ttl = 600
+

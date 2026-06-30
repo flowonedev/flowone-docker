@@ -1,0 +1,30 @@
+[Unit]
+Description=FlowOne VPS Admin site reconciler (periodic)
+Documentation=file:///var/www/vps-admin/agent/reconcile-sites.php
+
+[Timer]
+# Wall-clock every 5 minutes (:00, :05, :10, ...). The reconciler's job:
+#   1. detect drift between desired_state and actual_state,
+#   2. catch SSL deferred (pending_dns) sites once DNS has propagated,
+#   3. enqueue RECONCILE jobs + heal stale `degraded` rows.
+# 5min is a good balance: pending_dns retries land within 5min of DNS
+# becoming reachable, but we don't hammer MariaDB with constant probes.
+#
+# Why OnCalendar and not the monotonic OnBootSec/OnUnitActiveSec pair:
+# these units are routinely enabled long after boot (manual deploys onto
+# already-running servers). A monotonic schedule enabled mid-uptime can
+# fail to arm a NEXT elapse (the OnBootSec anchor is in the past and
+# OnUnitActiveSec hasn't been seeded), leaving the timer installed but
+# never firing until the next reboot. OnCalendar always computes a
+# concrete next run, and Persistent=true catches up a single missed run
+# after downtime.
+OnCalendar=*:0/5
+# Small random skew so multiple nodes (future) don't all probe at the
+# same instant and so we don't hammer MariaDB exactly on the boundary.
+RandomizedDelaySec=15s
+
+Unit=vpsadmin-reconciler.service
+Persistent=true
+
+[Install]
+WantedBy=timers.target

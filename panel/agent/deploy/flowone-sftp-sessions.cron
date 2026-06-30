@@ -1,0 +1,21 @@
+# FlowOne SFTP session sync
+#
+# Drains new sshd / internal-sftp journal entries into the panel's
+# sftp_sessions table (login / logout / duration / transfer bytes per
+# additional restricted SFTP user). Runs as root because the ssh journal is
+# root-readable. Idempotent + incremental (advances a stored journald cursor),
+# so once-a-minute is safe and cheap.
+#
+# Install on server:
+#   cp /var/www/vps-admin/agent/deploy/flowone-sftp-sessions.cron \
+#      /etc/cron.d/flowone-sftp-sessions
+#   chmod 0644 /etc/cron.d/flowone-sftp-sessions
+#   systemctl restart cron   # or: service cron reload
+#
+# Requires:
+#   - migrate_sftp_sessions.sql applied
+#   - sshd Match block running `internal-sftp -l INFO` (SshdSftpConfigurator;
+#     applied automatically the next time an SFTP user is created/repaired,
+#     or run `sshd -t && systemctl reload ssh` after deploying the config)
+
+* * * * * root /usr/local/lsws/lsphp83/bin/php /var/www/vps-admin/agent/scripts/sftp-session-sync.php >/dev/null 2>&1

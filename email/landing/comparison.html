@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MailFlow vs Gmail vs Outlook vs ProtonMail - Complete Comparison</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Compare MailFlow with Gmail, Outlook, and ProtonMail. See why MailFlow offers better email tracking, AI assistance, and privacy for professionals.">
+    <meta name="keywords" content="mailflow vs gmail, mailflow vs outlook, mailflow vs protonmail, email comparison, self-hosted email">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    
+    <!-- Google Analytics - Replace GA_MEASUREMENT_ID with your actual ID -->
+    <!-- Analytics disabled: GTM removed for local/offline operation -->
+    <!-- To re-enable, uncomment: <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script> -->
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'GA_MEASUREMENT_ID');
+        
+        // Track page as comparison view
+        gtag('event', 'page_view', {
+            'page_title': 'Comparison Page',
+            'page_path': '/comparison'
+        });
+    </script>
+    
+    <!-- Fonts -->
+    <link rel="stylesheet" href="/fonts/outfit/font.css">
+    
+    <!-- Google Material Symbols -->
+    <link rel="stylesheet" href="/fonts/material-symbols-outlined/font.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="/js/tailwind.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Outfit', 'sans-serif']
+                    },
+                    colors: {
+                        'surface': {
+                            50: '#fafafa',
+                            100: '#f4f4f5',
+                            200: '#e4e4e7',
+                            700: '#3f3f46',
+                            800: '#27272a',
+                            900: '#18181b',
+                            950: '#0c0c0d'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* Theme CSS Variables */
+        :root {
+            --brand-50: #f0fdf4;
+            --brand-100: #dcfce7;
+            --brand-200: #bbf7d0;
+            --brand-300: #86efac;
+            --brand-400: #4ade80;
+            --brand-500: #22c55e;
+            --brand-600: #16a34a;
+            --brand-700: #15803d;
+            --brand-800: #166534;
+            --brand-900: #14532d;
+            --brand-rgb: 34, 197, 94;
+            --gradient-start: #22c55e;
+            --gradient-mid: #4ade80;
+            --gradient-end: #22c55e;
+        }
+        [data-theme="orange"] {
+            --brand-500: #f97316; --brand-600: #ea580c; --brand-700: #c2410c;
+            --brand-400: #fb923c; --brand-rgb: 249, 115, 22;
+            --gradient-start: #f97316; --gradient-mid: #fbbf24; --gradient-end: #f97316;
+        }
+        [data-theme="blue"] {
+            --brand-500: #3b82f6; --brand-600: #2563eb; --brand-700: #1d4ed8;
+            --brand-400: #60a5fa; --brand-rgb: 59, 130, 246;
+            --gradient-start: #3b82f6; --gradient-mid: #60a5fa; --gradient-end: #3b82f6;
+        }
+        [data-theme="purple"] {
+            --brand-500: #a855f7; --brand-600: #9333ea; --brand-700: #7e22ce;
+            --brand-400: #c084fc; --brand-rgb: 168, 85, 247;
+            --gradient-start: #a855f7; --gradient-mid: #c084fc; --gradient-end: #a855f7;
+        }
+        
+        .bg-brand-500 { background-color: var(--brand-500); }
+        .bg-brand-600 { background-color: var(--brand-600); }
+        .text-brand-400 { color: var(--brand-400); }
+        .bg-brand-500\/10 { background-color: rgba(var(--brand-rgb), 0.1); }
+        .bg-brand-500\/20 { background-color: rgba(var(--brand-rgb), 0.2); }
+        .bg-brand-500\/30 { background-color: rgba(var(--brand-rgb), 0.3); }
+        .bg-brand-600\/10 { background-color: rgba(var(--brand-rgb), 0.1); }
+        .bg-brand-600\/20 { background-color: rgba(var(--brand-rgb), 0.2); }
+        .border-brand-500\/20 { border-color: rgba(var(--brand-rgb), 0.2); }
+        .border-brand-500\/30 { border-color: rgba(var(--brand-rgb), 0.30); }
+        .shadow-brand-500\/25 { --tw-shadow-color: rgba(var(--brand-rgb), 0.25); }
+        .shadow-brand-500\/30 { --tw-shadow-color: rgba(var(--brand-rgb), 0.3); }
+        .from-brand-500 { --tw-gradient-from: var(--brand-500); }
+        .to-brand-600 { --tw-gradient-to: var(--brand-600); }
+        .from-brand-600 { --tw-gradient-from: var(--brand-600); }
+        .to-brand-700 { --tw-gradient-to: var(--brand-700); }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-mid) 50%, var(--gradient-end) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .glass {
+            background: rgba(24, 24, 27, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Theme switcher */
+        .theme-btn {
+            width: 24px; height: 24px; border-radius: 50%;
+            border: 2px solid transparent; cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .theme-btn:hover { transform: scale(1.15); }
+        .theme-btn.active { border-color: white; box-shadow: 0 0 0 2px rgba(255,255,255,0.3); }
+        .theme-btn-green { background: linear-gradient(135deg, #22c55e, #4ade80); }
+        .theme-btn-orange { background: linear-gradient(135deg, #f97316, #fbbf24); }
+        .theme-btn-blue { background: linear-gradient(135deg, #3b82f6, #60a5fa); }
+        .theme-btn-purple { background: linear-gradient(135deg, #a855f7, #c084fc); }
+    </style>
+    
+    <script>
+        function setTheme(theme) {
+            if (theme === 'green') {
+                document.documentElement.removeAttribute('data-theme');
+            } else {
+                document.documentElement.setAttribute('data-theme', theme);
+            }
+            document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.querySelector(`[data-theme-btn="${theme}"]`);
+            if (activeBtn) activeBtn.classList.add('active');
+            localStorage.setItem('mailflow-theme', theme);
+        }
+        (function() {
+            const savedTheme = localStorage.getItem('mailflow-theme') || 'green';
+            if (savedTheme !== 'green') {
+                document.documentElement.setAttribute('data-theme', savedTheme);
+            }
+        })();
+    </script>
+</head>
+<body class="bg-surface-950 text-white font-sans antialiased">
+    
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <a href="index.html" class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center">
+                        <span class="material-symbols-outlined filled text-white">mail</span>
+                    </div>
+                    <span class="text-2xl font-bold">Mail<span class="gradient-text">Flow</span></span>
+                </a>
+                
+                <div class="hidden md:flex items-center gap-8">
+                    <a href="index.html#features" class="text-surface-200 hover:text-white transition-colors">Features</a>
+                    <a href="index.html#tracking" class="text-surface-200 hover:text-white transition-colors">Tracking</a>
+                    <a href="index.html#ai" class="text-surface-200 hover:text-white transition-colors">AI Assistant</a>
+                    <a href="index.html#pricing" class="text-surface-200 hover:text-white transition-colors">Pricing</a>
+                    <a href="comparison.html" class="text-white font-medium">Compare</a>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <!-- Theme Switcher -->
+                    <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-800/50 border border-surface-700">
+                        <button onclick="setTheme('green')" class="theme-btn theme-btn-green active" data-theme-btn="green" title="Green"></button>
+                        <button onclick="setTheme('orange')" class="theme-btn theme-btn-orange" data-theme-btn="orange" title="Orange"></button>
+                        <button onclick="setTheme('blue')" class="theme-btn theme-btn-blue" data-theme-btn="blue" title="Blue"></button>
+                        <button onclick="setTheme('purple')" class="theme-btn theme-btn-purple" data-theme-btn="purple" title="Purple"></button>
+                    </div>
+                    
+                    <a href="https://email.devcon1.hu" class="hidden sm:block text-surface-200 hover:text-white transition-colors">Log In</a>
+                    <a href="index.html#get-started" class="px-6 py-2.5 rounded-full bg-gradient-to-r from-brand-500 to-brand-600 font-medium hover:from-brand-600 hover:to-brand-700 transition-all shadow-lg shadow-brand-500/25">
+                        Get Started
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="pt-32 pb-16 relative">
+        <div class="absolute inset-0 bg-gradient-to-b from-brand-500/10 to-transparent"></div>
+        <div class="relative z-10 max-w-5xl mx-auto px-6 text-center">
+            <h1 class="text-5xl md:text-6xl font-bold mb-6">
+                MailFlow vs <span class="gradient-text">The Competition</span>
+            </h1>
+            <p class="text-xl text-surface-300 max-w-2xl mx-auto">
+                A detailed, honest comparison of MailFlow against Gmail, Outlook, ProtonMail, and other major email providers. See where we excel and where others fall short.
+            </p>
+        </div>
+    </section>
+
+    <!-- Quick Summary -->
+    <section class="py-12">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid md:grid-cols-4 gap-6">
+                <div class="bg-gradient-to-br from-brand-500/20 to-brand-600/10 rounded-2xl p-6 border border-brand-500/30">
+                    <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center mb-4">
+                        <span class="material-symbols-outlined filled text-2xl text-white">mail</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">MailFlow</h3>
+                    <p class="text-surface-300 text-sm">Self-hosted, privacy-first, full-featured with tracking and AI</p>
+                    <div class="mt-4 flex items-center gap-2 text-brand-400">
+                        <span class="material-symbols-outlined">star</span>
+                        <span class="font-medium">Best for Privacy + Features</span>
+                    </div>
+                </div>
+                
+                <div class="bg-surface-800/40 rounded-2xl p-6 border border-surface-700/50">
+                    <div class="w-14 h-14 rounded-xl bg-surface-700 flex items-center justify-center mb-4 text-2xl">G</div>
+                    <h3 class="text-xl font-bold mb-2">Gmail</h3>
+                    <p class="text-surface-400 text-sm">Popular, feature-rich, but your data funds their advertising</p>
+                    <div class="mt-4 flex items-center gap-2 text-surface-400">
+                        <span class="material-symbols-outlined">star_half</span>
+                        <span class="font-medium">Good for General Use</span>
+                    </div>
+                </div>
+                
+                <div class="bg-surface-800/40 rounded-2xl p-6 border border-surface-700/50">
+                    <div class="w-14 h-14 rounded-xl bg-surface-700 flex items-center justify-center mb-4 text-2xl">O</div>
+                    <h3 class="text-xl font-bold mb-2">Outlook</h3>
+                    <p class="text-surface-400 text-sm">Enterprise-focused, Microsoft ecosystem, limited customization</p>
+                    <div class="mt-4 flex items-center gap-2 text-surface-400">
+                        <span class="material-symbols-outlined">star_half</span>
+                        <span class="font-medium">Good for MS Shops</span>
+                    </div>
+                </div>
+                
+                <div class="bg-surface-800/40 rounded-2xl p-6 border border-surface-700/50">
+                    <div class="w-14 h-14 rounded-xl bg-surface-700 flex items-center justify-center mb-4 text-2xl">P</div>
+                    <h3 class="text-xl font-bold mb-2">ProtonMail</h3>
+                    <p class="text-surface-400 text-sm">Privacy-focused, end-to-end encrypted, but limited features</p>
+                    <div class="mt-4 flex items-center gap-2 text-surface-400">
+                        <span class="material-symbols-outlined">star_half</span>
+                        <span class="font-medium">Good for Privacy Only</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Detailed Comparison Tables -->
+    <section class="py-16">
+        <div class="max-w-7xl mx-auto px-6 space-y-16">
+            
+            <!-- Email & Communication -->
+            <div>
+                <h2 class="text-3xl font-bold mb-8 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-brand-400 text-3xl">mail</span>
+                    Email & Communication
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-surface-700 text-left">
+                                <th class="py-4 px-4 font-semibold">Feature</th>
+                                <th class="py-4 px-4 text-center font-bold text-brand-400">MailFlow</th>
+                                <th class="py-4 px-4 text-center">Gmail</th>
+                                <th class="py-4 px-4 text-center">Outlook</th>
+                                <th class="py-4 px-4 text-center">ProtonMail</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm">
+                            <tr class="border-b border-surface-800 hover:bg-surface-800/30">
+                                <td class="py-4 px-4">
+                                    <div class="font-medium">Email Read Tracking</div>
+                                    <div class="text-surface-400 text-xs mt-1">Know when recipients open your emails</div>
+                                </td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span><div class="text-xs text-surface-400 mt-1">Built-in, free</div></td>
+                                <td class="py-4 px-4 text-center"><span class="text-yellow-400 material-symbols-outlined">warning</span><div class="text-xs text-surface-400 mt-1">Paid addon only</div></td>
+                                <td class="py-4 px-4 text-center"><span class="text-yellow-400 material-symbols-outlined">warning</span><div class="text-xs text-surface-400 mt-1">Business tier only</div></td>
+                                <td class="py-4 px-4 text-center"><span class="text-red-400 material-symbols-outlined">cancel</span><div class="text-xs text-surface-400 mt-1">Not available</div></td>
+                            </tr>
+                            <tr class="border-b border-surface-800 hover:bg-surface-800/30">
+                                <td class="py-4 px-4">
+                                    <div class="font-medium">Per-Recipient Tracking</div>
+                                    <div class="text-surface-400 text-xs mt-1">Track each recipient separately in group emails</div>
+                                </td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-red-400 material-symbols-outlined">cancel</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-red-400 material-symbols-outlined">cancel</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-red-400 material-symbols-outlined">cancel</span></td>
+                            </tr>
+                            <tr class="border-b border-surface-800 hover:bg-surface-800/30">
+                                <td class="py-4 px-4">
+                                    <div class="font-medium">Conversation Threading</div>
+                                    <div class="text-surface-400 text-xs mt-1">Group related emails together</div>
+                                </td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                            </tr>
+                            <tr class="border-b border-surface-800 hover:bg-surface-800/30">
+                                <td class="py-4 px-4">
+                                    <div class="font-medium">Email Reactions</div>
+                                    <div class="text-surface-400 text-xs mt-1">React to emails with emojis</div>
+                                </td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span><div class="text-xs text-surface-400 mt-1">Cross-platform</div></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-red-400 material-symbols-outlined">cancel</span></td>
+                            </tr>
+                            <tr class="border-b border-surface-800 hover:bg-surface-800/30">
+                                <td class="py-4 px-4">
+                                    <div class="font-medium">Custom Labels/Tags</div>
+                                    <div class="text-surface-400 text-xs mt-1">Organize emails with colored labels</div>
+                                </td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                            </tr>
+                            <tr class="hover:bg-surface-800/30">
+                                <td class="py-4 px-4">
+                                    <div class="font-medium">One-Click Unsubscribe</div>
+                                    <div class="text-surface-400 text-xs mt-1">RFC 8058 compliant unsubscribe</div>
+                                </td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- AI & Productivity -->
+            <div>
+                <h2 class="text-3xl font-bold mb-8 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-brand-400 text-3xl">smart_toy</span>
+                    AI & Productivity
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-surface-700 text-left">
+                                <th class="py-4 px-4 font-semibold">Feature</th>
+                                <th class="py-4 px-4 text-center font-bold text-brand-400">MailFlow</th>
+                                <th class="py-4 px-4 text-center">Gmail</th>
+                                <th class="py-4 px-4 text-center">Outlook</th>
+                                <th class="py-4 px-4 text-center">ProtonMail</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm">
+                            <tr class="border-b border-surface-800 hover:bg-surface-800/30">
+                                <td class="py-4 px-4">
+                                    <div class="font-medium">AI Email Summarization</div>
+                                    <div class="text-surface-400 text-xs mt-1">Summarize long email threads instantly</div>
+                                </td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span><div class="text-xs text-surface-400 mt-1">Your API key</div></td>
+                                <td class="py-4 px-4 text-center"><span class="text-yellow-400 material-symbols-outlined">warning</span><div class="text-xs text-surface-400 mt-1">Duet AI (paid)</div></td>
+                                <td class="py-4 px-4 text-center"><span class="text-yellow-400 material-symbols-outlined">warning</span><div class="text-xs text-surface-400 mt-1">Copilot (paid)</div></td>
+                                <td class="py-4 px-4 text-center"><span class="text-red-400 material-symbols-outlined">cancel</span></td>
+                            </tr>
+                            <tr class="border-b border-surface-800 hover:bg-surface-800/30">
+                                <td class="py-4 px-4">
+                                    <div class="font-medium">AI Draft Generation</div>
+                                    <div class="text-surface-400 text-xs mt-1">Generate email replies with AI</div>
+                                </td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-yellow-400 material-symbols-outlined">warning</span><div class="text-xs text-surface-400 mt-1">Paid only</div></td>
+                                <td class="py-4 px-4 text-center"><span class="text-yellow-400 material-symbols-outlined">warning</span><div class="text-xs text-surface-400 mt-1">Paid only</div></td>
+                                <td class="py-4 px-4 text-center"><span class="text-red-400 material-symbols-outlined">cancel</span></td>
+                            </tr>
+                            <tr class="border-b border-surface-800 hover:bg-surface-800/30">
+                                <td class="py-4 px-4">
+                                    <div class="font-medium">AI Tone Rewriting</div>
+                                    <div class="text-surface-400 text-xs mt-1">Rewrite emails in different styles</div>
+                                </td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-yellow-400 material-symbols-outlined">warning</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-yellow-400 material-symbols-outlined">warning</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-red-400 material-symbols-outlined">cancel</span></td>
+                            </tr>
+                            <tr class="border-b border-surface-800 hover:bg-surface-800/30">
+                                <td class="py-4 px-4">
+                                    <div class="font-medium">Task Creation from Email</div>
+                                    <div class="text-surface-400 text-xs mt-1">Create tasks from email content</div>
+                                </td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span><div class="text-xs text-surface-400 mt-1">Text selection</div></td>
+                                <td class="py-4 px-4 text-center"><span class="text-yellow-400 material-symbols-outlined">warning</span><div class="text-xs text-surface-400 mt-1">Via Tasks app</div></td>
+                                <td class="py-4 px-4 text-center"><span class="text-yellow-400 material-symbols-outlined">warning</span><div class="text-xs text-surface-400 mt-1">Via To Do</div></td>
+                                <td class="py-4 px-4 text-center"><span class="text-red-400 material-symbols-outlined">cancel</span></td>
+                            </tr>
+                            <tr class="hover:bg-surface-800/30">
+                                <td class="py-4 px-4">
+                                    <div class="font-medium">Bring Your Own API Key</div>
+                                    <div class="text-surface-400 text-xs mt-1">Use your own OpenAI/AI key</div>
+                                </td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-red-400 material-symbols-outlined">cancel</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-red-400 material-symbols-outlined">cancel</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-red-400 material-symbols-outlined">cancel</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Calendar & Accounts -->
+            <div>
+                <h2 class="text-3xl font-bold mb-8 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-brand-400 text-3xl">calendar_month</span>
+                    Calendar & Multi-Account
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-surface-700 text-left">
+                                <th class="py-4 px-4 font-semibold">Feature</th>
+                                <th class="py-4 px-4 text-center font-bold text-brand-400">MailFlow</th>
+                                <th class="py-4 px-4 text-center">Gmail</th>
+                                <th class="py-4 px-4 text-center">Outlook</th>
+                                <th class="py-4 px-4 text-center">ProtonMail</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm">
+                            <tr class="border-b border-surface-800 hover:bg-surface-800/30">
+                                <td class="py-4 px-4">
+                                    <div class="font-medium">Google Calendar Sync</div>
+                                    <div class="text-surface-400 text-xs mt-1">Bidirectional sync with Google Calendar</div>
+                                </td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span><div class="text-xs text-surface-400 mt-1">Native</div></td>
+                                <td class="py-4 px-4 text-center"><span class="text-yellow-400 material-symbols-outlined">warning</span><div class="text-xs text-surface-400 mt-1">Limited</div></td>
+                                <td class="py-4 px-4 text-center"><span class="text-red-400 material-symbols-outlined">cancel</span></td>
+                            </tr>
+                            <tr class="border-b border-surface-800 hover:bg-surface-800/30">
+                                <td class="py-4 px-4">
+                                    <div class="font-medium">Outlook Calendar Sync</div>
+                                    <div class="text-surface-400 text-xs mt-1">Bidirectional sync with Microsoft Calendar</div>
+                                </td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-yellow-400 material-symbols-outlined">warning</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span><div class="text-xs text-surface-400 mt-1">Native</div></td>
+                                <td class="py-4 px-4 text-center"><span class="text-red-400 material-symbols-outlined">cancel</span></td>
+                            </tr>
+                            <tr class="border-b border-surface-800 hover:bg-surface-800/30">
+                                <td class="py-4 px-4">
+                                    <div class="font-medium">Gmail Account Connection</div>
+                                    <div class="text-surface-400 text-xs mt-1">Connect Gmail via OAuth</div>
+                                </td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span><div class="text-xs text-surface-400 mt-1">Native</div></td>
+                                <td class="py-4 px-4 text-center"><span class="text-yellow-400 material-symbols-outlined">warning</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-yellow-400 material-symbols-outlined">warning</span><div class="text-xs text-surface-400 mt-1">Import only</div></td>
+                            </tr>
+                            <tr class="border-b border-surface-800 hover:bg-surface-800/30">
+                                <td class="py-4 px-4">
+                                    <div class="font-medium">Outlook Account Connection</div>
+                                    <div class="text-surface-400 text-xs mt-1">Connect Outlook via OAuth</div>
+                                </td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-yellow-400 material-symbols-outlined">warning</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span><div class="text-xs text-surface-400 mt-1">Native</div></td>
+                                <td class="py-4 px-4 text-center"><span class="text-yellow-400 material-symbols-outlined">warning</span><div class="text-xs text-surface-400 mt-1">Import only</div></td>
+                            </tr>
+                            <tr class="hover:bg-surface-800/30">
+                                <td class="py-4 px-4">
+                                    <div class="font-medium">Any IMAP Account</div>
+                                    <div class="text-surface-400 text-xs mt-1">Connect any standard IMAP server</div>
+                                </td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-yellow-400 material-symbols-outlined">warning</span><div class="text-xs text-surface-400 mt-1">Limited</div></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-yellow-400 material-symbols-outlined">warning</span><div class="text-xs text-surface-400 mt-1">Import only</div></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Security & Privacy -->
+            <div>
+                <h2 class="text-3xl font-bold mb-8 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-brand-400 text-3xl">shield</span>
+                    Security & Privacy
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-surface-700 text-left">
+                                <th class="py-4 px-4 font-semibold">Feature</th>
+                                <th class="py-4 px-4 text-center font-bold text-brand-400">MailFlow</th>
+                                <th class="py-4 px-4 text-center">Gmail</th>
+                                <th class="py-4 px-4 text-center">Outlook</th>
+                                <th class="py-4 px-4 text-center">ProtonMail</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm">
+                            <tr class="border-b border-surface-800 hover:bg-surface-800/30">
+                                <td class="py-4 px-4">
+                                    <div class="font-medium">Self-Hosted</div>
+                                    <div class="text-surface-400 text-xs mt-1">Run on your own server</div>
+                                </td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-red-400 material-symbols-outlined">cancel</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-red-400 material-symbols-outlined">cancel</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-red-400 material-symbols-outlined">cancel</span></td>
+                            </tr>
+                            <tr class="border-b border-surface-800 hover:bg-surface-800/30">
+                                <td class="py-4 px-4">
+                                    <div class="font-medium">Two-Factor Authentication</div>
+                                    <div class="text-surface-400 text-xs mt-1">TOTP-based 2FA with backup codes</div>
+                                </td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                            </tr>
+                            <tr class="border-b border-surface-800 hover:bg-surface-800/30">
+                                <td class="py-4 px-4">
+                                    <div class="font-medium">Block Remote Images</div>
+                                    <div class="text-surface-400 text-xs mt-1">Block tracking pixels by default</div>
+                                </td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                            </tr>
+                            <tr class="border-b border-surface-800 hover:bg-surface-800/30">
+                                <td class="py-4 px-4">
+                                    <div class="font-medium">No Data Mining/Ads</div>
+                                    <div class="text-surface-400 text-xs mt-1">Your emails are not scanned for ads</div>
+                                </td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-red-400 material-symbols-outlined">cancel</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-yellow-400 material-symbols-outlined">warning</span><div class="text-xs text-surface-400 mt-1">Free tier ads</div></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                            </tr>
+                            <tr class="hover:bg-surface-800/30">
+                                <td class="py-4 px-4">
+                                    <div class="font-medium">Full Data Control</div>
+                                    <div class="text-surface-400 text-xs mt-1">You own and control all data</div>
+                                </td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-red-400 material-symbols-outlined">cancel</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-red-400 material-symbols-outlined">cancel</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-yellow-400 material-symbols-outlined">warning</span><div class="text-xs text-surface-400 mt-1">E2E only</div></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Filters & Storage -->
+            <div>
+                <h2 class="text-3xl font-bold mb-8 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-brand-400 text-3xl">filter_alt</span>
+                    Filters & Storage
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-surface-700 text-left">
+                                <th class="py-4 px-4 font-semibold">Feature</th>
+                                <th class="py-4 px-4 text-center font-bold text-brand-400">MailFlow</th>
+                                <th class="py-4 px-4 text-center">Gmail</th>
+                                <th class="py-4 px-4 text-center">Outlook</th>
+                                <th class="py-4 px-4 text-center">ProtonMail</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm">
+                            <tr class="border-b border-surface-800 hover:bg-surface-800/30">
+                                <td class="py-4 px-4">
+                                    <div class="font-medium">Server-Side Filters (Sieve)</div>
+                                    <div class="text-surface-400 text-xs mt-1">Filters run 24/7 on server</div>
+                                </td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-red-400 material-symbols-outlined">cancel</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-yellow-400 material-symbols-outlined">warning</span><div class="text-xs text-surface-400 mt-1">Limited rules</div></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                            </tr>
+                            <tr class="border-b border-surface-800 hover:bg-surface-800/30">
+                                <td class="py-4 px-4">
+                                    <div class="font-medium">Complex Filter Conditions</div>
+                                    <div class="text-surface-400 text-xs mt-1">Multiple conditions per filter</div>
+                                </td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                            </tr>
+                            <tr class="border-b border-surface-800 hover:bg-surface-800/30">
+                                <td class="py-4 px-4">
+                                    <div class="font-medium">Integrated Cloud Storage</div>
+                                    <div class="text-surface-400 text-xs mt-1">Built-in file storage</div>
+                                </td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-yellow-400 material-symbols-outlined">warning</span><div class="text-xs text-surface-400 mt-1">Separate app</div></td>
+                                <td class="py-4 px-4 text-center"><span class="text-yellow-400 material-symbols-outlined">warning</span><div class="text-xs text-surface-400 mt-1">Separate app</div></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                            </tr>
+                            <tr class="border-b border-surface-800 hover:bg-surface-800/30">
+                                <td class="py-4 px-4">
+                                    <div class="font-medium">Public File Sharing</div>
+                                    <div class="text-surface-400 text-xs mt-1">Share files with public links</div>
+                                </td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                            </tr>
+                            <tr class="hover:bg-surface-800/30">
+                                <td class="py-4 px-4">
+                                    <div class="font-medium">SpamAssassin Training</div>
+                                    <div class="text-surface-400 text-xs mt-1">Train spam filter with your emails</div>
+                                </td>
+                                <td class="py-4 px-4 text-center"><span class="text-green-400 material-symbols-outlined">check_circle</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-red-400 material-symbols-outlined">cancel</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-red-400 material-symbols-outlined">cancel</span></td>
+                                <td class="py-4 px-4 text-center"><span class="text-red-400 material-symbols-outlined">cancel</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+        </div>
+    </section>
+
+    <!-- Bottom Line -->
+    <section class="py-24 relative">
+        <div class="absolute inset-0 bg-gradient-to-b from-surface-950 via-surface-900 to-surface-950"></div>
+        <div class="relative z-10 max-w-5xl mx-auto px-6">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold mb-6">The <span class="gradient-text">Bottom Line</span></h2>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-surface-800/40 rounded-2xl p-8 border border-surface-700/50">
+                    <h3 class="text-2xl font-bold mb-4 flex items-center gap-3">
+                        <span class="material-symbols-outlined text-brand-400">thumb_up</span>
+                        Choose MailFlow if you...
+                    </h3>
+                    <ul class="space-y-3 text-surface-300">
+                        <li class="flex items-start gap-2">
+                            <span class="material-symbols-outlined text-green-400 text-lg mt-0.5">check</span>
+                            Need to know when your emails are read
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="material-symbols-outlined text-green-400 text-lg mt-0.5">check</span>
+                            Want AI features without expensive subscriptions
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="material-symbols-outlined text-green-400 text-lg mt-0.5">check</span>
+                            Manage multiple email accounts (Gmail + Outlook + more)
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="material-symbols-outlined text-green-400 text-lg mt-0.5">check</span>
+                            Value privacy and data ownership
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="material-symbols-outlined text-green-400 text-lg mt-0.5">check</span>
+                            Already run your own mail server
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="material-symbols-outlined text-green-400 text-lg mt-0.5">check</span>
+                            Want powerful server-side filtering
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="bg-surface-800/40 rounded-2xl p-8 border border-surface-700/50">
+                    <h3 class="text-2xl font-bold mb-4 flex items-center gap-3">
+                        <span class="material-symbols-outlined text-surface-400">thumb_down</span>
+                        Stick with Gmail/Outlook if you...
+                    </h3>
+                    <ul class="space-y-3 text-surface-400">
+                        <li class="flex items-start gap-2">
+                            <span class="material-symbols-outlined text-surface-500 text-lg mt-0.5">remove</span>
+                            Don't care about email tracking
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="material-symbols-outlined text-surface-500 text-lg mt-0.5">remove</span>
+                            Are comfortable with big tech reading your emails
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="material-symbols-outlined text-surface-500 text-lg mt-0.5">remove</span>
+                            Only use one email account
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="material-symbols-outlined text-surface-500 text-lg mt-0.5">remove</span>
+                            Don't want to manage your own server
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="material-symbols-outlined text-surface-500 text-lg mt-0.5">remove</span>
+                            Are happy paying for AI features
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-24 relative overflow-hidden">
+        <div class="absolute inset-0">
+            <div class="absolute inset-0 bg-gradient-to-r from-brand-600/20 via-brand-500/10 to-brand-600/20"></div>
+        </div>
+        
+        <div class="relative z-10 max-w-4xl mx-auto px-6 text-center">
+            <h2 class="text-4xl font-bold mb-6">Ready to make the switch?</h2>
+            <p class="text-xl text-surface-300 mb-10 max-w-2xl mx-auto">
+                Join professionals who've upgraded their email experience. Deploy MailFlow today.
+            </p>
+            
+            <div class="flex flex-wrap justify-center gap-4">
+                <a href="index.html#get-started" class="px-8 py-4 rounded-full bg-gradient-to-r from-brand-500 to-brand-600 font-semibold text-lg hover:from-brand-600 hover:to-brand-700 transition-all shadow-xl shadow-brand-500/30 flex items-center gap-2">
+                    <span class="material-symbols-outlined">download</span>
+                    Get Started Free
+                </a>
+                <a href="https://email.devcon1.hu" class="px-8 py-4 rounded-full border-2 border-white/20 font-semibold text-lg hover:bg-white/10 transition-all flex items-center gap-2">
+                    <span class="material-symbols-outlined">play_circle</span>
+                    Try Demo
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-surface-800">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <a href="index.html" class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center">
+                        <span class="material-symbols-outlined filled text-white text-lg">mail</span>
+                    </div>
+                    <span class="text-xl font-bold">Mail<span class="gradient-text">Flow</span></span>
+                </a>
+                <p class="text-surface-500 text-sm">
+                    2025 MailFlow. Professional email, reimagined.
+                </p>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // Set correct active button on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('mailflow-theme') || 'green';
+            setTheme(savedTheme);
+        });
+    </script>
+</body>
+</html>
+

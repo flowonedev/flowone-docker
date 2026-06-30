@@ -1,0 +1,152 @@
+{
+  "automationGuide": {
+    "howAutomationsWork": "How Automations Work"
+  },
+  "boardAutomationPanel": {
+    "addLabel": "Add label",
+    "assignMember": "Assign member",
+    "cardCompleted": "Card completed",
+    "cardCreated": "Card created",
+    "cardIdleForXDays": "Card idle for X days",
+    "cardIsOverdue": "Card is overdue",
+    "cardMovedToList": "Card moved to list",
+    "checklistCompleted": "Checklist completed",
+    "createInvoiceDraft": "Create invoice draft",
+    "egCardCardtitleNeedsAttention": "e.g., Card {{card_title}} needs attention",
+    "egNotifyOnOverdue": "e.g., Notify on overdue",
+    "emailReceivedOnCard": "Email received on card",
+    "executedActionsWillAppearHere": "Executed actions will appear here",
+    "howAutomationsWork": "How automations work",
+    "howItWorks": "How it works",
+    "idleDays": "Idle Days",
+    "labelAdded": "Label added",
+    "message": "Message",
+    "moveCardToList": "Move card to list",
+    "newAutomationRule": "New Automation Rule",
+    "noAutomationActivityYet": "No automation activity yet",
+    "noAutomationRulesYet": "No automation rules yet",
+    "pickATemplateOrCreate": "Pick a template or create from scratch",
+    "postChatMessage": "Post chat message",
+    "ruleName": "Rule Name",
+    "sendNotification": "Send notification",
+    "thenAction": "Then (Action)",
+    "updateDealStage": "Update deal stage",
+    "whenTrigger": "When (Trigger)"
+  },
+  "boardAutomationTemplates": {
+    "blankRule": "Blank Rule",
+    "newAutomation": "New Automation",
+    "pickATemplateOrStart": "Pick a template or start from scratch",
+    "searchTemplates": "Search templates...",
+    "startFromScratchWithFull": "Start from scratch with full control"
+  },
+  "boardClientView": {
+    "completed": "Completed",
+    "margin": "Margin",
+    "noClientLinkedToThis": "No client linked to this board. Assign a client from board settings.",
+    "revenue": "Revenue",
+    "totalCards": "Total Cards"
+  },
+  "boardMoodSplitView": {
+    "chooseAMoodBoard": "Choose a Mood Board...",
+    "close": "Close",
+    "createAMoodBoardFirst": "Create a mood board first to use split view.",
+    "noMoodBoardsFound": "No mood boards found.",
+    "openInFullMoodBoard": "Open in full Mood Board editor",
+    "selectAMoodBoardTo": "Select a Mood Board to reference alongside your board"
+  },
+  "boardProSettings": {
+    "automations": "Automations",
+    "configureBoardProFeaturesFor": "Configure Board Pro features for this board.",
+    "emailRules": "Email Rules",
+    "linkedEmails": "Linked Emails"
+  },
+  "boardRevenueView": {
+    "howBillingWorks": "How billing works",
+    "noCardlevelRevenueData": "No card-level revenue data",
+    "noMilestonesYet": "No milestones yet",
+    "openACardAndSet": "Open a card and set revenue / cost to see per-task breakdown",
+    "progress": "Progress",
+    "readyToInvoice": "Ready to invoice",
+    "refresh": "Refresh",
+    "setAmountsAndInvoiceDates": "Set amounts and invoice dates on lists from the base Financials view"
+  },
+  "cardDrivePanel": {
+    "cardFolderCreated": "Card folder created",
+    "failedToCreateCardFolder": "Failed to create card folder",
+    "linkAFolderFromThe": "Link a folder from the board's Map panel first.",
+    "noDriveFolderLinkedTo": "No Drive folder linked to this board.",
+    "noFolderForThisCard": "No folder for this card yet",
+    "openInDrive": "Open in Drive"
+  },
+  "cardEmailsPanel": {
+    "awaiting": "Awaiting",
+    "forwarded": "Forwarded",
+    "none": "None",
+    "replied": "Replied",
+    "unlinkEmail": "Unlink email"
+  },
+  "cardFinancialsPanel": {
+    "cost": "Cost",
+    "currency": "Currency",
+    "invoice": "Invoice",
+    "margin": "Margin:",
+    "openLinkedCrmInvoice": "Open linked CRM invoice",
+    "revenue": "Revenue",
+    "timeBudgetH": "Time Budget (h)"
+  },
+  "cardInvoicePanel": {
+    "additionalNotesForTheInvoice": "Additional notes for the invoice...",
+    "amount": "Amount",
+    "client": "Client",
+    "invoiceDraftCreated": "Invoice draft created",
+    "invoicePreview": "Invoice Preview",
+    "item": "Item",
+    "notesOptional": "Notes (optional)",
+    "paymentTerm": "Payment Term",
+    "tasks": "Tasks",
+    "taxRate": "Tax Rate (%)"
+  },
+  "emailRulesGuide": {
+    "howEmailRulesWork": "How Email Rules Work"
+  },
+  "emailRulesPanel": {
+    "autoassignToOptional": "Auto-assign to (optional)",
+    "autocreateCardWhenMatched": "Auto-create card when matched",
+    "autolinkIncomingEmailsToCards": "Auto-link incoming emails to cards based on subject or sender",
+    "cancel": "Cancel",
+    "emailRuleCreated": "Email rule created",
+    "failedToCreateEmailRule": "Failed to create email rule",
+    "failedToDeleteRule": "Failed to delete rule",
+    "failedToUpdateRule": "Failed to update rule",
+    "firstListDefault": "First list (default)",
+    "howEmailRulesWork": "How email rules work",
+    "howItWorks": "How it works",
+    "labelfolderMatch": "Label/folder match",
+    "matchType": "Match Type",
+    "newEmailRule": "New Email Rule",
+    "noEmailRulesYet": "No email rules yet",
+    "noOne": "No one",
+    "ruleDeleted": "Rule deleted",
+    "senderDomain": "Sender domain",
+    "senderEmail": "Sender email",
+    "subjectContains": "Subject contains",
+    "targetListForNewCards": "Target List (for new cards)",
+    "value": "Value"
+  },
+  "executiveDashboard": {
+    "aiSummary": "AI Summary",
+    "cached": "(cached)",
+    "complete": "Complete",
+    "done": "Done",
+    "estCompletion": "Est. Completion",
+    "overdue": "Overdue",
+    "progress": "Progress",
+    "remaining": "Remaining",
+    "revenueProjection": "Revenue Projection",
+    "riskAnalysis": "Risk Analysis",
+    "teamWorkload": "Team Workload",
+    "total": "Total",
+    "weeklyVelocity": "Weekly Velocity"
+  }
+}

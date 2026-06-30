@@ -1,0 +1,825 @@
+{
+  "featureGuide": {
+    "howItWorks": "How it works",
+    "features": "Features",
+    "worksWithOtherModules": "Works with other modules",
+    "active": "ACTIVE",
+    "available": "AVAILABLE",
+
+    "drive": {
+      "title": "Drive Features",
+      "footer": "Drive is a core feature available to all users. Board Pro and CRM Pro add deeper integration.",
+      "tiers": {
+        "drive": {
+          "name": "Drive",
+          "description": "Cloud file storage with folders, documents, and sharing.",
+          "storage": "Storage",
+          "fileUpload": "File upload & download",
+          "folderOrganization": "Folder organization",
+          "dragDrop": "Drag & drop uploads",
+          "imagePreview": "Image & PDF preview",
+          "documents": "Documents",
+          "docEditor": "Built-in document editor",
+          "presentationEditor": "Presentation editor",
+          "markdown": "Markdown support",
+          "fullTextSearch": "Full-text search",
+          "sharing": "Sharing",
+          "publicShareLinks": "Public share links",
+          "folderSharing": "Folder sharing",
+          "portalDelivery": "Portal document delivery"
+        }
+      },
+      "integrations": {
+        "boardPro": "Attach Drive files to board cards",
+        "crmInvoices": "Auto-save invoice PDFs to Drive",
+        "moodBoards": "Use Drive images in mood boards",
+        "email": "Save email attachments to Drive"
+      }
+    },
+
+    "clients": {
+      "title": "Client Management Features",
+      "footer": "Client management is a core feature. Time Tracker and CRM Pro add financial depth.",
+      "tiers": {
+        "clients": {
+          "name": "Clients",
+          "description": "Domain-based client tracking with contacts, activity, and board linking.",
+          "core": "Core",
+          "autoDetect": "Auto-detect clients from emails",
+          "statusTracking": "Client status tracking",
+          "contactManagement": "Contact management",
+          "activityTimeline": "Activity timeline",
+          "linkBoards": "Link clients to boards",
+          "hourlyRate": "Hourly rate & payment terms"
+        },
+        "timeTracker": {
+          "name": "+ Time Tracker",
+          "description": "Track time spent per client for profitability analysis.",
+          "perClientTime": "Per-client time logs",
+          "effectiveRate": "Effective hourly rate",
+          "profitability": "Profitability tracking"
+        },
+        "crmPro": {
+          "name": "+ CRM Pro",
+          "description": "Full CRM with deals, invoices, expenses, and reporting.",
+          "pipeline": "Sales pipeline & deals",
+          "invoices": "Invoice management",
+          "expenses": "Expense tracking",
+          "billingFields": "Client billing fields",
+          "reports": "Revenue & profitability reports",
+          "healthScoring": "Client health scoring"
+        }
+      },
+      "integrations": {
+        "boards": "Link boards to clients for project tracking",
+        "financials": "View client revenue across all boards",
+        "timeTracker": "Log time against client projects",
+        "email": "Auto-detect client from email domain"
+      }
+    },
+
+    "calendar": {
+      "title": "Calendar Features",
+      "footer": "Activate the Calendar addon from the VPS Admin Panel.",
+      "tiers": {
+        "calendar": {
+          "name": "Calendar",
+          "description": "Synced calendar with event management and scheduling.",
+          "monthWeekDay": "Month / week / day views",
+          "createEdit": "Create & edit events",
+          "caldav": "CalDAV calendar sync",
+          "multiple": "Multiple calendar support",
+          "colorCoded": "Color-coded calendars",
+          "reminders": "Event reminders"
+        }
+      },
+      "integrations": {
+        "tasks": "Task due dates appear on calendar",
+        "boards": "Board card deadlines on calendar"
+      }
+    },
+
+    "moodboards": {
+      "title": "Mood Board Features",
+      "footer": "Activate the Mood Boards addon from the VPS Admin Panel. Board Pro adds split view.",
+      "tiers": {
+        "moodboards": {
+          "name": "Mood Boards",
+          "description": "Visual mood boards for inspiration, design references, and client presentations.",
+          "dragDrop": "Drag & drop image layout",
+          "multipleBoards": "Multiple boards",
+          "shareLinks": "Public share links",
+          "imageUpload": "Image upload & paste",
+          "freeform": "Freeform canvas",
+          "backgrounds": "Board backgrounds"
+        }
+      },
+      "integrations": {
+        "boardPro": "Mood Board split view alongside Kanban",
+        "drive": "Use Drive images in mood boards",
+        "portal": "Share mood boards with clients via portal"
+      }
+    },
+
+    "timeTracker": {
+      "title": "Time Tracker Features",
+      "footer": "Activate the Time Tracker addon from the VPS Admin Panel.",
+      "tiers": {
+        "timeTracker": {
+          "name": "Time Tracker",
+          "description": "Track time spent on client work with one-click start/stop timers.",
+          "oneClick": "One-click start/stop timer",
+          "manualEntry": "Manual time entry",
+          "perClient": "Per-client time logging",
+          "summaries": "Daily & weekly summaries",
+          "categorization": "Activity categorization",
+          "reports": "Time reports & export"
+        }
+      },
+      "integrations": {
+        "clients": "Log time against specific clients",
+        "boardPro": "Time tracking view per board",
+        "crmPro": "Profitability reports: revenue vs hours",
+        "financials": "Effective hourly rate calculations"
+      }
+    },
+
+    "team": {
+      "title": "Team Features",
+      "footer": "Activate the Team addon from the VPS Admin Panel. Chat addon adds messaging.",
+      "tiers": {
+        "team": {
+          "name": "Team",
+          "description": "Manage colleagues and collaborate across the workspace.",
+          "addManage": "Add & manage colleagues",
+          "rolesStatus": "Colleague roles & status",
+          "presence": "Online presence indicators",
+          "directory": "Team directory"
+        }
+      },
+      "integrations": {
+        "chatDm": "Direct messaging between team members",
+        "boards": "Share boards & assign cards to colleagues",
+        "chatVideo": "Video calls with team members"
+      }
+    },
+
+    "chat": {
+      "title": "Chat & Meetings Features",
+      "footer": "Activate the Chat addon from the VPS Admin Panel. Requires Team addon for colleague messaging.",
+      "tiers": {
+        "chat": {
+          "name": "Chat",
+          "description": "Real-time messaging, channels, and video meetings.",
+          "messaging": "Messaging",
+          "directMessages": "Direct messages",
+          "groupChannels": "Group channels",
+          "fileSharing": "File sharing in chat",
+          "reactions": "Message reactions",
+          "readReceipts": "Read receipts",
+          "meetings": "Meetings",
+          "videoCalls": "Video & audio calls",
+          "screenSharing": "Screen sharing",
+          "meetingInvites": "Meeting invites via link",
+          "inCallChat": "In-call chat"
+        }
+      },
+      "integrations": {
+        "team": "Chat with colleagues from your team",
+        "boards": "Share board cards in chat"
+      }
+    },
+
+    "emailMarketing": {
+      "title": "Email Marketing Features",
+      "footer": "Activate the Email Marketing addon from the VPS Admin Panel.",
+      "tiers": {
+        "emailMarketing": {
+          "name": "Email Marketing",
+          "description": "Mailing lists, campaigns, and subscriber management.",
+          "lists": "Lists",
+          "createLists": "Create mailing lists",
+          "importCsv": "Import subscribers (CSV)",
+          "manageSubscriptions": "Manage subscriptions",
+          "unsubscribe": "Unsubscribe handling",
+          "campaigns": "Campaigns",
+          "htmlEditor": "HTML email editor",
+          "scheduling": "Campaign scheduling",
+          "tracking": "Send tracking & stats",
+          "templates": "Template library"
+        }
+      },
+      "integrations": {
+        "clients": "Build lists from client contacts",
+        "email": "Send campaigns from your email account"
+      }
+    },
+
+    "automationHub": {
+      "title": "Automation Hub Features",
+      "footer": "Activate the Automation Hub addon from the VPS Admin Panel. More modules = more triggers & actions.",
+      "tiers": {
+        "automationHub": {
+          "name": "Automation Hub",
+          "description": "Visual workflow builder connecting triggers and actions across all modules.",
+          "workflowBuilder": "Workflow Builder",
+          "visualEditor": "Visual node-based editor",
+          "dragDrop": "Drag & drop workflow design",
+          "conditionalBranching": "Conditional branching",
+          "delaySchedule": "Delay & schedule nodes",
+          "triggersActions": "Triggers & Actions",
+          "emailTriggers": "Email triggers (received, sent)",
+          "boardTriggers": "Board card triggers (moved, completed)",
+          "crmTriggers": "CRM triggers (deal won, invoice overdue)",
+          "webhookTriggers": "Webhook & API triggers",
+          "sendEmailActions": "Send email actions",
+          "createCardActions": "Create card / task actions"
+        }
+      },
+      "integrations": {
+        "email": "Trigger on incoming/outgoing emails",
+        "boards": "Card created, moved, or completed triggers",
+        "crmPro": "Deal, invoice, and pipeline triggers",
+        "external": "Webhook triggers for external services"
+      }
+    },
+
+    "crmPipeline": {
+      "title": "CRM Pipeline Features",
+      "footer": "CRM Pro includes pipeline, invoices, and reports. Activate from the VPS Admin Panel.",
+      "tiers": {
+        "crmPro": {
+          "name": "CRM Pro",
+          "description": "Sales pipeline with deal tracking, probability weighting, and forecasting.",
+          "pipeline": "Pipeline",
+          "kanbanDealBoard": "Kanban-style deal board",
+          "customStages": "Custom pipeline stages",
+          "dealValue": "Deal value & currency",
+          "winProbability": "Win probability tracking",
+          "dragDropStages": "Drag & drop stage changes",
+          "forecasting": "Forecasting",
+          "weightedForecast": "Weighted revenue forecast",
+          "monthlyProjections": "Monthly projections",
+          "winRateAnalytics": "Win rate analytics",
+          "conversionFunnel": "Stage conversion funnel"
+        }
+      },
+      "integrations": {
+        "clients": "Deals linked to client records",
+        "invoices": "Create invoice when deal is won",
+        "boards": "Link deals to project boards",
+        "automation": "Trigger workflows on deal stage changes"
+      }
+    },
+
+    "crmInvoices": {
+      "title": "Invoice Features",
+      "footer": "CRM Pro includes pipeline, invoices, and reports. Activate from the VPS Admin Panel.",
+      "tiers": {
+        "crmPro": {
+          "name": "CRM Pro",
+          "description": "Full invoicing system with line items, payments, and billing provider integration.",
+          "invoicing": "Invoicing",
+          "createInvoices": "Create invoices with line items",
+          "taxDiscount": "Tax, discount & currency support",
+          "partialPayments": "Partial payment tracking",
+          "recurring": "Recurring invoices",
+          "pdfGeneration": "PDF generation",
+          "sendViaEmail": "Send invoices via email",
+          "billingProviders": "Billing Providers",
+          "billingo": "Billingo integration",
+          "szamlazz": "Szamlazz.hu integration",
+          "autoPush": "Auto-push invoices to provider",
+          "statusSync": "Status sync from provider",
+          "autoSavePdf": "Auto-save PDFs to Drive"
+        }
+      },
+      "integrations": {
+        "clients": "Invoices linked to client billing info",
+        "pipeline": "Create invoice when deal is won",
+        "boardPro": "Link invoices to board cards",
+        "financials": "Invoice totals in financial overview",
+        "drive": "Auto-save invoice PDFs"
+      }
+    },
+
+    "crmDashboard": {
+      "title": "CRM Dashboard & Reports",
+      "footer": "CRM Pro includes pipeline, invoices, and reports. Activate from the VPS Admin Panel.",
+      "tiers": {
+        "crmPro": {
+          "name": "CRM Pro",
+          "description": "Comprehensive reporting across pipeline, invoices, and client health.",
+          "dashboard": "Dashboard",
+          "revenueOverview": "Revenue overview",
+          "pipelineValue": "Pipeline value summary",
+          "monthlyChart": "Monthly revenue chart",
+          "clientHealth": "Client health tracking",
+          "reports": "Reports",
+          "invoiceAging": "Invoice aging report",
+          "clientValueRanking": "Client value ranking",
+          "profitabilityAnalysis": "Profitability analysis",
+          "dealForecast": "Deal forecast by month",
+          "conversionFunnel": "Conversion funnel"
+        }
+      },
+      "integrations": {
+        "pipeline": "Deal data feeds dashboard metrics",
+        "invoices": "Invoice data for revenue reports",
+        "clients": "Per-client health and ranking",
+        "timeTracker": "Hours data for profitability reports"
+      }
+    },
+
+    "financials": {
+      "title": "Financial Features by Addon Tier",
+      "footer": "Each tier builds on the previous one. Activate addons from the VPS Admin Panel.",
+      "tiers": {
+        "kanbanBoards": {
+          "name": "Kanban Boards",
+          "description": "Cash flow forecast & milestone tracking. Invoice externally in your own system.",
+          "milestoneAmounts": "Milestone amounts per board list",
+          "invoiceDateTracking": "Invoice date & payment status tracking",
+          "cashFlowProjection": "Cash flow projection by month",
+          "groupBy": "Group by month / client / project",
+          "chartsYoy": "Charts & year-over-year summary"
+        },
+        "boardPro": {
+          "name": "+ Board Pro",
+          "description": "In-depth per-card financials. Track revenue, costs & margin per task.",
+          "revenuePerCard": "Revenue & cost per card/task",
+          "marginCalc": "Margin & profitability calculations",
+          "timeBudget": "Time budget tracking per task",
+          "boardRevenueView": "Board revenue view & executive dashboard",
+          "financialAutomations": "Financial automations"
+        },
+        "crmPro": {
+          "name": "+ CRM Pro",
+          "description": "Full invoicing system with billing provider integration & automation.",
+          "createInvoices": "Create invoices with line items",
+          "billingoSzamlazz": "Billingo & Szamlazz.hu integration",
+          "pipelineDeals": "Pipeline deals & revenue forecast",
+          "expenseTracking": "Expense tracking & profitability reports",
+          "invoiceAutomations": "Invoice automations & PDF generation"
+        }
+      },
+      "integrations": {
+        "boards": "Milestones from all your boards",
+        "boardPro": "Per-card revenue & cost estimates",
+        "crmInvoices": "Invoice totals and statuses",
+        "clients": "Group financials by client"
+      }
+    },
+
+    "boards": {
+      "title": "Board Features by Addon Tier",
+      "footer": "Board Pro adds advanced views, per-card features, and automation. Activate from the VPS Admin Panel.",
+      "tiers": {
+        "kanbanBoards": {
+          "name": "Kanban Boards",
+          "description": "Full-featured project boards with multiple view modes and team collaboration.",
+          "views": "Views",
+          "kanbanBoard": "Kanban board",
+          "tableView": "Table view",
+          "calendarView": "Calendar view",
+          "timelineView": "Timeline view",
+          "features": "Features",
+          "checklists": "Checklists & due dates",
+          "labels": "Labels & cover images",
+          "milestoneBilling": "Milestone billing",
+          "teamSharing": "Team sharing & permissions",
+          "boardMap": "Board Map & Activity Log",
+          "trelloImport": "Trello import"
+        },
+        "boardPro": {
+          "name": "+ Board Pro",
+          "description": "Advanced views, automation, per-card financials, and executive reporting.",
+          "extraViews": "Extra Views",
+          "revenueBillingView": "Revenue & Billing view",
+          "timeTrackingView": "Time Tracking view",
+          "workBreakdownView": "Work Breakdown view",
+          "moodBoardSplitView": "Mood Board split view",
+          "cardFeatures": "Card Features",
+          "perCardRevenue": "Per-card revenue & cost",
+          "linkedEmails": "Linked emails on cards",
+          "driveFiles": "Drive files on cards",
+          "commandCenter": "Command Center (AI)",
+          "automationReports": "Automation & Reports",
+          "boardAutomations": "Board automations",
+          "emailRules": "Email rules (auto-sort)",
+          "executiveReport": "Executive Report",
+          "proSettings": "Pro Settings"
+        }
+      },
+      "integrations": {
+        "clients": "Link boards to clients",
+        "financials": "Milestone totals in financial overview",
+        "boardProEmail": "Link emails to cards",
+        "boardProDrive": "Attach Drive files to cards"
+      }
+    },
+
+    "moduleNames": {
+      "boardPro": "Board Pro",
+      "crmInvoices": "CRM Invoices",
+      "moodBoards": "Mood Boards",
+      "email": "Email",
+      "boards": "Boards",
+      "financials": "Financials",
+      "timeTracker": "Time Tracker",
+      "clients": "Clients",
+      "tasks": "Tasks",
+      "drive": "Drive",
+      "clientPortal": "Client Portal",
+      "chat": "Chat",
+      "team": "Team",
+      "external": "External",
+      "pipeline": "Pipeline",
+      "invoices": "Invoices",
+      "automation": "Automation",
+      "boardProEmail": "Board Pro + Email",
+      "boardProDrive": "Board Pro + Drive"
+    }
+  },
+
+  "stepGuide": {
+    "common": {
+      "dontShowAgain": "Don't show again",
+      "back": "Back",
+      "next": "Next",
+      "gotIt": "Got it"
+    },
+    "workflowGuide": {
+      "title": "How Billing Works",
+      "subtitle": "Project to invoice in {count} steps",
+      "s1title": "Create a Project Board",
+      "s1desc": "Each board represents one project. Link it to a client so all billing and invoices stay connected.",
+      "s1example": "Example: \"Acme Corp Website Redesign\" board, linked to client Acme Corp.",
+      "s1v1": "Board", "s1v2": "Client",
+      "s2title": "Set Up Milestones",
+      "s2desc": "Each list can become a billing milestone. Set an expected amount, currency, and planned invoice date. This defines when and how much you will bill.",
+      "s2example": "Example: \"Design Phase\" list -- 500 EUR, invoice date March 15.",
+      "s2v1": "Design", "s2v1sub": "500 EUR", "s2v2": "Development", "s2v2sub": "1,200 EUR", "s2v3": "Launch", "s2v3sub": "300 EUR",
+      "s3title": "Add Tasks & Track Progress",
+      "s3desc": "Add cards (tasks) to each list. Use checklists inside cards for granular tracking. As you complete items, the milestone progress fills up automatically.",
+      "s3example": "Example: Card \"Create logo\" with checklist: Sketches, Color palette, Final version.",
+      "s3v1": "Card", "s3v1sub": "3 todos", "s3v2": "Checklist", "s3v2sub": "2/3 done", "s3v3": "Progress", "s3v3sub": "66%",
+      "s4title": "Track Revenue Per Task",
+      "s4desc": "With Board Pro, each card can have its own revenue and cost estimate. This gives you a per-task profit margin breakdown beyond just milestone totals.",
+      "s4example": "Example: Card \"Frontend build\" -- Revenue: 800 EUR, Cost: 400 EUR, Margin: 400 EUR.",
+      "s4badge": "Board Pro",
+      "s4v1": "Revenue", "s4v1sub": "800 EUR", "s4v2": "Cost", "s4v2sub": "400 EUR", "s4v3": "Margin", "s4v3sub": "+400 EUR",
+      "s5title": "Milestone Ready -- Create Invoice",
+      "s5desc": "When all tasks in a milestone are done, it shows \"Ready to invoice\". Open the card's Invoice panel to create a CRM invoice directly -- or use automation.",
+      "s5example": "Example: \"Design Phase\" hits 100% -> click \"Create Invoice\" -> draft invoice for 500 EUR appears in CRM.",
+      "s5badge": "Board Pro + CRM Pro",
+      "s5v1": "100% Done", "s5v2": "Create Invoice", "s5v3": "CRM Draft",
+      "s6title": "Manage Invoices in CRM",
+      "s6desc": "All invoices live in CRM Pro. Review the draft, add line items, send it to the client, record payments, or push it to Billingo / Szamlazz.hu for official invoicing.",
+      "s6example": "Example: Invoice #2024-015 for Acme Corp -- 500 EUR -- Status: Sent -- Due: April 15.",
+      "s6badge": "CRM Pro",
+      "s6v1": "Draft", "s6v2": "Sent", "s6v3": "Paid",
+      "s7title": "Automate the Flow",
+      "s7desc": "Set up a CRM automation rule: when a board is closed, automatically create a draft invoice. No manual steps needed -- close the project, invoice appears.",
+      "s7example": "Example: Rule \"Auto-invoice on close\" -- Trigger: Board closed -> Action: Create invoice draft.",
+      "s7badge": "CRM Pro",
+      "s7v1": "Board Closed", "s7v2": "Automation", "s7v3": "Invoice Created"
+    },
+    "emailRulesGuide": {
+      "title": "How Email Rules Work",
+      "subtitle": "Email-to-board routing in {count} steps",
+      "s1title": "What Are Email Rules?",
+      "s1desc": "Email rules automatically link incoming emails to your board. When an email matches your criteria, it gets attached to an existing card or creates a new one.",
+      "s1example": "Example: Every email from \"client.com\" automatically appears as a card on your project board.",
+      "s1v1": "Email Arrives", "s1v2": "Rule Matches", "s1v3": "Card Created",
+      "s2title": "Match Types",
+      "s2desc": "Choose how to match incoming emails. You can match by subject line keywords, sender domain, specific sender email, or email label/folder.",
+      "s2example": "Match types: \"Subject contains [Project X]\", \"Sender domain = client.com\", \"Sender email = boss@work.com\".",
+      "s2v1": "Subject", "s2v1sub": "contains...", "s2v2": "Domain", "s2v2sub": "@client.com", "s2v3": "Sender", "s2v3sub": "exact email",
+      "s3title": "Auto-Create Cards",
+      "s3desc": "When \"Auto-create card\" is enabled, a matching email creates a new card on the board. The email subject becomes the card title, and the email body is attached.",
+      "s3example": "Example: Email with subject \"Logo feedback\" from client.com -> New card \"Logo feedback\" in the \"Inbox\" list.",
+      "s3v1": "New Email", "s3v2": "Auto-Create", "s3v3": "New Card", "s3v3sub": "In \"Inbox\" list",
+      "s4title": "Link to Existing Cards",
+      "s4desc": "If auto-create is off, matching emails are linked to the most relevant existing card (matched by subject similarity). This keeps email threads organized under the right task.",
+      "s4example": "Example: Reply email \"Re: Logo feedback\" links to the existing \"Logo feedback\" card instead of creating a duplicate.",
+      "s4v1": "Reply Email", "s4v2": "Smart Match", "s4v3": "Linked", "s4v3sub": "Existing card",
+      "s5title": "Auto-Assign & Route",
+      "s5desc": "Optionally auto-assign matching cards to a specific team member. Combined with the target list setting, you can route different email types to different people and workflows.",
+      "s5example": "Example: Emails from \"support@\" -> List \"Support Tickets\" -> Assigned to team@company.com.",
+      "s5v1": "Match", "s5v2": "Target List", "s5v3": "Assign",
+      "s6title": "Example: Client Email Routing",
+      "s6desc": "A common setup: create one rule per client domain. Emails from acme.com go to the \"Acme Corp\" board, emails from beta.io go to the \"Beta Project\" board.",
+      "s6example": "Rule 1: Sender domain \"acme.com\" -> Create card in \"Incoming\". Rule 2: Subject contains \"[urgent]\" -> Create card in \"Priority\" list.",
+      "s6v1": "acme.com", "s6v1sub": "Rule 1", "s6v2": "beta.io", "s6v2sub": "Rule 2", "s6v3": "Sorted", "s6v3sub": "Auto-routed",
+      "s7title": "Managing Rules",
+      "s7desc": "Toggle rules on and off without deleting them. This is useful when a project wraps up -- just disable the rule. Re-enable it later if work resumes.",
+      "s7example": "Tip: Start with a broad rule (sender domain), then add specific ones (subject keywords) as your workflow evolves.",
+      "s7v1": "Active", "s7v1sub": "3 rules", "s7v2": "Paused", "s7v2sub": "1 rule", "s7v3": "Deleted", "s7v3sub": "Gone"
+    },
+    "automationGuide": {
+      "title": "How Automations Work",
+      "subtitle": "Trigger-action rules in {count} steps",
+      "s1title": "What Are Automations?",
+      "s1desc": "Automations are \"if this, then that\" rules for your board. When something happens (a trigger), an action runs automatically. No manual work needed.",
+      "s1example": "Example: When a card moves to the \"Done\" list, automatically notify the team.",
+      "s1v1": "Trigger", "s1v2": "Condition", "s1v3": "Action",
+      "s2title": "Available Triggers",
+      "s2desc": "A trigger is the event that starts the automation. You can react to card movements, completions, overdue deadlines, idle cards, new cards, labels, checklists, or incoming emails.",
+      "s2example": "Common triggers: \"Card moved to list\", \"Card is overdue\", \"Checklist completed\", \"Email received on card\".",
+      "s2v1": "Card Moved", "s2v2": "Overdue", "s2v3": "Email In",
+      "s3title": "Available Actions",
+      "s3desc": "An action is what happens when the trigger fires. Move cards, assign members, add labels, send notifications, create invoice drafts, post chat messages, or update CRM deal stages.",
+      "s3example": "Common actions: \"Move card to Done\", \"Send notification\", \"Create invoice draft\", \"Post chat message\".",
+      "s3v1": "Move Card", "s3v2": "Notify", "s3v3": "Invoice",
+      "s4title": "Example: Auto-Move Completed Cards",
+      "s4desc": "Create a rule: when a card's checklist is fully completed, move it to the \"Done\" list automatically. Great for keeping the board clean.",
+      "s4example": "Rule: \"Auto-archive done\" -- Trigger: Checklist completed -> Action: Move card to \"Done\".",
+      "s4v1": "All Done", "s4v2": "Auto-Move", "s4v3": "\"Done\" List",
+      "s5title": "Example: Overdue Alerts",
+      "s5desc": "Set up a rule that fires when a card passes its due date. The action sends a notification or chat message so nothing falls through the cracks.",
+      "s5example": "Rule: \"Overdue alert\" -- Trigger: Card is overdue -> Action: Send notification.",
+      "s5v1": "Past Due", "s5v2": "Alert", "s5v3": "Notification",
+      "s6title": "Example: Auto-Invoice on Completion",
+      "s6desc": "When all cards in a milestone list are completed, automatically create an invoice draft in CRM. The milestone amount and client are pulled from the board settings.",
+      "s6example": "Rule: \"Invoice on milestone\" -- Trigger: All cards done in list -> Action: Create invoice draft.",
+      "s6badge": "CRM Pro",
+      "s6v1": "100% Done", "s6v2": "Auto-Create", "s6v3": "Invoice Draft",
+      "s7title": "Managing Rules",
+      "s7desc": "Each rule has a toggle to enable/disable it without deleting. You can see how many times a rule has fired (run count). Create as many rules as you need per board.",
+      "s7example": "Tip: Start with one simple rule (like overdue alerts), see it work, then add more.",
+      "s7v1": "Create", "s7v2": "Toggle", "s7v3": "Monitor"
+    },
+    "crmSequencesGuide": {
+      "title": "How Email Sequences Work",
+      "subtitle": "Drip campaigns in {count} steps",
+      "s1title": "What Are Email Sequences?",
+      "s1desc": "Email sequences are automated drip campaigns. You define a series of emails with delays between them. Once a contact is enrolled, the system sends each email on schedule.",
+      "s1example": "Example: A 3-email welcome sequence -- Day 0: \"Welcome!\", Day 3: \"Getting started guide\", Day 7: \"How can we help?\".",
+      "s1v1": "Email 1", "s1v2": "3 days", "s1v3": "Email 2", "s1v4": "4 days", "s1v5": "Email 3",
+      "s2title": "Creating a Sequence",
+      "s2desc": "Give your sequence a name (e.g. \"Welcome Series\"). Then add steps -- each step is an email with a subject, body, and delay in days from the previous step.",
+      "s2example": "Step 1 (Day 0): \"Thanks for your interest!\" -> Step 2 (Day 2): \"Here's what we offer\" -> Step 3 (Day 5): \"Ready to get started?\".",
+      "s2v1": "Name It", "s2v2": "Add Steps", "s2v3": "Set Delays",
+      "s3title": "Enrolling Contacts",
+      "s3desc": "You can enroll contacts manually from the Sequences view, or automatically via CRM Automation rules. Each enrollment tracks its progress independently.",
+      "s3example": "Manual: Click \"Enroll\" on a sequence, type the contact email. Automatic: Create an automation rule with action \"Start email sequence\".",
+      "s3v1": "Manual", "s3v2": "or", "s3v3": "Automation",
+      "s4title": "Tracking Progress",
+      "s4desc": "Each enrolled contact shows their current step, status (active, completed, cancelled), and next scheduled send. You can cancel an enrollment at any time.",
+      "s4example": "In the enrollments panel: \"john@client.com -- Step 2 of 3 -- Next email in 2 days -- Status: Active\".",
+      "s4v1": "Step 1 Done", "s4v2": "Step 2 Sending", "s4v3": "Step 3 Queued",
+      "s5title": "Example: Post-Proposal Follow-Up",
+      "s5desc": "After sending a proposal, enroll the client in a follow-up sequence: Day 2: \"Just checking in\", Day 5: \"Happy to answer questions\", Day 10: \"Would you like to schedule a call?\".",
+      "s5example": "Combine with automation: Trigger \"Deal stage changed to Proposal\" -> Action \"Start sequence: Proposal Follow-up\".",
+      "s5v1": "Proposal Sent", "s5v2": "Auto-Enroll", "s5v3": "Drip Emails",
+      "s6title": "Example: Onboarding New Clients",
+      "s6desc": "When a deal is won, start an onboarding sequence: Day 0: \"Welcome aboard!\", Day 1: \"Your setup guide\", Day 3: \"Meet your account manager\", Day 7: \"Check-in\".",
+      "s6example": "Automation trigger: \"Deal won\" -> Action: \"Start sequence: Client Onboarding\". All touchpoints happen automatically.",
+      "s6v1": "Deal Won", "s6v2": "Auto-Start", "s6v3": "4-Step Series",
+      "s7title": "Best Practices",
+      "s7desc": "Keep sequences short (3-5 emails max). Use clear subjects. Space emails 2-5 days apart. Always include value in each email. Test sequences on yourself first.",
+      "s7example": "Tip: Create a few standard sequences (Welcome, Follow-up, Onboarding) and connect them to automation rules.",
+      "s7v1": "Short & Sweet", "s7v2": "Add Value", "s7v3": "Automate"
+    },
+    "crmAutomationGuide": {
+      "title": "How CRM Automations Work",
+      "subtitle": "Trigger-action rules in {count} steps",
+      "s1title": "What Are CRM Automations?",
+      "s1desc": "CRM automations are \"if this happens, then do that\" rules for your sales pipeline, clients, and invoices. They run automatically when a trigger condition is met.",
+      "s1example": "Example: When a deal has been sitting in \"Negotiation\" for 7+ days, automatically send a follow-up reminder.",
+      "s1v1": "Trigger", "s1v2": "Condition", "s1v3": "Action",
+      "s2title": "Deal Triggers",
+      "s2desc": "React to changes in your sales pipeline. Triggers fire when deals move between stages, sit idle too long, are won, or are lost.",
+      "s2example": "Available: \"Deal stage changed\", \"Deal idle in stage\" (e.g. 7+ days), \"Deal won\", \"Deal lost\".",
+      "s2v1": "Stage Change", "s2v2": "Deal Idle", "s2v3": "Won / Lost",
+      "s3title": "Client & Invoice Triggers",
+      "s3desc": "Monitor client health and invoice status. Get alerted when a client's health score drops, when there's been no contact for too long, or when an invoice becomes overdue.",
+      "s3example": "Available: \"Client health low\", \"No contact for X days\", \"Invoice overdue\".",
+      "s3v1": "Health Low", "s3v2": "No Contact", "s3v3": "Overdue",
+      "s4title": "Cross-Feature Triggers",
+      "s4desc": "CRM automation can react to events from other features: when a board is closed, tracked time reaches a threshold, or drive folder permissions change.",
+      "s4example": "Available: \"Board closed\", \"Time spent reached\", \"Drive folder permissions changed\".",
+      "s4v1": "Board Done", "s4v2": "Time Limit", "s4v3": "Drive Change",
+      "s5title": "Available Actions",
+      "s5desc": "When a trigger fires, one of these actions runs: send an email, create an invoice draft, move a deal, notify a user, start an email sequence, or send a chat message.",
+      "s5example": "Common combo: \"Invoice overdue by 3 days\" triggers \"Send email\" to the client with a payment reminder.",
+      "s5v1": "Send Email", "s5v2": "Create Invoice", "s5v3": "Chat Message",
+      "s6title": "Example: Auto-Invoice on Deal Won",
+      "s6desc": "When a deal is marked as won, automatically create an invoice draft with the deal's value and client. The draft appears in your Invoices tab ready for review.",
+      "s6example": "Rule: \"Invoice on close\" -- Trigger: Deal won -> Action: Create invoice draft.",
+      "s6v1": "Deal Won", "s6v2": "Auto-Create", "s6v3": "Invoice Draft",
+      "s7title": "Example: Follow-Up on Stale Deals",
+      "s7desc": "If a deal sits in \"Proposal\" for more than 5 days, automatically send a follow-up email to the client or notify your sales team via chat.",
+      "s7example": "Rule: \"Stale deal nudge\" -- Trigger: Deal idle in \"Proposal\" for 5+ days -> Action: Send follow-up email.",
+      "s7v1": "5+ Days Idle", "s7v2": "Auto-Send", "s7v3": "Follow-Up Email",
+      "s8title": "Example: Sequence on New Lead",
+      "s8desc": "When a deal enters your pipeline (stage changes to \"Lead\"), automatically start a welcome email sequence to nurture the lead.",
+      "s8example": "Rule: \"Welcome sequence\" -- Trigger: Deal stage changed to \"Lead\" -> Action: Start email sequence \"Welcome Series\".",
+      "s8badge": "Sequences",
+      "s8v1": "New Lead", "s8v2": "Start", "s8v3": "Email Series",
+      "s9title": "Managing Rules",
+      "s9desc": "Toggle rules on/off without deleting them. Share rules with colleagues. Test-fire a rule to verify it works. Check the Execution Log to see what ran and when.",
+      "s9example": "Tip: Start with one rule (like \"overdue invoice reminder\"), verify in the Execution Log, then expand.",
+      "s9v1": "Create", "s9v2": "Test / Share", "s9v3": "Monitor Log"
+    },
+
+    "drive": {
+      "title": "How Drive Works",
+      "subtitle": "File management in {count} steps",
+      "s1title": "Upload & Store Files", "s1desc": "Upload files from your computer or save attachments from emails directly to your personal drive. Every file is stored securely and accessible from anywhere.", "s1example": "Example: Drag a contract PDF into your Drive -- it's instantly available across all your devices.",
+      "s1v1": "Upload", "s1v2": "Stored",
+      "s2title": "Organize with Folders", "s2desc": "Create nested folder structures to keep your projects tidy. Move files between folders, rename them, and keep everything where you can find it.", "s2example": "Example: Create a \"Projects / Acme Corp / Contracts\" folder hierarchy for a client's documents.",
+      "s2v1": "Folder", "s2v2": "Subfolder", "s2v3": "Files",
+      "s3title": "Share & Collaborate", "s3desc": "Share folders with colleagues and set permissions. Collaborators can view or edit files depending on the access level you grant them.", "s3example": "Example: Share the \"Design Assets\" folder with your design team as editors so they can upload their work.",
+      "s3v1": "Shared Folder", "s3v2": "Team", "s3v3": "Edit",
+      "s4title": "File Versioning", "s4desc": "Every time a file is updated, Drive keeps the previous version. You can browse the version history and restore any earlier version if needed.", "s4example": "Example: You overwrite a logo file -- no problem, open version history and restore the previous version.",
+      "s4v1": "Edit File", "s4v2": "History", "s4v3": "Restore",
+      "s5title": "Cross-Module Integration", "s5desc": "Files from Drive can be attached to board cards, sent in chat messages, and linked to client records. Drive is the central file hub for the entire app.", "s5example": "Example: Attach a wireframe from Drive to a board card, then share the same file in a chat channel.",
+      "s5v1": "Attach", "s5v2": "Boards", "s5v3": "Chat"
+    },
+    "clients": {
+      "title": "How Clients Work",
+      "subtitle": "Client management in {count} steps",
+      "s1title": "Create a Client", "s1desc": "Clients are auto-detected from email domains. When you email someone at acme.com, a client record for Acme is created automatically. You can also add clients manually.", "s1example": "Example: Email john{'@'}acme.com and the system auto-creates \"acme.com\" as a client with John as the first contact.",
+      "s1v1": "Email", "s1v2": "Client",
+      "s2title": "Add Contacts", "s2desc": "Each client can have multiple contacts -- people you communicate with at that company. Each contact has a name, email, phone, and position.", "s2example": "Example: Acme Corp has 3 contacts: John (CEO), Jane (CTO), and Bob (Designer).",
+      "s2v1": "Client", "s2v2": "Contact 1", "s2v3": "Contact 2",
+      "s3title": "Billing Information", "s3desc": "Set up billing details including company name, tax number, billing address, bank account, and payment terms. Used when generating invoices.", "s3example": "Example: Set Acme's payment terms to 30 days and add their tax number for automatic invoice generation.",
+      "s3v1": "Company", "s3v2": "Tax Info", "s3v3": "Payment",
+      "s4title": "Link to Projects", "s4desc": "Connect clients to project boards. When a board is linked to a client, all milestones, time tracking, and invoices are associated with that client.", "s4example": "Example: Link the \"Website Redesign\" board to Acme Corp -- all billable work flows to their account.",
+      "s4v1": "Client", "s4v2": "Link", "s4v3": "Board",
+      "s5title": "Client Overview", "s5desc": "See a unified view of all activity for each client: time tracked, tasks completed, invoices sent, and total revenue. Everything in one place.", "s5example": "Example: Open Acme's overview to see 45 hours tracked this month, 3 open tasks, and $12,000 invoiced.",
+      "s5v1": "Time", "s5v2": "Tasks", "s5v3": "Revenue"
+    },
+    "calendar": {
+      "title": "How Calendar Works",
+      "subtitle": "Scheduling in {count} steps",
+      "s1title": "Create Events", "s1desc": "Add events with a title, date, time, location, and description. Events appear on your personal calendar and can be viewed by day, week, or month.", "s1example": "Example: Create a \"Team Standup\" event for Monday at 9:00 AM in the meeting room.",
+      "s1v1": "New", "s1v2": "Event",
+      "s2title": "Schedule Meetings", "s2desc": "Invite colleagues to meetings. Add video call links, set the location, and everyone sees it on their calendar with notifications.", "s2example": "Example: Schedule a design review with 3 team members and attach a video call link.",
+      "s2v1": "Invite", "s2v2": "Video Call", "s2v3": "Confirmed",
+      "s3title": "Reminders & Notifications", "s3desc": "Set reminders before events so you never miss a meeting. Get notified by browser notification or email at the time you choose.", "s3example": "Example: Set a 15-minute reminder for client calls and a 1-hour reminder for preparation-heavy meetings.",
+      "s3v1": "Event", "s3v2": "Alarm", "s3v3": "Notify",
+      "s4title": "Recurring Events", "s4desc": "Create events that repeat daily, weekly, monthly, or on custom schedules. Edit one occurrence or the entire series.", "s4example": "Example: Set up a weekly Monday standup that repeats every week indefinitely.",
+      "s4v1": "Repeating", "s4v2": "Schedule",
+      "s5title": "Integrations", "s5desc": "Calendar connects with boards (due dates appear as events), time tracking (log time from events), and tasks (deadlines sync both ways).", "s5example": "Example: A board card due date automatically shows on your calendar. Start time tracking directly from the event.",
+      "s5v1": "Calendar", "s5v2": "Boards", "s5v3": "Time"
+    },
+    "timeTracker": {
+      "title": "How Time Tracking Works",
+      "subtitle": "Track time in {count} steps",
+      "s1title": "Start Tracking", "s1desc": "Click the play button to start a timer. Add a description of what you're working on. Stop the timer when you're done -- the entry is saved automatically.", "s1example": "Example: Click play, type \"Frontend development for Acme homepage\", work for 2 hours, then stop.",
+      "s1v1": "Start", "s1v2": "Tracking", "s1v3": "Stop",
+      "s2title": "Link to Clients", "s2desc": "Associate each time entry with a specific client. This lets you track how much time you spend on each client's projects for accurate billing.", "s2example": "Example: Log 3 hours of design work under \"Acme Corp\" -- it appears in their client overview.",
+      "s2v1": "Entry", "s2v2": "Link", "s2v3": "Client",
+      "s3title": "Activity Types", "s3desc": "Categorize time entries by activity type: development, design, meetings, admin, support, and more. Helps you understand where your time goes.", "s3example": "Example: This week: 20h development, 5h meetings, 3h design -- see where your time is actually spent.",
+      "s3v1": "Dev", "s3v2": "Design", "s3v3": "Meetings",
+      "s4title": "Reports & Analytics", "s4desc": "View detailed time reports by day, week, month, or custom range. Filter by client, project, or activity type to get the exact breakdown you need.", "s4example": "Example: Generate a monthly report showing all time tracked for Acme Corp, grouped by activity type.",
+      "s4v1": "Reports", "s4v2": "By Period", "s4v3": "By Client",
+      "s5title": "Billing Integration", "s5desc": "Time entries feed directly into billing calculations. Set hourly rates per client, and the system calculates totals automatically for invoice generation.", "s5example": "Example: 10 hours at $150/hr for Acme = $1,500 automatically calculated and ready for invoicing.",
+      "s5v1": "Time", "s5v2": "Rate", "s5v3": "Invoice"
+    },
+    "moodBoard": {
+      "title": "How Mood Boards Work",
+      "subtitle": "Visual design in {count} steps",
+      "s1title": "Create a Board", "s1desc": "Start with a blank canvas or choose from templates. Each mood board is an infinite canvas where you can arrange visual content freely.", "s1example": "Example: Create a \"Brand Identity\" mood board to collect colors, typography, and inspiration images.",
+      "s1v1": "New", "s1v2": "Canvas",
+      "s2title": "Add Content", "s2desc": "Drop images, text blocks, shapes, drawings, and audio onto your canvas. Import files from Drive or upload directly. Resize and position everything freely.", "s2example": "Example: Add a hero image, a color palette swatch, and text notes describing the design direction.",
+      "s2v1": "Images", "s2v2": "Text", "s2v3": "Shapes",
+      "s3title": "Connect & Arrange", "s3desc": "Link related items with visual connections. Group items together, use frames to organize sections, and align everything with guides.", "s3example": "Example: Connect the \"Logo\" item to \"Color Palette\" and \"Typography\" with arrows showing the relationship.",
+      "s3v1": "Item A", "s3v2": "Connect", "s3v3": "Item B",
+      "s4title": "Present", "s4desc": "Switch to presentation mode to walk through your mood board slide by slide. Create artboards as slides and present them fullscreen.", "s4example": "Example: Create 5 artboard slides and present the brand concept to your client in fullscreen mode.",
+      "s4v1": "Slides", "s4v2": "Navigate", "s4v3": "Fullscreen",
+      "s5title": "Share & Export", "s5desc": "Share mood boards with a public link for external review, or invite team members to collaborate. Export as images for offline use.", "s5example": "Example: Send a public link to your client so they can review the mood board and leave feedback.",
+      "s5v1": "Public Link", "s5v2": "Collaborate"
+    },
+    "team": {
+      "title": "How Team Management Works",
+      "subtitle": "Team setup in {count} steps",
+      "s1title": "Add Colleagues", "s1desc": "Invite team members by their email address. They'll get access to shared resources based on their role. Manage your entire team from one place.", "s1example": "Example: Add jane{'@'}company.com as a colleague -- she can now access shared boards, chat, and Drive folders.",
+      "s1v1": "Email Invite", "s1v2": "Colleague Added",
+      "s2title": "Set Roles & Permissions", "s2desc": "Assign roles to control what colleagues can access. Admins have full control, editors can modify content, and viewers have read-only access.", "s2example": "Example: Set your project manager as Admin, developers as Editors, and the client contact as Viewer.",
+      "s2v1": "Admin", "s2v2": "Editor", "s2v3": "Viewer",
+      "s3title": "Departments", "s3desc": "Organize colleagues into departments like Design, Development, or Marketing. Departments help with filtering and bulk permissions.", "s3example": "Example: Create a \"Development\" department and assign all your developers -- now share boards to the whole group.",
+      "s3v1": "Department", "s3v2": "Members",
+      "s4title": "Shared Access", "s4desc": "Colleagues automatically get access to resources shared with them: boards, Drive folders, chat channels, and calendar events.", "s4example": "Example: When you share a board with a colleague, they see it in their sidebar and get notifications for changes.",
+      "s4v1": "Colleague", "s4v2": "Boards", "s4v3": "Chat",
+      "s5title": "Activity & Security", "s5desc": "Track team activity and manage security settings. See who accessed what, review login history, and revoke access when needed.", "s5example": "Example: Check the activity log to see who edited the project board last week.",
+      "s5v1": "Activity Log", "s5v2": "Security"
+    },
+    "chat": {
+      "title": "How Chat Works",
+      "subtitle": "Communication in {count} steps",
+      "s1title": "Direct Messages", "s1desc": "Send private 1:1 messages to any colleague. Share text, files, images, and links. Messages are instant and encrypted.", "s1example": "Example: Send a quick message to your designer: \"The new mockup looks great, let's discuss the color palette.\"",
+      "s1v1": "You", "s1v2": "Message", "s1v3": "Colleague",
+      "s2title": "Group Channels", "s2desc": "Create topic-based channels for team discussions. Channels can be public (anyone can join) or private (invite-only). Pin important messages.", "s2example": "Example: Create a #design-reviews channel where the team discusses and approves design work.",
+      "s2v1": "#Channel", "s2v2": "Team", "s2v3": "Discussion",
+      "s3title": "File Sharing", "s3desc": "Share files, images, and documents directly in conversations. Files are saved to Drive automatically. Preview images and documents inline.", "s3example": "Example: Drop a wireframe image into the #design channel -- everyone sees it inline and can download it.",
+      "s3v1": "Images", "s3v2": "Docs", "s3v3": "To Drive",
+      "s4title": "Huddles & Calls", "s4desc": "Start voice or video calls directly from any chat. Screen share during calls. Huddles are lightweight audio calls for quick discussions.", "s4example": "Example: Start a huddle in the #development channel for a quick 5-minute sync without scheduling a meeting.",
+      "s4v1": "Audio", "s4v2": "Video", "s4v3": "Screen Share",
+      "s5title": "Integrations", "s5desc": "Chat connects with boards (get notifications for card changes), tasks (create tasks from messages), and other modules for a unified workflow.", "s5example": "Example: Get a chat notification when a board card is assigned to you, and reply with a status update.",
+      "s5v1": "Chat", "s5v2": "Boards", "s5v3": "Notifications"
+    },
+    "automationHub": {
+      "title": "How Automation Hub Works",
+      "subtitle": "Automation in {count} steps",
+      "s1title": "Create a Workflow", "s1desc": "Build automated workflows by connecting triggers to actions. When something happens (trigger), the system automatically performs the actions you defined.", "s1example": "Example: When a new email arrives from a VIP client -> Create a high-priority task on the board.",
+      "s1v1": "Trigger", "s1v2": "Workflow", "s1v3": "Action",
+      "s2title": "Choose Triggers", "s2desc": "Triggers are events that start your workflow: incoming emails, form submissions, scheduled times, webhook calls, or manual activation.", "s2example": "Example: Trigger on \"New email from support{'@'}\" to auto-create support tickets.",
+      "s2v1": "Email", "s2v2": "Schedule", "s2v3": "Webhook",
+      "s3title": "Add Actions", "s3desc": "Actions are what happens when the workflow triggers: send emails, create board cards, update CRM deals, post chat messages, or call external APIs.", "s3example": "Example: Action chain: Send acknowledgment email -> Create board card -> Notify team in chat.",
+      "s3v1": "Send Email", "s3v2": "Create Task", "s3v3": "Notify",
+      "s4title": "Conditions & Branches", "s4desc": "Add conditions to route workflows differently based on data. If/else branches let you handle different scenarios in a single workflow.", "s4example": "Example: If deal value > $10,000 -> Notify manager. Else -> Assign to sales rep automatically.",
+      "s4v1": "Filter", "s4v2": "Branch", "s4v3": "Route",
+      "s5title": "Monitor & Debug", "s5desc": "Check the execution log to see every workflow run, its status, and any errors. Debug failed runs and optimize your automations over time.", "s5example": "Example: Execution log shows your \"Welcome Email\" workflow ran 50 times this week with 100% success rate.",
+      "s5v1": "Log", "s5v2": "Success", "s5v3": "Error"
+    },
+    "mailingLists": {
+      "title": "How Mailing Lists Work",
+      "subtitle": "List management in {count} steps",
+      "s1title": "Create a List", "s1desc": "Set up subscriber lists for different audiences. Each list has a name, description, and its own set of subscribers that you can target in campaigns.", "s1example": "Example: Create lists for \"Newsletter Subscribers\", \"Product Updates\", and \"Beta Testers\".",
+      "s1v1": "New", "s1v2": "List",
+      "s2title": "Add Subscribers", "s2desc": "Import subscribers from CSV files, add them manually, or let them subscribe through forms. Each subscriber has an email, name, and custom fields.", "s2example": "Example: Import 500 newsletter subscribers from a CSV file with name, email, and company columns.",
+      "s2v1": "Import", "s2v2": "Add", "s2v3": "Subscribers",
+      "s3title": "Create Segments", "s3desc": "Segment your lists based on subscriber data: location, signup date, engagement level, or custom fields. Send targeted campaigns to specific segments.", "s3example": "Example: Create a segment of subscribers who opened the last 3 emails -- your most engaged audience.",
+      "s3v1": "All", "s3v2": "Filter", "s3v3": "Segment",
+      "s4title": "Manage Subscribers", "s4desc": "Track subscriber status: active, unsubscribed, bounced. Clean your lists automatically. Handle unsubscribes and bounces gracefully.", "s4example": "Example: The system auto-removes bounced emails and processes unsubscribe requests instantly.",
+      "s4v1": "Active", "s4v2": "Unsub", "s4v3": "Bounced",
+      "s5title": "Use in Campaigns", "s5desc": "Select one or more mailing lists when creating email campaigns. Combine lists and segments for precise targeting.", "s5example": "Example: Send a product launch campaign to \"Beta Testers\" + \"Newsletter\" lists, excluding unengaged subscribers.",
+      "s5v1": "List", "s5v2": "Select", "s5v3": "Campaign"
+    },
+    "campaigns": {
+      "title": "How Email Campaigns Work",
+      "subtitle": "Email marketing in {count} steps",
+      "s1title": "Create a Campaign", "s1desc": "Start a new email campaign by giving it a name and choosing the type: newsletter, product update, announcement, or custom. Save drafts to finish later.", "s1example": "Example: Create a \"February Newsletter\" campaign to share company updates with your subscribers.",
+      "s1v1": "New", "s1v2": "Draft",
+      "s2title": "Design Your Email", "s2desc": "Use the visual email editor to craft your message. Add text, images, buttons, and links. Preview how it looks on desktop and mobile.", "s2example": "Example: Design a newsletter with a hero image, 3 article summaries, and a call-to-action button.",
+      "s2v1": "Template", "s2v2": "Edit", "s2v3": "Preview",
+      "s3title": "Select Audience", "s3desc": "Choose which mailing lists and segments receive the campaign. Combine multiple lists, exclude segments, and see the estimated reach.", "s3example": "Example: Send to \"All Subscribers\" minus \"Unengaged\" segment = 2,340 recipients.",
+      "s3v1": "Lists", "s3v2": "Segments", "s3v3": "Audience",
+      "s4title": "Send or Schedule", "s4desc": "Send the campaign immediately or schedule it for a specific date and time. Choose the best sending time for your audience's timezone.", "s4example": "Example: Schedule the newsletter for Tuesday at 10:00 AM when open rates are highest.",
+      "s4v1": "Send Now", "s4v2": "Schedule",
+      "s5title": "Track Results", "s5desc": "Monitor campaign performance in real-time: open rate, click rate, bounces, and unsubscribes. See which links were clicked most and by whom.", "s5example": "Example: Your newsletter had a 35% open rate and 12% click rate -- the product link got the most clicks.",
+      "s5v1": "Opens", "s5v2": "Clicks", "s5v3": "Trends"
+    },
+    "crmPipeline": {
+      "title": "How CRM Pipeline Works",
+      "subtitle": "Sales pipeline in {count} steps",
+      "s1title": "Create a Pipeline", "s1desc": "Set up sales pipelines with custom stages that match your sales process. Each pipeline has a name and ordered stages that deals move through.", "s1example": "Example: Create a \"Sales Pipeline\" with stages: Lead -> Qualified -> Proposal -> Negotiation -> Closed.",
+      "s1v1": "New", "s1v2": "Pipeline",
+      "s2title": "Add Deals", "s2desc": "Create deals with a name, value, contact, and expected close date. Assign deals to team members and track them as they progress through stages.", "s2example": "Example: Add deal \"Acme Website Redesign\" worth $15,000, linked to contact John at Acme Corp.",
+      "s2v1": "Deal", "s2v2": "Contact", "s2v3": "Value",
+      "s3title": "Move Through Stages", "s3desc": "Drag deals between stages as they progress. Each stage change is tracked with a timestamp so you can analyze how long deals spend in each stage.", "s3example": "Example: Drag the Acme deal from \"Proposal\" to \"Negotiation\" -- the system logs the stage change.",
+      "s3v1": "Lead", "s3v2": "Negotiate", "s3v3": "Won",
+      "s4title": "Revenue Forecasting", "s4desc": "See projected revenue based on deal values and stages. Weight deals by probability to get a realistic forecast of expected income.", "s4example": "Example: Pipeline shows $50K in proposals (50% probability) + $30K in negotiation (80%) = $49K weighted forecast.",
+      "s4v1": "Forecast", "s4v2": "Revenue",
+      "s5title": "Won & Lost Analysis", "s5desc": "Mark deals as won or lost with reasons. Track win rates, average deal size, and time-to-close. Use insights to improve your sales process.", "s5example": "Example: This quarter: 15 deals won ($120K), 5 lost -- win rate 75%, average time-to-close 23 days.",
+      "s5v1": "Won", "s5v2": "Lost", "s5v3": "Analytics"
+    },
+    "crmInvoices": {
+      "title": "How CRM Invoices Work",
+      "subtitle": "Invoicing in {count} steps",
+      "s1title": "Create an Invoice", "s1desc": "Generate invoices with line items, quantities, rates, and tax. Invoices are calculated automatically with subtotals and totals.", "s1example": "Example: Create an invoice for Acme with 3 line items: design (10h x $100), development (20h x $120), hosting ($50/mo).",
+      "s1v1": "New", "s1v2": "Line Items", "s1v3": "Total",
+      "s2title": "Link to Client", "s2desc": "Associate invoices with clients to auto-fill billing info: company name, address, tax number, and payment terms. All stored from the client record.", "s2example": "Example: Select \"Acme Corp\" and billing name, address, and tax number are filled automatically.",
+      "s2v1": "Invoice", "s2v2": "Link", "s2v3": "Client",
+      "s3title": "Send Invoice", "s3desc": "Email invoices directly to clients or export as PDF for manual sending. The system tracks when an invoice was sent and viewed.", "s3example": "Example: Click Send and the invoice PDF is emailed to Acme's billing contact with a professional template.",
+      "s3v1": "Email", "s3v2": "PDF",
+      "s4title": "Track Payment Status", "s4desc": "Monitor invoice lifecycle: Draft -> Sent -> Paid -> Overdue. Get notified when invoices become overdue. Filter by status for quick overview.", "s4example": "Example: Dashboard shows 5 paid ($25K), 3 sent ($12K), 1 overdue ($3K) -- follow up on the overdue one.",
+      "s4v1": "Draft", "s4v2": "Sent", "s4v3": "Paid",
+      "s5title": "Billing Provider Integration", "s5desc": "Connect to Billingo or Szamlazz.hu for automated invoice generation with legal compliance. Invoices sync both ways between the systems.", "s5example": "Example: Create an invoice here and it's automatically generated in Billingo with the correct Hungarian tax format.",
+      "s5badge": "Integration",
+      "s5v1": "Invoice", "s5v2": "Sync", "s5v3": "Provider"
+    },
+    "crmDashboard": {
+      "title": "How CRM Dashboard Works",
+      "subtitle": "CRM overview in {count} steps",
+      "s1title": "Pipeline Overview", "s1desc": "See all your pipelines at a glance: total deal count, total value, and deals per stage. Quickly identify which stages need attention.", "s1example": "Example: Dashboard shows 25 active deals worth $180K across 3 pipelines, with 8 deals stuck in \"Proposal\".",
+      "s1v1": "Pipelines", "s1v2": "Deals", "s1v3": "Values",
+      "s2title": "Revenue Metrics", "s2desc": "Track key metrics: total revenue, won deals this period, average deal size, and pipeline velocity. Compare across time periods to spot trends.", "s2example": "Example: This month: $45K won (up 20% from last month), 12 deals closed, avg size $3,750.",
+      "s2v1": "Revenue", "s2v2": "Won Deals",
+      "s3title": "Activity Feed", "s3desc": "See recent CRM activity across your entire team: new deals, stage changes, invoices sent, and payments received. Stay on top of everything.", "s3example": "Example: Feed shows Jane moved 3 deals to \"Won\" today, and 2 invoices were paid this morning.",
+      "s3v1": "Activity", "s3v2": "Team",
+      "s4title": "Charts & Trends", "s4desc": "Visualize your sales data with charts: revenue over time, deals by stage, win/loss ratios, and team performance comparisons.", "s4example": "Example: The revenue trend chart shows steady growth from $30K/month to $50K/month over the last quarter.",
+      "s4v1": "Charts", "s4v2": "Trends",
+      "s5title": "Quick Actions", "s5desc": "Jump directly to deals, invoices, or contacts from the dashboard. Create new deals, send invoices, or update deal stages without leaving the overview.", "s5example": "Example: Spot a stale deal on the dashboard, click it, update the stage, and add a note -- all in seconds.",
+      "s5v1": "Deals", "s5v2": "Invoices", "s5v3": "Contacts"
+    },
+    "boards": {
+      "title": "How Boards Work",
+      "subtitle": "Project management in {count} steps",
+      "s1title": "Create a Board", "s1desc": "Boards are your project workspaces. Each board has lists (columns) that represent stages of work. Start with a blank board or use the default setup.", "s1example": "Example: Create a \"Website Redesign\" board with lists: Backlog, In Progress, Review, Done.",
+      "s1v1": "New", "s1v2": "Board",
+      "s2title": "Add Cards (Tasks)", "s2desc": "Cards represent tasks or work items. Add descriptions, checklists, due dates, and attachments. Cards live in lists and can be moved between them.", "s2example": "Example: Create a \"Design Homepage\" card with a checklist: wireframe, mockup, review, implement.",
+      "s2v1": "Card", "s2v2": "Description", "s2v3": "Checklist",
+      "s3title": "Labels & Filters", "s3desc": "Color-code cards with labels to categorize them (bug, feature, urgent). Filter and search cards by label, assignee, due date, or text.", "s3example": "Example: Label cards as \"Bug\" (red), \"Feature\" (green), \"Urgent\" (orange) -- then filter to see only bugs.",
+      "s3v1": "Labels", "s3v2": "Filter", "s3v3": "Search",
+      "s4title": "Drag & Drop Workflow", "s4desc": "Move cards between lists by dragging them. This visual workflow makes it easy to see what's in progress, what's blocked, and what's done.", "s4example": "Example: Drag \"Design Homepage\" from \"In Progress\" to \"Review\" when the mockup is ready for feedback.",
+      "s4v1": "List A", "s4v2": "Move", "s4v3": "List B",
+      "s5title": "Collaborate", "s5desc": "Invite members to boards, assign cards to specific people, add comments for discussion, and attach files from Drive. Everyone stays in sync.", "s5example": "Example: Assign the homepage card to Jane, she comments with questions, and you attach the mockup from Drive.",
+      "s5v1": "Assign", "s5v2": "Comment", "s5v3": "Attach"
+    }
+  }
+}

@@ -1,0 +1,261 @@
+@media print {
+  html,
+  body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  body.print-doc > *:not(#print-container),
+  body.print-ppt > *:not(#print-container) {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  body.print-doc #print-container,
+  body.print-ppt #print-container {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    z-index: auto !important;
+  }
+
+  /* ============================================
+     DOC PRINT (A4 portrait)
+     ============================================ */
+  body.print-doc #print-container .print-page {
+    display: block !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    padding: 20mm 15mm !important;
+    box-sizing: border-box !important;
+    background: white !important;
+    box-shadow: none !important;
+    page-break-after: always !important;
+    page-break-inside: avoid !important;
+    overflow: hidden !important;
+  }
+
+  body.print-doc #print-container .print-page:last-child {
+    page-break-after: auto !important;
+  }
+
+  body.print-doc #print-container .print-page-content {
+    position: relative !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  body.print-doc #print-container .print-page-number {
+    position: absolute !important;
+    bottom: 10mm !important;
+    left: 0 !important;
+    right: 0 !important;
+    text-align: center !important;
+    font-size: 10pt !important;
+    color: #666 !important;
+    font-family: Arial, sans-serif !important;
+  }
+
+  body.print-doc #print-container p {
+    font-family: Georgia, "Times New Roman", Times, serif !important;
+    font-size: 11pt !important;
+    line-height: 1.5 !important;
+    color: black !important;
+    margin: 0 0 6pt 0 !important;
+    text-align: justify !important;
+  }
+
+  body.print-doc #print-container h1,
+  body.print-doc #print-container h2,
+  body.print-doc #print-container h3,
+  body.print-doc #print-container h4,
+  body.print-doc #print-container h5,
+  body.print-doc #print-container h6 {
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-weight: bold !important;
+    color: #1a365d !important;
+    page-break-after: avoid !important;
+  }
+
+  body.print-doc #print-container h1 {
+    font-size: 18pt !important;
+    margin: 0 0 10pt 0 !important;
+  }
+
+  body.print-doc #print-container h2 {
+    font-size: 14pt !important;
+    margin: 14pt 0 6pt 0 !important;
+    color: #2d3748 !important;
+  }
+
+  body.print-doc #print-container h3 {
+    font-size: 12pt !important;
+    margin: 12pt 0 4pt 0 !important;
+    color: #2d3748 !important;
+  }
+
+  body.print-doc #print-container blockquote {
+    font-style: italic !important;
+    color: #4a5568 !important;
+    border-left: 2pt solid #aaa !important;
+    margin: 10pt 0 !important;
+    padding: 4pt 0 4pt 12pt !important;
+  }
+
+  body.print-doc #print-container ul,
+  body.print-doc #print-container ol {
+    margin: 6pt 0 6pt 16pt !important;
+    padding: 0 !important;
+  }
+
+  body.print-doc #print-container li {
+    margin: 2pt 0 !important;
+    page-break-inside: avoid !important;
+  }
+
+  body.print-doc #print-container a {
+    color: #2b6cb0 !important;
+    text-decoration: underline !important;
+  }
+
+  body.print-doc #print-container hr {
+    border: none !important;
+    border-top: 0.5pt solid #ccc !important;
+    margin: 12pt 0 !important;
+  }
+
+  body.print-doc #print-container table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+    margin: 8pt 0 !important;
+  }
+
+  body.print-doc #print-container th,
+  body.print-doc #print-container td {
+    border: 0.5pt solid #999 !important;
+    padding: 4pt 6pt !important;
+    text-align: left !important;
+  }
+
+  body.print-doc #print-container th {
+    background: #eee !important;
+    font-weight: bold !important;
+  }
+
+  body.print-doc #print-container pre,
+  body.print-doc #print-container code {
+    font-family: "Courier New", Courier, monospace !important;
+    font-size: 9pt !important;
+  }
+
+  body.print-doc #print-container pre {
+    background: #f5f5f5 !important;
+    padding: 6pt !important;
+    border: 0.5pt solid #ddd !important;
+    margin: 8pt 0 !important;
+    white-space: pre-wrap !important;
+    word-break: break-word !important;
+  }
+
+  body.print-doc #print-container img {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  body.print-doc #print-container strong,
+  body.print-doc #print-container b {
+    font-weight: bold !important;
+  }
+
+  body.print-doc #print-container em,
+  body.print-doc #print-container i {
+    font-style: italic !important;
+  }
+
+  body.print-doc #print-container u {
+    text-decoration: underline !important;
+  }
+
+  body.print-doc #print-container s,
+  body.print-doc #print-container strike {
+    text-decoration: line-through !important;
+  }
+
+  body.print-doc #print-container,
+  body.print-doc #print-container * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* ============================================
+     PPT PRINT (A4 landscape)
+     ============================================ */
+  @page {
+    size: A4 landscape;
+    margin: 0.5cm;
+  }
+
+  body.print-ppt #print-container {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  body.print-ppt #print-container .print-slide {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 16 / 9 !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+    box-shadow: none !important;
+    page-break-after: always !important;
+    page-break-inside: avoid !important;
+    overflow: visible !important;
+    position: relative !important;
+    background: white !important;
+  }
+
+  body.print-ppt #print-container .print-slide:last-child {
+    page-break-after: auto !important;
+  }
+
+  body.print-ppt #print-container,
+  body.print-ppt #print-container * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body.print-ppt #print-container .print-slide div {
+    overflow: visible !important;
+  }
+
+  body.print-ppt #print-container .print-slide img {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  body.print-ppt #print-container .print-slide svg {
+    max-width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+}
+

@@ -1,0 +1,35 @@
+---
+description: UI must use toggle switches, never raw checkboxes
+globs: **/*.vue
+alwaysApply: false
+---
+
+# Never use checkboxes — always use toggle switches
+
+Raw `<input type="checkbox">` is banned in the UI. Every boolean control
+(settings, options, "enable X", filters) must use the shared `Toggle`
+switch component for a nicer UI.
+
+- Panel dashboard: `import Toggle from '@/components/Toggle.vue'`
+- It is `v-model` compatible (prop `modelValue`, emits `update:modelValue`).
+- Make the adjacent label text clickable too (toggles are buttons, so a
+  wrapping `<label>` won't forward the click).
+
+```vue
+<!-- ❌ BAD -->
+<label class="flex items-center gap-2">
+  <input v-model="form.enabled" type="checkbox" />
+  <span>Enable feature</span>
+</label>
+
+<!-- ✅ GOOD -->
+<div class="flex items-center gap-3">
+  <Toggle v-model="form.enabled" />
+  <span class="text-sm cursor-pointer" @click="form.enabled = !form.enabled">
+    Enable feature
+  </span>
+</div>
+```
+
+This also covers checkboxes hand-styled as switches via `sr-only peer` —
+use the `Toggle` component instead of re-implementing it.

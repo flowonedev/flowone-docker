@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="6" fill="#18181b"/>
+  <!-- Rocket shape -->
+  <path d="M16 6c-2 3-3 6-3 9v3l-2 2v2h10v-2l-2-2v-3c0-3-1-6-3-9z" fill="#22c55e"/>
+  <!-- Rocket window -->
+  <circle cx="16" cy="13" r="2" fill="#18181b"/>
+  <!-- Flames -->
+  <path d="M13 22l3 4 3-4" fill="#22c55e" opacity="0.6"/>
+</svg>

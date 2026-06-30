@@ -1,0 +1,11 @@
+---
+description: macOS build preferences for FlowOne Email desktop app
+globs: electron-builder.yml
+alwaysApply: false
+---
+
+# macOS Build Preferences
+
+- Build only for **Apple Silicon (arm64)** -- no Intel (x64) builds
+- Build only **DMG** format -- no ZIP archives
+- Skip code signing unless explicitly requested

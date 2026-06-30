@@ -1,0 +1,9 @@
+/*
+ * Core fonts for Fleet Manager -- self-hosted, no external CDN.
+ * Font woff2 files live in email/frontend/public/fonts/ and are
+ * deployed to the server's /fonts/ directory (shared across all apps).
+ */
+
+@import url('/fonts/material-symbols-rounded/font.css');
+@import url('/fonts/outfit/font.css');
+@import url('/fonts/jetbrains-mono/font.css');

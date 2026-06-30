@@ -1,0 +1,20 @@
+{
+    "name": "devcon/fleet-manager-api",
+    "description": "DEVCON Fleet Manager API",
+    "type": "project",
+    "require": {
+        "php": ">=8.1",
+        "firebase/php-jwt": "^6.0",
+        "phpseclib/phpseclib": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "FleetManager\\Api\\": "src/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    }
+}
+

@@ -1,0 +1,43 @@
+{
+  "name": "flowone-chat-mobile",
+  "version": "1.0.0",
+  "description": "FlowOne Chat - Mobile app for team messaging, calls, and collaboration",
+  "author": "FlowOne",
+  "license": "MIT",
+  "scripts": {
+    "build:web": "vite build && node scripts/copy-fonts.mjs",
+    "sync:ios": "npx cap sync ios",
+    "open:ios": "npx cap open ios",
+    "build:ios": "npm run build:web && npm run sync:ios",
+    "dev": "vite",
+    "dev:ios": "npm run build:web && npx cap run ios"
+  },
+  "dependencies": {
+    "@capacitor-firebase/messaging": "^6.3.1",
+    "@capacitor/android": "^6.2.1",
+    "@capacitor/app": "^6.0.0",
+    "@capacitor/browser": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/device": "^6.0.3",
+    "@capacitor/haptics": "^6.0.0",
+    "@capacitor/ios": "^6.0.0",
+    "@capacitor/keyboard": "^6.0.0",
+    "@capacitor/push-notifications": "^6.0.0",
+    "@capacitor/status-bar": "^6.0.0",
+    "@capawesome/capacitor-badge": "^6.0.0",
+    "axios": "^1.7.7"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0",
+    "@vitejs/plugin-vue": "^5.0.4",
+    "autoprefixer": "^10.4.17",
+    "pinia": "^2.1.7",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.13",
+    "typescript": "^5.9.3",
+    "vite": "^5.4.21",
+    "vue": "^3.4.38",
+    "vue-i18n": "^9.9.0",
+    "vue-router": "^4.3.0"
+  }
+}

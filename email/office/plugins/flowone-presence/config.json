@@ -1,0 +1,24 @@
+{
+    "name": "FlowOne Presence",
+    "nameLocale": {},
+    "guid": "asc.{8A4E7C2D-91B3-4D5F-AE60-FF3D4C7B5A19}",
+    "version": "1.0.0",
+    "variations": [
+        {
+            "description": "FlowOne live cursors and follow mode",
+            "url": "index.html",
+            "icons": [],
+            "isViewer": true,
+            "EditorsSupport": ["word", "cell", "slide"],
+            "isVisual": false,
+            "isModal": false,
+            "isInsideMode": false,
+            "isSystem": true,
+            "initDataType": "none",
+            "initData": "",
+            "isUpdateOleOnResize": false,
+            "buttons": [],
+            "events": []
+        }
+    ]
+}

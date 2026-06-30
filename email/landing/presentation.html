@@ -1,0 +1,1652 @@
+<!DOCTYPE html>
+<html lang="hu">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MailFlow - Presentation</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+
+    <!-- Fonts -->
+    <link rel="stylesheet" href="/fonts/outfit/font.css" />
+    <link rel="stylesheet" href="/fonts/jetbrains-mono/font.css" />
+
+    <!-- Google Material Symbols -->
+    <link rel="stylesheet" href="/fonts/material-symbols-outlined/font.css" />
+
+    <!-- Tailwind CSS -->
+    <script src="/js/tailwind.min.js"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Outfit", "sans-serif"],
+              mono: ["JetBrains Mono", "monospace"],
+            },
+            colors: {
+              surface: {
+                50: "#fafafa",
+                100: "#f4f4f5",
+                200: "#e4e4e7",
+                700: "#3f3f46",
+                800: "#27272a",
+                900: "#18181b",
+                950: "#0c0c0d",
+              },
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      :root {
+        --brand-50: #f0fdf4;
+        --brand-100: #dcfce7;
+        --brand-200: #bbf7d0;
+        --brand-300: #86efac;
+        --brand-400: #4ade80;
+        --brand-500: #22c55e;
+        --brand-600: #16a34a;
+        --brand-700: #15803d;
+        --brand-800: #166534;
+        --brand-900: #14532d;
+        --brand-rgb: 34, 197, 94;
+        --gradient-start: #22c55e;
+        --gradient-mid: #4ade80;
+        --gradient-end: #22c55e;
+      }
+
+      .material-symbols-outlined {
+        font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+      }
+      .material-symbols-outlined.filled {
+        font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
+      }
+
+      ::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+      }
+
+      .gradient-text {
+        background: linear-gradient(
+          135deg,
+          var(--gradient-start) 0%,
+          var(--gradient-mid) 50%,
+          var(--gradient-end) 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .bg-brand-500 {
+        background-color: var(--brand-500);
+      }
+      .bg-brand-600 {
+        background-color: var(--brand-600);
+      }
+      .text-brand-400 {
+        color: var(--brand-400);
+      }
+      .text-brand-500 {
+        color: var(--brand-500);
+      }
+      .border-brand-500 {
+        border-color: var(--brand-500);
+      }
+      .bg-brand-500\/10 {
+        background-color: rgba(var(--brand-rgb), 0.1);
+      }
+      .bg-brand-500\/20 {
+        background-color: rgba(var(--brand-rgb), 0.2);
+      }
+
+      /* Slide system */
+      .slide {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 4rem;
+        opacity: 0;
+        transform: translateX(100px);
+        pointer-events: none;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .slide.active {
+        opacity: 1;
+        transform: translateX(0);
+        pointer-events: auto;
+      }
+
+      .slide.prev {
+        transform: translateX(-100px);
+      }
+
+      /* Animations */
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-15px);
+        }
+      }
+
+      @keyframes pulse-glow {
+        0%,
+        100% {
+          box-shadow: 0 0 20px rgba(var(--brand-rgb), 0.3);
+        }
+        50% {
+          box-shadow: 0 0 40px rgba(var(--brand-rgb), 0.5);
+        }
+      }
+
+      @keyframes draw-line {
+        0% {
+          stroke-dashoffset: 1000;
+        }
+        100% {
+          stroke-dashoffset: 0;
+        }
+      }
+
+      .animate-float {
+        animation: float 4s ease-in-out infinite;
+      }
+
+      .animate-pulse-glow {
+        animation: pulse-glow 2s ease-in-out infinite;
+      }
+
+      /* Progress bar */
+      .progress-bar {
+        transition: width 0.3s ease;
+      }
+
+      /* Feature card styling */
+      .feature-box {
+        background: rgba(39, 39, 42, 0.6);
+        border: 1px solid rgba(63, 63, 70, 0.5);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+      }
+
+      .feature-box:hover {
+        transform: translateY(-4px);
+        border-color: rgba(var(--brand-rgb), 0.3);
+        box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.5);
+      }
+
+      /* Comparison table */
+      .comparison-table {
+        background: rgba(24, 24, 27, 0.8);
+        border: 1px solid rgba(63, 63, 70, 0.5);
+        border-radius: 1rem;
+        overflow: hidden;
+      }
+
+      .comparison-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2px;
+      }
+
+      .comparison-cell {
+        padding: 1rem 1.5rem;
+        background: rgba(39, 39, 42, 0.4);
+      }
+
+      /* Flow diagram */
+      .flow-step {
+        background: linear-gradient(
+          135deg,
+          rgba(var(--brand-rgb), 0.1),
+          rgba(var(--brand-rgb), 0.05)
+        );
+        border: 1px solid rgba(var(--brand-rgb), 0.2);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+      }
+
+      .flow-step:hover {
+        transform: scale(1.05);
+        border-color: rgba(var(--brand-rgb), 0.5);
+      }
+
+      .flow-arrow {
+        color: var(--brand-500);
+        font-size: 2rem;
+      }
+
+      /* Mock UI elements */
+      .mock-window {
+        background: #18181b;
+        border: 1px solid #3f3f46;
+        border-radius: 0.75rem;
+        overflow: hidden;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      }
+
+      .mock-titlebar {
+        background: #27272a;
+        padding: 0.75rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .mock-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+      }
+
+      /* Keyboard hints */
+      .kbd {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 2rem;
+        height: 2rem;
+        padding: 0 0.5rem;
+        background: rgba(63, 63, 70, 0.5);
+        border: 1px solid #52525b;
+        border-radius: 0.375rem;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.75rem;
+        box-shadow: 0 2px 0 #3f3f46;
+      }
+
+      /* Staggered animations */
+      .stagger-1 {
+        animation-delay: 0.1s;
+      }
+      .stagger-2 {
+        animation-delay: 0.2s;
+      }
+      .stagger-3 {
+        animation-delay: 0.3s;
+      }
+      .stagger-4 {
+        animation-delay: 0.4s;
+      }
+      .stagger-5 {
+        animation-delay: 0.5s;
+      }
+
+      .fade-in-up {
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeInUp 0.6s ease forwards;
+      }
+
+      @keyframes fadeInUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .slide.active .fade-in-up {
+        animation: fadeInUp 0.6s ease forwards;
+      }
+
+      .slide:not(.active) .fade-in-up {
+        animation: none;
+        opacity: 0;
+      }
+
+      /* Price highlight */
+      .price-highlight {
+        background: linear-gradient(
+          135deg,
+          rgba(var(--brand-rgb), 0.2),
+          rgba(var(--brand-rgb), 0.05)
+        );
+        border: 2px solid rgba(var(--brand-rgb), 0.3);
+        border-radius: 1.5rem;
+        padding: 2rem;
+      }
+    </style>
+  </head>
+
+  <body class="bg-surface-950 text-white font-sans antialiased overflow-hidden">
+    <!-- Background Effects -->
+    <div class="fixed inset-0 pointer-events-none">
+      <div
+        class="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl"></div>
+      <div
+        class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-brand-500/5 rounded-full blur-3xl"></div>
+      <div
+        class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:64px_64px]"></div>
+    </div>
+
+    <!-- Navigation Header -->
+    <header
+      class="fixed top-0 left-0 right-0 z-50 px-8 py-4 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-3 group">
+        <div
+          class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center transition-transform group-hover:scale-110">
+          <span class="material-symbols-outlined filled text-white">mail</span>
+        </div>
+        <span class="text-xl font-bold">
+          Mail
+          <span class="gradient-text">Flow</span>
+        </span>
+      </a>
+
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2 text-sm text-surface-400">
+          <span class="kbd">
+            <span class="material-symbols-outlined text-base">arrow_back</span>
+          </span>
+          <span class="kbd">
+            <span class="material-symbols-outlined text-base">
+              arrow_forward
+            </span>
+          </span>
+          <span class="ml-2">navigate</span>
+        </div>
+        <div class="text-surface-400">|</div>
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-surface-400">Slide</span>
+          <span id="current-slide" class="text-lg font-semibold text-brand-400">
+            1
+          </span>
+          <span class="text-surface-500">/</span>
+          <span id="total-slides" class="text-surface-400">18</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Progress Bar -->
+    <div class="fixed top-0 left-0 right-0 h-1 bg-surface-800 z-50">
+      <div
+        id="progress"
+        class="progress-bar h-full bg-gradient-to-r from-brand-500 to-brand-400"
+        style="width: 5.56%"></div>
+    </div>
+
+    <!-- Slides Container -->
+    <main id="slides-container" class="relative w-full h-screen">
+      <!-- Slide 1: Cover -->
+      <section class="slide active" data-slide="1">
+        <div class="text-center max-w-4xl">
+          <div class="mb-8 fade-in-up">
+            <div
+              class="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center animate-pulse-glow">
+              <span
+                class="material-symbols-outlined filled text-5xl text-white">
+                mail
+              </span>
+            </div>
+          </div>
+          <h1 class="text-7xl md:text-8xl font-bold mb-6 fade-in-up stagger-1">
+            Mail
+            <span class="gradient-text">Flow</span>
+          </h1>
+          <p
+            class="text-3xl md:text-4xl text-surface-300 font-light fade-in-up stagger-2">
+            E-mail
+            <span class="text-brand-400 font-medium">&#8594;</span>
+            Munka.
+          </p>
+          <p class="text-2xl text-surface-400 mt-4 fade-in-up stagger-3">
+            Sajat infrastrukturan.
+          </p>
+          <div
+            class="mt-16 flex items-center justify-center gap-2 text-surface-500 fade-in-up stagger-4">
+            <span class="material-symbols-outlined animate-bounce">
+              keyboard_arrow_down
+            </span>
+            <span class="text-sm">Nyomj jobbra a folytatashoz</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 2: The Reality -->
+      <section class="slide" data-slide="2">
+        <div class="max-w-5xl w-full">
+          <h2 class="text-5xl font-bold mb-12 text-center fade-in-up">
+            Az e-mailnel
+            <span class="gradient-text">indul a munka</span>
+          </h2>
+
+          <div class="grid md:grid-cols-3 gap-6 mb-12">
+            <div class="feature-box fade-in-up stagger-1">
+              <span
+                class="material-symbols-outlined text-4xl text-brand-400 mb-4">
+                inbox
+              </span>
+              <h3 class="text-xl font-semibold mb-2">
+                Minden keres e-mailben erkezik
+              </h3>
+              <p class="text-surface-400">
+                Thunderbird, Outlook vagy webes postafiokok - mindegy, honnan
+              </p>
+            </div>
+            <div class="feature-box fade-in-up stagger-2">
+              <span
+                class="material-symbols-outlined text-4xl text-brand-400 mb-4">
+                folder_open
+              </span>
+              <h3 class="text-xl font-semibold mb-2">
+                Projektek es fajlok itt kezdodnek
+              </h3>
+              <p class="text-surface-400">
+                A legtobb projekt egy ügyfél e-mailbol indul
+              </p>
+            </div>
+            <div class="feature-box fade-in-up stagger-3">
+              <span
+                class="material-symbols-outlined text-4xl text-brand-400 mb-4">
+                schedule
+              </span>
+              <h3 class="text-xl font-semibold mb-2">Hataridok is</h3>
+              <p class="text-surface-400">
+                A határidők és feladatok mind az e-mailekből érkeznek
+              </p>
+            </div>
+          </div>
+
+          <div class="text-center fade-in-up stagger-4">
+            <div
+              class="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-amber-500/10 border border-amber-500/30">
+              <span class="material-symbols-outlined text-amber-400">
+                warning
+              </span>
+              <span class="text-amber-300">
+                De az e-mail megall a "valasz elkuldve" szintjen
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 3: The Problem -->
+      <section class="slide" data-slide="3">
+        <div class="max-w-5xl w-full">
+          <h2 class="text-5xl font-bold mb-12 text-center fade-in-up">
+            A munka
+            <span class="text-red-400">szetszorodik</span>
+          </h2>
+
+          <!-- Scattered tools visualization -->
+          <div class="relative h-80 mb-8 fade-in-up stagger-1">
+            <div
+              class="absolute top-0 left-1/4 feature-box w-40 animate-float"
+              style="animation-delay: 0s">
+              <span class="material-symbols-outlined text-3xl text-blue-400">
+                mail
+              </span>
+              <p class="text-sm mt-2">E-mail</p>
+            </div>
+            <div
+              class="absolute top-1/4 right-1/4 feature-box w-40 animate-float"
+              style="animation-delay: 0.5s">
+              <span class="material-symbols-outlined text-3xl text-purple-400">
+                task_alt
+              </span>
+              <p class="text-sm mt-2">Feladatkezelo</p>
+            </div>
+            <div
+              class="absolute bottom-1/4 left-1/3 feature-box w-40 animate-float"
+              style="animation-delay: 1s">
+              <span class="material-symbols-outlined text-3xl text-yellow-400">
+                cloud
+              </span>
+              <p class="text-sm mt-2">Felhotarhely</p>
+            </div>
+            <div
+              class="absolute bottom-0 right-1/3 feature-box w-40 animate-float"
+              style="animation-delay: 1.5s">
+              <span class="material-symbols-outlined text-3xl text-green-400">
+                calendar_month
+              </span>
+              <p class="text-sm mt-2">Naptar</p>
+            </div>
+            <div
+              class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 feature-box w-40 animate-float"
+              style="animation-delay: 2s">
+              <span class="material-symbols-outlined text-3xl text-orange-400">
+                dashboard
+              </span>
+              <p class="text-sm mt-2">Projektboard</p>
+            </div>
+          </div>
+
+          <div class="text-center fade-in-up stagger-2">
+            <p class="text-2xl text-surface-300 mb-4">
+              4-6 eszkoz.
+              <span class="text-red-400 font-semibold">Nulla kapcsolat.</span>
+            </p>
+            <p class="text-xl text-surface-400">
+              Meg ha a levelek a gepeden vannak, a munka nem egy helyen van.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 4: Why SaaS Email Fails -->
+      <section class="slide" data-slide="4">
+        <div class="max-w-4xl w-full">
+          <h2 class="text-5xl font-bold mb-4 text-center fade-in-up">
+            A SaaS e-mail
+            <span class="text-red-400">beszelgetesre keszult</span>
+          </h2>
+          <p
+            class="text-xl text-surface-400 text-center mb-12 fade-in-up stagger-1">
+            Nem munkara
+          </p>
+
+          <div class="grid md:grid-cols-2 gap-6">
+            <div
+              class="feature-box flex items-start gap-4 fade-in-up stagger-1">
+              <span class="material-symbols-outlined text-3xl text-red-400">
+                cancel
+              </span>
+              <div>
+                <h3 class="text-lg font-semibold">Az e-mail magaban el</h3>
+                <p class="text-surface-400 text-sm">
+                  Nincs kapcsolodas a munkadhoz
+                </p>
+              </div>
+            </div>
+            <div
+              class="feature-box flex items-start gap-4 fade-in-up stagger-2">
+              <span class="material-symbols-outlined text-3xl text-red-400">
+                cancel
+              </span>
+              <div>
+                <h3 class="text-lg font-semibold">A feladatok mashol vannak</h3>
+                <p class="text-surface-400 text-sm">Masolas, sync, káosz</p>
+              </div>
+            </div>
+            <div
+              class="feature-box flex items-start gap-4 fade-in-up stagger-3">
+              <span class="material-symbols-outlined text-3xl text-red-400">
+                cancel
+              </span>
+              <div>
+                <h3 class="text-lg font-semibold">A fajlok levalnak</h3>
+                <p class="text-surface-400 text-sm">
+                  Csatolmanyok elvesznek a kontextusbol
+                </p>
+              </div>
+            </div>
+            <div
+              class="feature-box flex items-start gap-4 fade-in-up stagger-4">
+              <span class="material-symbols-outlined text-3xl text-red-400">
+                cancel
+              </span>
+              <div>
+                <h3 class="text-lg font-semibold">A riportalas manualis</h3>
+                <p class="text-surface-400 text-sm">
+                  Orak mennek el az osszesitesre
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-12 text-center fade-in-up stagger-5">
+            <div
+              class="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-red-500/10 border border-red-500/30">
+              <span class="material-symbols-outlined text-red-400">lock</span>
+              <span class="text-red-300">A tulajdonjog: nulla</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 5: The Realization -->
+      <section class="slide" data-slide="5">
+        <div class="max-w-4xl text-center">
+          <div class="mb-8 fade-in-up">
+            <span class="material-symbols-outlined text-8xl text-brand-400">
+              lightbulb
+            </span>
+          </div>
+          <h2 class="text-5xl md:text-6xl font-bold mb-8 fade-in-up stagger-1">
+            Nem az e-mail a
+            <span class="text-surface-400">problema</span>
+          </h2>
+          <div class="space-y-4 fade-in-up stagger-2">
+            <p class="text-3xl text-surface-300">
+              Az e-mailt nem
+              <span class="text-red-400 line-through">lecserelni</span>
+              kell.
+            </p>
+            <p class="text-4xl font-semibold">
+              Hanem
+              <span class="gradient-text">befejezni</span>
+              .
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 6: The Solution -->
+      <section class="slide" data-slide="6">
+        <div class="max-w-4xl text-center">
+          <h2 class="text-5xl font-bold mb-8 fade-in-up">
+            A MailFlow a
+            <span class="gradient-text">hianyzo reteg</span>
+          </h2>
+
+          <div class="mb-12 fade-in-up stagger-1">
+            <div class="mock-window max-w-2xl mx-auto">
+              <div class="mock-titlebar">
+                <div class="mock-dot bg-red-500"></div>
+                <div class="mock-dot bg-yellow-500"></div>
+                <div class="mock-dot bg-green-500"></div>
+                <span class="ml-4 text-sm text-surface-400">
+                  email.yourdomain.com
+                </span>
+              </div>
+              <div class="p-6 bg-surface-900">
+                <div class="flex gap-4">
+                  <div class="w-48 space-y-2">
+                    <div
+                      class="flex items-center gap-2 px-3 py-2 bg-brand-500/20 rounded-lg">
+                      <span class="material-symbols-outlined text-brand-400">
+                        inbox
+                      </span>
+                      <span class="text-sm">Inbox</span>
+                    </div>
+                    <div
+                      class="flex items-center gap-2 px-3 py-2 text-surface-400">
+                      <span class="material-symbols-outlined">task_alt</span>
+                      <span class="text-sm">Tasks</span>
+                    </div>
+                    <div
+                      class="flex items-center gap-2 px-3 py-2 text-surface-400">
+                      <span class="material-symbols-outlined">folder</span>
+                      <span class="text-sm">Drive</span>
+                    </div>
+                    <div
+                      class="flex items-center gap-2 px-3 py-2 text-surface-400">
+                      <span class="material-symbols-outlined">
+                        calendar_month
+                      </span>
+                      <span class="text-sm">Calendar</span>
+                    </div>
+                  </div>
+                  <div class="flex-1 space-y-2">
+                    <div
+                      class="bg-surface-800 rounded-lg p-3 border-l-4 border-brand-500">
+                      <div class="flex items-center justify-between">
+                        <span class="font-medium">
+                          Project Alfa - Ugyfel keres
+                        </span>
+                        <span
+                          class="text-xs text-brand-400 flex items-center gap-1">
+                          <span class="material-symbols-outlined text-sm">
+                            visibility
+                          </span>
+                          Olvasva
+                        </span>
+                      </div>
+                      <p class="text-sm text-surface-400 mt-1">
+                        Kapcsolodo feladatok: 3 | Fajlok: 5
+                      </p>
+                    </div>
+                    <div class="bg-surface-800/50 rounded-lg p-3">
+                      <span class="font-medium">Meeting Notes - Q1 Review</span>
+                      <p class="text-sm text-surface-400 mt-1">
+                        Naptar esemeny letrehozva
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p class="text-2xl text-surface-300 fade-in-up stagger-2">
+            A MailFlow a valodi ugyfel e-maileket automatikusan
+            <span class="text-brand-400 font-semibold">
+              strukturalt munkava
+            </span>
+            alakitja.
+          </p>
+        </div>
+      </section>
+
+      <!-- Slide 7: Core Flow (Hero Slide) -->
+      <section class="slide" data-slide="7">
+        <div class="max-w-5xl w-full">
+          <h2 class="text-5xl font-bold mb-12 text-center fade-in-up">
+            E-mailtol az
+            <span class="gradient-text">elvegzett munkaig</span>
+          </h2>
+
+          <div class="flex items-center justify-center gap-4 flex-wrap mb-12">
+            <div class="flow-step fade-in-up stagger-1">
+              <span
+                class="material-symbols-outlined text-4xl text-brand-400 mb-2">
+                mail
+              </span>
+              <p class="font-medium">Ugyfel e-mail</p>
+              <p class="text-sm text-surface-400">erkezik</p>
+            </div>
+            <span class="flow-arrow fade-in-up stagger-1">&#8594;</span>
+            <div class="flow-step fade-in-up stagger-2">
+              <span
+                class="material-symbols-outlined text-4xl text-brand-400 mb-2">
+                transform
+              </span>
+              <p class="font-medium">Feladatok</p>
+              <p class="text-sm text-surface-400">es projekt</p>
+            </div>
+            <span class="flow-arrow fade-in-up stagger-2">&#8594;</span>
+            <div class="flow-step fade-in-up stagger-3">
+              <span
+                class="material-symbols-outlined text-4xl text-brand-400 mb-2">
+                folder
+              </span>
+              <p class="font-medium">Fajlok</p>
+              <p class="text-sm text-surface-400">munkaval egyutt</p>
+            </div>
+            <span class="flow-arrow fade-in-up stagger-3">&#8594;</span>
+            <div class="flow-step fade-in-up stagger-4">
+              <span
+                class="material-symbols-outlined text-4xl text-brand-400 mb-2">
+                event
+              </span>
+              <p class="font-medium">Hataridok</p>
+              <p class="text-sm text-surface-400">naptarban</p>
+            </div>
+            <span class="flow-arrow fade-in-up stagger-4">&#8594;</span>
+            <div class="flow-step fade-in-up stagger-5">
+              <span
+                class="material-symbols-outlined text-4xl text-brand-400 mb-2">
+                analytics
+              </span>
+              <p class="font-medium">Riportok</p>
+              <p class="text-sm text-surface-400">automatikusan</p>
+            </div>
+          </div>
+
+          <div class="text-center space-y-4 fade-in-up stagger-5">
+            <p class="text-2xl text-surface-300">
+              Minden osszekotve. Minden visszakovetheto.
+            </p>
+            <p class="text-xl font-semibold gradient-text">
+              Minden a te szervereden.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 8: What Makes It Different -->
+      <section class="slide" data-slide="8">
+        <div class="max-w-4xl w-full">
+          <h2 class="text-5xl font-bold mb-4 text-center fade-in-up">
+            Valodi hasznalatra epiteve
+          </h2>
+          <p
+            class="text-xl text-surface-400 text-center mb-12 fade-in-up stagger-1">
+            Nem funkciolistara
+          </p>
+
+          <div class="grid md:grid-cols-2 gap-6">
+            <div
+              class="feature-box flex items-start gap-4 fade-in-up stagger-1">
+              <span class="material-symbols-outlined text-3xl text-brand-400">
+                check_circle
+              </span>
+              <div>
+                <h3 class="text-lg font-semibold">
+                  A munka valodi e-mailekbol indul
+                </h3>
+                <p class="text-surface-400 text-sm">
+                  Nem importalod - egybol dolgozhatsz
+                </p>
+              </div>
+            </div>
+            <div
+              class="feature-box flex items-start gap-4 fade-in-up stagger-2">
+              <span class="material-symbols-outlined text-3xl text-brand-400">
+                check_circle
+              </span>
+              <div>
+                <h3 class="text-lg font-semibold">Nincs manualis duplikalas</h3>
+                <p class="text-surface-400 text-sm">
+                  Egyszer irod be, mindenhol megjelenik
+                </p>
+              </div>
+            </div>
+            <div
+              class="feature-box flex items-start gap-4 fade-in-up stagger-3">
+              <span class="material-symbols-outlined text-3xl text-brand-400">
+                check_circle
+              </span>
+              <div>
+                <h3 class="text-lg font-semibold">
+                  Nincs szinkronizalo eszkoz
+                </h3>
+                <p class="text-surface-400 text-sm">
+                  Minden egy helyen, nativan
+                </p>
+              </div>
+            </div>
+            <div
+              class="feature-box flex items-start gap-4 fade-in-up stagger-4">
+              <span class="material-symbols-outlined text-3xl text-brand-400">
+                check_circle
+              </span>
+              <div>
+                <h3 class="text-lg font-semibold">Nincs kontextusvesztes</h3>
+                <p class="text-surface-400 text-sm">
+                  Az e-mail, feladat es fajl egyutt marad
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 9: Client Overview -->
+      <section class="slide" data-slide="9">
+        <div class="max-w-5xl w-full">
+          <h2 class="text-5xl font-bold mb-4 text-center fade-in-up">
+            Minden ugyfel. Egy nezet.
+            <span class="gradient-text">Automatikusan.</span>
+          </h2>
+          <p
+            class="text-xl text-surface-400 text-center mb-12 fade-in-up stagger-1">
+            CRM CRM nelkul
+          </p>
+
+          <div class="grid md:grid-cols-3 gap-6 mb-12 fade-in-up stagger-2">
+            <div
+              class="feature-box text-center border-2 border-green-500/30 bg-green-500/5">
+              <span
+                class="material-symbols-outlined text-5xl text-green-400 mb-4">
+                check_circle
+              </span>
+              <h3 class="text-xl font-semibold text-green-400">Aktiv</h3>
+              <p class="text-surface-400 text-sm mt-2">
+                Folyamatban levo projektek
+              </p>
+            </div>
+            <div
+              class="feature-box text-center border-2 border-yellow-500/30 bg-yellow-500/5">
+              <span
+                class="material-symbols-outlined text-5xl text-yellow-400 mb-4">
+                hourglass_empty
+              </span>
+              <h3 class="text-xl font-semibold text-yellow-400">Varakozik</h3>
+              <p class="text-surface-400 text-sm mt-2">Ugyfel valaszra var</p>
+            </div>
+            <div
+              class="feature-box text-center border-2 border-red-500/30 bg-red-500/5">
+              <span
+                class="material-symbols-outlined text-5xl text-red-400 mb-4">
+                priority_high
+              </span>
+              <h3 class="text-xl font-semibold text-red-400">
+                Figyelmet igenyel
+              </h3>
+              <p class="text-surface-400 text-sm mt-2">Sürgetendo</p>
+            </div>
+          </div>
+
+          <div class="text-center space-y-2 fade-in-up stagger-3">
+            <p class="text-xl text-surface-300">Nincs karbantartando CRM.</p>
+            <p class="text-2xl font-semibold">
+              Az ugyfelállapot a
+              <span class="gradient-text">valodi munkabol</span>
+              szarmazik.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 10: Ownership Model -->
+      <section class="slide" data-slide="10">
+        <div class="max-w-4xl w-full">
+          <h2 class="text-5xl font-bold mb-12 text-center fade-in-up">
+            Ez
+            <span class="text-red-400 line-through">nem</span>
+            SaaS
+          </h2>
+
+          <div class="comparison-table fade-in-up stagger-1">
+            <div class="comparison-row bg-surface-800">
+              <div
+                class="comparison-cell font-semibold text-red-400 text-center">
+                SaaS E-mail
+              </div>
+              <div
+                class="comparison-cell font-semibold text-brand-400 text-center">
+                MailFlow
+              </div>
+            </div>
+            <div class="comparison-row">
+              <div class="comparison-cell text-center">
+                <span class="material-symbols-outlined text-red-400 mr-2">
+                  repeat
+                </span>
+                Orok berles
+              </div>
+              <div class="comparison-cell text-center">
+                <span class="material-symbols-outlined text-brand-400 mr-2">
+                  verified
+                </span>
+                Egyszeri tulajdon
+              </div>
+            </div>
+            <div class="comparison-row">
+              <div class="comparison-cell text-center">
+                <span class="material-symbols-outlined text-red-400 mr-2">
+                  person
+                </span>
+                Felhasznalonkenti dij
+              </div>
+              <div class="comparison-cell text-center">
+                <span class="material-symbols-outlined text-brand-400 mr-2">
+                  groups
+                </span>
+                Korlatlan felhasznalo
+              </div>
+            </div>
+            <div class="comparison-row">
+              <div class="comparison-cell text-center">
+                <span class="material-symbols-outlined text-red-400 mr-2">
+                  lock
+                </span>
+                Szallitoi lock-in
+              </div>
+              <div class="comparison-cell text-center">
+                <span class="material-symbols-outlined text-brand-400 mr-2">
+                  dns
+                </span>
+                Sajat VPS
+              </div>
+            </div>
+            <div class="comparison-row">
+              <div class="comparison-cell text-center">
+                <span class="material-symbols-outlined text-red-400 mr-2">
+                  cloud
+                </span>
+                Adatok az o szerveriken
+              </div>
+              <div class="comparison-cell text-center">
+                <span class="material-symbols-outlined text-brand-400 mr-2">
+                  key
+                </span>
+                Sajat kulcsok
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 11: Infrastructure Stack -->
+      <section class="slide" data-slide="11">
+        <div class="max-w-4xl w-full">
+          <h2 class="text-5xl font-bold mb-12 text-center fade-in-up">
+            Sajat infrastrukturan
+            <span class="gradient-text">fut</span>
+          </h2>
+
+          <div class="relative fade-in-up stagger-1">
+            <!-- Stack visualization -->
+            <div class="space-y-4 max-w-2xl mx-auto">
+              <div class="feature-box text-center border-2 border-brand-500/50">
+                <span
+                  class="material-symbols-outlined text-3xl text-brand-400 mb-2">
+                  apps
+                </span>
+                <h3 class="text-xl font-semibold">MailFlow Platform</h3>
+                <p class="text-surface-400 text-sm">
+                  E-mail + Tasks + Drive + Calendar
+                </p>
+              </div>
+              <div class="flex justify-center">
+                <span
+                  class="material-symbols-outlined text-2xl text-surface-500">
+                  keyboard_arrow_down
+                </span>
+              </div>
+              <div class="feature-box text-center">
+                <span
+                  class="material-symbols-outlined text-3xl text-blue-400 mb-2">
+                  dashboard
+                </span>
+                <h3 class="text-xl font-semibold">DEVCON Szerverpanel</h3>
+                <p class="text-surface-400 text-sm">
+                  Teljes szerver management
+                </p>
+              </div>
+              <div class="flex justify-center">
+                <span
+                  class="material-symbols-outlined text-2xl text-surface-500">
+                  keyboard_arrow_down
+                </span>
+              </div>
+              <div class="feature-box text-center">
+                <span
+                  class="material-symbols-outlined text-3xl text-purple-400 mb-2">
+                  mail_lock
+                </span>
+                <h3 class="text-xl font-semibold">Hardenelt Mail Stack</h3>
+                <p class="text-surface-400 text-sm">
+                  Postfix + Dovecot + Security
+                </p>
+              </div>
+              <div class="flex justify-center">
+                <span
+                  class="material-symbols-outlined text-2xl text-surface-500">
+                  keyboard_arrow_down
+                </span>
+              </div>
+              <div class="feature-box text-center">
+                <span
+                  class="material-symbols-outlined text-3xl text-red-400 mb-2">
+                  security
+                </span>
+                <h3 class="text-xl font-semibold">Biztonsagi retegek</h3>
+                <p class="text-surface-400 text-sm">
+                  Fail2ban + ModSec + Firewall
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-center mt-12 fade-in-up stagger-2">
+            <p class="text-2xl">
+              Nem hozzaferest berelsz.
+              <span class="gradient-text font-semibold">
+                A rendszert birtoklod.
+              </span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 12: Pricing Philosophy -->
+      <section class="slide" data-slide="12">
+        <div class="max-w-4xl w-full">
+          <h2 class="text-5xl font-bold mb-12 text-center fade-in-up">
+            Egyszeru.
+            <span class="gradient-text">Oszinte arazas.</span>
+          </h2>
+
+          <div class="grid md:grid-cols-2 gap-8">
+            <div class="price-highlight fade-in-up stagger-1">
+              <div class="text-center mb-6">
+                <span
+                  class="material-symbols-outlined text-5xl text-brand-400 mb-4">
+                  shopping_cart
+                </span>
+                <h3 class="text-2xl font-semibold">
+                  Tulajdonolt infrastruktura
+                </h3>
+              </div>
+              <div class="text-center mb-6">
+                <span class="text-5xl font-bold gradient-text">
+                  &#8364;3 490
+                </span>
+                <p class="text-surface-400">egyszeri dij</p>
+              </div>
+              <ul class="space-y-3">
+                <li class="flex items-center gap-3">
+                  <span class="material-symbols-outlined text-brand-400">
+                    check_circle
+                  </span>
+                  <span>Korlatlan felhasznalo</span>
+                </li>
+                <li class="flex items-center gap-3">
+                  <span class="material-symbols-outlined text-brand-400">
+                    check_circle
+                  </span>
+                  <span>Teljes atadas</span>
+                </li>
+                <li class="flex items-center gap-3">
+                  <span class="material-symbols-outlined text-brand-400">
+                    check_circle
+                  </span>
+                  <span>Nincs lock-in</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="feature-box fade-in-up stagger-2">
+              <div class="text-center mb-6">
+                <span
+                  class="material-symbols-outlined text-5xl text-blue-400 mb-4">
+                  support_agent
+                </span>
+                <h3 class="text-2xl font-semibold">Opcionalis felügyelet</h3>
+              </div>
+              <div class="text-center mb-6">
+                <span class="text-4xl font-bold text-surface-200">
+                  &#8364;149
+                </span>
+                <span class="text-surface-400">/ ho</span>
+              </div>
+              <ul class="space-y-3 text-surface-300">
+                <li class="flex items-center gap-3">
+                  <span class="material-symbols-outlined text-blue-400">
+                    check_circle
+                  </span>
+                  <span>Barmikor lemondhato</span>
+                </li>
+                <li class="flex items-center gap-3">
+                  <span class="material-symbols-outlined text-blue-400">
+                    check_circle
+                  </span>
+                  <span>Minden a tied marad</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 13: Cost Comparison -->
+      <section class="slide" data-slide="13">
+        <div class="max-w-4xl w-full">
+          <h2 class="text-5xl font-bold mb-4 text-center fade-in-up">
+            Mit fizetsz
+            <span class="gradient-text">3 ev alatt</span>
+          </h2>
+          <p
+            class="text-xl text-surface-400 text-center mb-12 fade-in-up stagger-1">
+            20 felhasznalo
+          </p>
+
+          <div class="space-y-4 fade-in-up stagger-2">
+            <div class="flex items-center gap-4">
+              <div class="w-40 text-right text-surface-300">
+                Google Workspace
+              </div>
+              <div
+                class="flex-1 h-12 bg-red-500/20 rounded-lg relative overflow-hidden">
+                <div
+                  class="absolute inset-y-0 left-0 w-full bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-end px-4">
+                  <span class="font-semibold">~&#8364;15 500</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-4">
+              <div class="w-40 text-right text-surface-300">Microsoft 365</div>
+              <div
+                class="flex-1 h-12 bg-orange-500/20 rounded-lg relative overflow-hidden">
+                <div
+                  class="absolute inset-y-0 left-0 w-[88%] bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg flex items-center justify-end px-4">
+                  <span class="font-semibold">~&#8364;13 700</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-4">
+              <div class="w-40 text-right text-surface-300">
+                Tanacsado / MSP
+              </div>
+              <div
+                class="flex-1 h-12 bg-yellow-500/20 rounded-lg relative overflow-hidden">
+                <div
+                  class="absolute inset-y-0 left-0 w-[45%] bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-lg flex items-center justify-end px-4">
+                  <span class="font-semibold">&#8364;7 000+</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-4">
+              <div class="w-40 text-right font-semibold text-brand-400">
+                MailFlow
+              </div>
+              <div
+                class="flex-1 h-12 bg-brand-500/20 rounded-lg relative overflow-hidden">
+                <div
+                  class="absolute inset-y-0 left-0 w-[23%] bg-gradient-to-r from-brand-500 to-brand-600 rounded-lg flex items-center justify-end px-4 animate-pulse-glow">
+                  <span class="font-semibold">&#8364;3 490 + VPS</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-center mt-12 fade-in-up stagger-3">
+            <div
+              class="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-brand-500/10 border border-brand-500/30">
+              <span class="material-symbols-outlined text-brand-400">
+                trending_up
+              </span>
+              <span class="text-brand-300 font-semibold">
+                Megterules 12-18 honap alatt
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 14: Who It's For -->
+      <section class="slide" data-slide="14">
+        <div class="max-w-4xl w-full">
+          <h2 class="text-5xl font-bold mb-12 text-center fade-in-up">
+            <span class="gradient-text">Üzemeltetoknek</span>
+            epiteve
+          </h2>
+
+          <div class="grid md:grid-cols-3 gap-6">
+            <div class="feature-box text-center fade-in-up stagger-1">
+              <span
+                class="material-symbols-outlined text-4xl text-brand-400 mb-4">
+                groups
+              </span>
+              <h3 class="text-xl font-semibold">Ügynöksegek</h3>
+              <p class="text-surface-400 text-sm mt-2">
+                Ugyfelkezelés egy helyen
+              </p>
+            </div>
+            <div class="feature-box text-center fade-in-up stagger-2">
+              <span
+                class="material-symbols-outlined text-4xl text-brand-400 mb-4">
+                psychology
+              </span>
+              <h3 class="text-xl font-semibold">Tanacsadok</h3>
+              <p class="text-surface-400 text-sm mt-2">
+                Projektkövetes egyszeruen
+              </p>
+            </div>
+            <div class="feature-box text-center fade-in-up stagger-3">
+              <span
+                class="material-symbols-outlined text-4xl text-brand-400 mb-4">
+                palette
+              </span>
+              <h3 class="text-xl font-semibold">Studiok</h3>
+              <p class="text-surface-400 text-sm mt-2">
+                Kreativ munkafolyamatok
+              </p>
+            </div>
+            <div class="feature-box text-center fade-in-up stagger-4">
+              <span
+                class="material-symbols-outlined text-4xl text-brand-400 mb-4">
+                shield
+              </span>
+              <h3 class="text-xl font-semibold">
+                Adatvédelem-fokuszú csapatok
+              </h3>
+              <p class="text-surface-400 text-sm mt-2">GDPR compliant</p>
+            </div>
+            <div class="feature-box text-center fade-in-up stagger-5">
+              <span
+                class="material-symbols-outlined text-4xl text-brand-400 mb-4">
+                business
+              </span>
+              <h3 class="text-xl font-semibold">
+                Alapito altal vezetett KKV-k
+              </h3>
+              <p class="text-surface-400 text-sm mt-2">Kontrollt akarnak</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 15: Who It's NOT For -->
+      <section class="slide" data-slide="15">
+        <div class="max-w-4xl w-full">
+          <h2 class="text-5xl font-bold mb-12 text-center fade-in-up">
+            Ez
+            <span class="text-red-400">nem</span>
+            mindenkinek szol
+          </h2>
+
+          <div class="grid md:grid-cols-2 gap-6">
+            <div
+              class="feature-box flex items-start gap-4 border-red-500/30 bg-red-500/5 fade-in-up stagger-1">
+              <span class="material-symbols-outlined text-3xl text-red-400">
+                close
+              </span>
+              <div>
+                <h3 class="text-lg font-semibold">
+                  Magan e-mail felhasznaloknak
+                </h3>
+                <p class="text-surface-400 text-sm">Ez uzleti megoldas</p>
+              </div>
+            </div>
+            <div
+              class="feature-box flex items-start gap-4 border-red-500/30 bg-red-500/5 fade-in-up stagger-2">
+              <span class="material-symbols-outlined text-3xl text-red-400">
+                close
+              </span>
+              <div>
+                <h3 class="text-lg font-semibold">
+                  Teljesen menedzselt SaaS-t kereso csapatoknak
+                </h3>
+                <p class="text-surface-400 text-sm">Itt te vagy a tulajdonos</p>
+              </div>
+            </div>
+            <div
+              class="feature-box flex items-start gap-4 border-red-500/30 bg-red-500/5 fade-in-up stagger-3">
+              <span class="material-symbols-outlined text-3xl text-red-400">
+                close
+              </span>
+              <div>
+                <h3 class="text-lg font-semibold">
+                  Nagyvallalatoknak belso IT-val
+                </h3>
+                <p class="text-surface-400 text-sm">Sajat megoldasaik vannak</p>
+              </div>
+            </div>
+            <div
+              class="feature-box flex items-start gap-4 border-red-500/30 bg-red-500/5 fade-in-up stagger-4">
+              <span class="material-symbols-outlined text-3xl text-red-400">
+                close
+              </span>
+              <div>
+                <h3 class="text-lg font-semibold">
+                  "Beallitom es elfelejtem" megoldast akaroknak
+                </h3>
+                <p class="text-surface-400 text-sm">
+                  Ez aktiv mukodtetest igenyel
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-center mt-12 fade-in-up stagger-5">
+            <p class="text-xl text-surface-400 italic">Ez bizalmat epit.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 16: The Bigger Vision -->
+      <section class="slide" data-slide="16">
+        <div class="max-w-4xl text-center">
+          <div class="mb-8 fade-in-up">
+            <span class="material-symbols-outlined text-8xl text-brand-400">
+              rocket_launch
+            </span>
+          </div>
+          <h2 class="text-5xl md:text-6xl font-bold mb-8 fade-in-up stagger-1">
+            Az e-mail nem
+            <span class="text-surface-400">fejlodott</span>
+            .
+          </h2>
+          <p class="text-4xl text-surface-300 mb-8 fade-in-up stagger-2">
+            A munka igen.
+          </p>
+          <p class="text-3xl font-semibold fade-in-up stagger-3">
+            A MailFlow
+            <span class="gradient-text">osszekoti a kettot</span>
+            .
+          </p>
+        </div>
+      </section>
+
+      <!-- Slide 17: Call to Action -->
+      <section class="slide" data-slide="17">
+        <div class="max-w-4xl w-full text-center">
+          <h2 class="text-5xl font-bold mb-12 fade-in-up">
+            Ne
+            <span class="text-red-400">bereld tovabb</span>
+            a workflow-dat
+          </h2>
+
+          <div class="grid md:grid-cols-3 gap-6 mb-12">
+            <div
+              class="feature-box text-center border-2 border-brand-500/30 hover:border-brand-500 transition-colors fade-in-up stagger-1">
+              <span
+                class="material-symbols-outlined text-5xl text-brand-400 mb-4">
+                dns
+              </span>
+              <h3 class="text-xl font-semibold">
+                Telepitsd a sajat szerveredre
+              </h3>
+            </div>
+            <div
+              class="feature-box text-center border-2 border-brand-500/30 hover:border-brand-500 transition-colors fade-in-up stagger-2">
+              <span
+                class="material-symbols-outlined text-5xl text-brand-400 mb-4">
+                verified
+              </span>
+              <h3 class="text-xl font-semibold">
+                Birtokold az infrastrukturat
+              </h3>
+            </div>
+            <div
+              class="feature-box text-center border-2 border-brand-500/30 hover:border-brand-500 transition-colors fade-in-up stagger-3">
+              <span
+                class="material-symbols-outlined text-5xl text-brand-400 mb-4">
+                tune
+              </span>
+              <h3 class="text-xl font-semibold">Iranyitsd a munkat</h3>
+            </div>
+          </div>
+
+          <a
+            href="index.html#get-started"
+            class="inline-flex items-center gap-3 px-10 py-5 rounded-full bg-gradient-to-r from-brand-500 to-brand-600 text-xl font-semibold hover:from-brand-600 hover:to-brand-700 transition-all shadow-xl shadow-brand-500/30 hover:shadow-brand-500/50 hover:scale-105 fade-in-up stagger-4">
+            <span>Kezdjuk el</span>
+            <span class="material-symbols-outlined">arrow_forward</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- Slide 18: Closing -->
+      <section class="slide" data-slide="18">
+        <div class="max-w-4xl text-center">
+          <div class="mb-8 fade-in-up">
+            <div
+              class="w-32 h-32 mx-auto rounded-3xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center animate-pulse-glow">
+              <span
+                class="material-symbols-outlined filled text-7xl text-white">
+                mail
+              </span>
+            </div>
+          </div>
+          <h1 class="text-7xl md:text-8xl font-bold mb-8 fade-in-up stagger-1">
+            Mail
+            <span class="gradient-text">Flow</span>
+          </h1>
+          <div class="space-y-4 fade-in-up stagger-2">
+            <p class="text-3xl text-surface-300">
+              E-mail
+              <span class="text-brand-400">&#8594;</span>
+              Munka
+              <span class="text-brand-400">&#8594;</span>
+              Kesz
+            </p>
+            <p class="text-2xl text-surface-400">Sajat infrastrukturan.</p>
+          </div>
+          <div
+            class="mt-16 flex flex-wrap items-center justify-center gap-4 fade-in-up stagger-3">
+            <a
+              href="index.html"
+              class="px-8 py-4 rounded-full bg-gradient-to-r from-brand-500 to-brand-600 font-semibold text-lg hover:from-brand-600 hover:to-brand-700 transition-all shadow-xl shadow-brand-500/30 hover:shadow-brand-500/50">
+              Tovabb a weboldalra
+            </a>
+            <a
+              href="https://email.devcon1.hu"
+              class="px-8 py-4 rounded-full border-2 border-surface-600 font-semibold text-lg hover:bg-surface-800 hover:border-surface-500 transition-all">
+              Demo kiprobalasa
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Navigation Controls -->
+    <div
+      class="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4 z-50">
+      <button
+        id="prev-btn"
+        onclick="prevSlide()"
+        class="w-12 h-12 rounded-full bg-surface-800/80 border border-surface-700 flex items-center justify-center hover:bg-surface-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+        <span class="material-symbols-outlined">arrow_back</span>
+      </button>
+      <div class="flex gap-2" id="dots-container">
+        <!-- Dots will be generated by JS -->
+      </div>
+      <button
+        id="next-btn"
+        onclick="nextSlide()"
+        class="w-12 h-12 rounded-full bg-surface-800/80 border border-surface-700 flex items-center justify-center hover:bg-surface-700 transition-colors">
+        <span class="material-symbols-outlined">arrow_forward</span>
+      </button>
+    </div>
+
+    <!-- Fullscreen Toggle -->
+    <button
+      onclick="toggleFullscreen()"
+      class="fixed bottom-8 right-8 w-12 h-12 rounded-full bg-surface-800/80 border border-surface-700 flex items-center justify-center hover:bg-surface-700 transition-colors z-50">
+      <span class="material-symbols-outlined" id="fullscreen-icon">
+        fullscreen
+      </span>
+    </button>
+
+    <script>
+      let currentSlide = 1;
+      const totalSlides = 18;
+      const slides = document.querySelectorAll(".slide");
+      const dotsContainer = document.getElementById("dots-container");
+      const progressBar = document.getElementById("progress");
+      const prevBtn = document.getElementById("prev-btn");
+      const nextBtn = document.getElementById("next-btn");
+
+      // Generate dots
+      for (let i = 1; i <= totalSlides; i++) {
+        const dot = document.createElement("button");
+        dot.className = `w-2 h-2 rounded-full transition-all ${
+          i === 1 ? "bg-brand-500 w-6" : "bg-surface-600 hover:bg-surface-500"
+        }`;
+        dot.onclick = () => goToSlide(i);
+        dotsContainer.appendChild(dot);
+      }
+
+      function updateSlide() {
+        slides.forEach((slide, index) => {
+          const slideNum = index + 1;
+          slide.classList.remove("active", "prev");
+
+          if (slideNum === currentSlide) {
+            slide.classList.add("active");
+          } else if (slideNum < currentSlide) {
+            slide.classList.add("prev");
+          }
+        });
+
+        // Update dots
+        const dots = dotsContainer.querySelectorAll("button");
+        dots.forEach((dot, index) => {
+          if (index + 1 === currentSlide) {
+            dot.className = "w-6 h-2 rounded-full bg-brand-500 transition-all";
+          } else {
+            dot.className =
+              "w-2 h-2 rounded-full bg-surface-600 hover:bg-surface-500 transition-all";
+          }
+        });
+
+        // Update counter
+        document.getElementById("current-slide").textContent = currentSlide;
+
+        // Update progress bar
+        const progress = (currentSlide / totalSlides) * 100;
+        progressBar.style.width = `${progress}%`;
+
+        // Update nav buttons
+        prevBtn.disabled = currentSlide === 1;
+        nextBtn.disabled = currentSlide === totalSlides;
+      }
+
+      function nextSlide() {
+        if (currentSlide < totalSlides) {
+          currentSlide++;
+          updateSlide();
+        }
+      }
+
+      function prevSlide() {
+        if (currentSlide > 1) {
+          currentSlide--;
+          updateSlide();
+        }
+      }
+
+      function goToSlide(num) {
+        currentSlide = num;
+        updateSlide();
+      }
+
+      // Keyboard navigation
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight" || e.key === " " || e.key === "Enter") {
+          e.preventDefault();
+          nextSlide();
+        } else if (e.key === "ArrowLeft" || e.key === "Backspace") {
+          e.preventDefault();
+          prevSlide();
+        } else if (e.key === "Home") {
+          e.preventDefault();
+          goToSlide(1);
+        } else if (e.key === "End") {
+          e.preventDefault();
+          goToSlide(totalSlides);
+        } else if (e.key === "f" || e.key === "F") {
+          toggleFullscreen();
+        }
+      });
+
+      // Touch/swipe support
+      let touchStartX = 0;
+      let touchEndX = 0;
+
+      document.addEventListener("touchstart", (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+      });
+
+      document.addEventListener("touchend", (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+      });
+
+      function handleSwipe() {
+        const diff = touchStartX - touchEndX;
+        if (Math.abs(diff) > 50) {
+          if (diff > 0) {
+            nextSlide();
+          } else {
+            prevSlide();
+          }
+        }
+      }
+
+      // Fullscreen toggle
+      function toggleFullscreen() {
+        const icon = document.getElementById("fullscreen-icon");
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+          icon.textContent = "fullscreen_exit";
+        } else {
+          document.exitFullscreen();
+          icon.textContent = "fullscreen";
+        }
+      }
+
+      document.addEventListener("fullscreenchange", () => {
+        const icon = document.getElementById("fullscreen-icon");
+        icon.textContent = document.fullscreenElement
+          ? "fullscreen_exit"
+          : "fullscreen";
+      });
+
+      // Initialize
+      updateSlide();
+    </script>
+  </body>
+</html>

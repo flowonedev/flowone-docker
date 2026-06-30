@@ -1,0 +1,58 @@
+[Unit]
+Description=FlowOne VPS Admin worker daemon (drives site_jobs queue)
+Documentation=file:///var/www/vps-admin/agent/worker-daemon.php
+After=mariadb.service network-online.target
+Wants=mariadb.service
+
+[Service]
+Type=simple
+
+# The worker must run as root because the SFTP / OLS / system steps it
+# orchestrates need useradd, groupadd, lswsctrl, and write access to
+# /usr/local/lsws/conf/. Sandboxing below trims everything not
+# required for those.
+User=root
+Group=root
+
+ExecStart=/usr/local/lsws/lsphp83/bin/php /var/www/vps-admin/agent/worker-daemon.php
+
+# Graceful stop: give the worker up to 90s to finish a saga before
+# SIGKILL. The default LEASE_TTL_S is 60s; saga deadline is 300s but
+# most steps finish well under 60.
+TimeoutStopSec=90
+KillSignal=SIGTERM
+KillMode=mixed
+
+# Restart on crash but NOT on clean exit (so --once / --max-jobs do
+# what you expect, and the supervisor's "rapid restart ceiling exit"
+# isn't masked by systemd auto-restart).
+Restart=on-failure
+RestartSec=5
+
+# Logs go to journald with this identifier so `journalctl -u
+# vpsadmin-worker` shows the daemon output cleanly.
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=vpsadmin-worker
+
+# Light sandboxing. We deliberately do NOT use ProtectSystem=strict
+# or PrivateTmp here because the worker needs to write to:
+#   /usr/local/lsws/conf/        (OLS vhost configs)
+#   /home/{user}/                (site home dirs)
+#   /etc/passwd, /etc/group      (via useradd / groupadd; PAM handles)
+#   /var/www/vps-admin/storage/  (state, logs)
+#   /var/lib/flowone/            (worker.paused, future state files)
+#   /etc/opendkim/               (MailTeardownStep: DKIM keys + tables;
+#                                 mirrored in worker-daemon.php allowedRoots)
+NoNewPrivileges=no
+ReadWritePaths=/usr/local/lsws/conf /home /var/www/vps-admin/storage /var/lib/flowone /etc/opendkim
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+LockPersonality=yes
+
+LimitNOFILE=4096
+LimitNPROC=256
+
+[Install]
+WantedBy=multi-user.target

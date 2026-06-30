@@ -1,0 +1,1 @@
+ALTER TABLE mood_boards ADD COLUMN IF NOT EXISTS global_css_classes JSON DEFAULT NULL;

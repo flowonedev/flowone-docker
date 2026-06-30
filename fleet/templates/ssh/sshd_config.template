@@ -1,0 +1,50 @@
+# OpenSSH Server Configuration
+# Template for Fleet Manager deployment
+# Variables: {{SSH_PORT}}
+
+Port {{SSH_PORT}}
+AddressFamily any
+ListenAddress 0.0.0.0
+ListenAddress ::
+
+# Authentication
+# NOTE: root login + password auth are intentionally left enabled so the Fleet
+# Manager can connect to provision/manage the box. Lock these down per your policy
+# only AFTER confirming key-based access works, to avoid locking yourself out.
+PermitRootLogin yes
+PubkeyAuthentication yes
+AuthorizedKeysFile .ssh/authorized_keys
+PasswordAuthentication yes
+PermitEmptyPasswords no
+ChallengeResponseAuthentication no
+KbdInteractiveAuthentication no
+
+# Security
+MaxAuthTries 4
+MaxSessions 10
+LoginGraceTime 30
+AllowAgentForwarding no
+
+# Logging
+SyslogFacility AUTH
+LogLevel INFO
+
+# Environment
+AcceptEnv LANG LC_*
+
+# Subsystems
+Subsystem sftp /usr/lib/openssh/sftp-server
+
+# Keep alive
+ClientAliveInterval 120
+ClientAliveCountMax 3
+
+# X11 (disabled for servers)
+X11Forwarding no
+
+# Banner
+# Banner /etc/ssh/banner.txt
+
+# UseDNS (disable for faster connections)
+UseDNS no
+

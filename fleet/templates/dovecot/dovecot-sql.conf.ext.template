@@ -1,0 +1,57 @@
+# Dovecot SQL Configuration
+# Template for Fleet Manager deployment
+# Variables: {{MAIL_DB_USER}}, {{MAIL_DB_PASS}}, {{MAIL_DB_NAME}}
+#
+# This file configures Dovecot to authenticate users against the database.
+# Place at: /etc/dovecot/dovecot-sql.conf.ext
+# 
+# Reference this file in /etc/dovecot/dovecot.conf:
+#   passdb { driver = sql; args = /etc/dovecot/dovecot-sql.conf.ext }
+#   userdb { driver = sql; args = /etc/dovecot/dovecot-sql.conf.ext }
+
+# Database connection
+driver = mysql
+connect = host=127.0.0.1 dbname={{MAIL_DB_NAME}} user={{MAIL_DB_USER}} password={{MAIL_DB_PASS}}
+
+# Password encoding scheme
+# VPS Admin Panel stores passwords hashed with PHP's password_hash() using PASSWORD_DEFAULT
+# This is bcrypt (2y prefix)
+default_pass_scheme = BLF-CRYPT
+
+# Password query
+# Returns password hash for authentication
+# The password_hash field uses bcrypt format: $2y$...
+#
+# login_suspended = 0 enforces the panel "Suspend" button: a suspended mailbox
+# fails authentication for every client (IMAP/POP3/SMTP-AUTH and webmail) while
+# its status stays 'active' so the user_query below and Postfix delivery keep
+# working -- i.e. login is blocked but incoming mail still arrives.
+password_query = \
+  SELECT email AS user, password_hash AS password \
+  FROM mail_accounts \
+  WHERE email = '%u' AND status = 'active' AND login_suspended = 0
+
+# User query
+# Returns user information for mail delivery
+# uid/gid 5000 = vmail user (created by mail-install.sh)
+# home = account root (/home/vmail/<domain>/<user>); the Maildir lives at
+#        <home>/Maildir per mail_location, and ~/sieve holds the per-user
+#        webmail filter scripts written by the email app's Sieve sync
+# quota_rule = user's quota from database (in MB, converted to bytes)
+user_query = \
+  SELECT \
+    email AS user, \
+    5000 AS uid, \
+    5000 AS gid, \
+    CONCAT('/home/vmail/', domain, '/', username) AS home, \
+    CONCAT('*:bytes=', quota_mb * 1024 * 1024) AS quota_rule \
+  FROM mail_accounts \
+  WHERE email = '%u' AND status = 'active'
+
+# Iterate query (for doveadm commands like quota recalc)
+# Lists all active users
+iterate_query = \
+  SELECT email AS user \
+  FROM mail_accounts \
+  WHERE status = 'active'
+

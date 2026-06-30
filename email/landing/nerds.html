@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DEVCON Ecosystem - Technical Documentation | Self-Hosted Infrastructure</title>
+
+    <meta name="description" content="Complete technical documentation for the DEVCON ecosystem: MailFlow email platform with Boards PRO, Automations, Modular Addons, Multilingual (HU/EN), DEVCON Panel server management, and Fleet Manager multi-server deployment. Full API docs, stack details, and architecture." />
+    <meta name="keywords" content="self-hosted email, VPS management, server panel, fleet management, PHP 8.3, Vue 3, OpenLiteSpeed, Postfix, Dovecot, technical documentation, boards pro, kanban automations, modular addons, multilingual email, workflow automation, CRM automation" />
+
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="stylesheet" href="/fonts/jetbrains-mono/font.css" />
+    <link rel="stylesheet" href="/fonts/inter/font.css" />
+    <link rel="stylesheet" href="/fonts/material-symbols-outlined/font.css" />
+
+    <script src="/js/tailwind.min.js"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              mono: ['JetBrains Mono', 'monospace'],
+            },
+            colors: {
+              terminal: { bg: '#0d1117', border: '#30363d', text: '#c9d1d9', green: '#3fb950', blue: '#58a6ff', purple: '#a371f7', orange: '#d29922', red: '#f85149' },
+              surface: { 50: '#fafafa', 100: '#f4f4f5', 200: '#e4e4e7', 700: '#3f3f46', 800: '#27272a', 900: '#18181b', 950: '#09090b' },
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      :root { --accent: #3fb950; --accent-dim: rgba(63, 185, 80, 0.15); }
+      
+      .gradient-text { background: linear-gradient(135deg, #3fb950, #58a6ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+      
+      .terminal { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; font-family: 'JetBrains Mono', monospace; }
+      .terminal-header { background: #161b22; padding: 8px 12px; border-bottom: 1px solid #30363d; display: flex; align-items: center; gap: 8px; }
+      .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+      .terminal-body { padding: 16px; font-size: 13px; line-height: 1.6; color: #c9d1d9; overflow-x: auto; }
+      .terminal .comment { color: #8b949e; }
+      .terminal .string { color: #a5d6ff; }
+      .terminal .keyword { color: #ff7b72; }
+      .terminal .function { color: #d2a8ff; }
+      .terminal .variable { color: #ffa657; }
+      .terminal .prompt { color: #3fb950; }
+      
+      .doc-section { scroll-margin-top: 100px; }
+      .sidebar-link { transition: all 0.15s ease; border-left: 2px solid transparent; }
+      .sidebar-link:hover, .sidebar-link.active { border-left-color: #3fb950; background: rgba(63, 185, 80, 0.1); color: white; }
+      
+      .feature-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 500; }
+      .badge-complete { background: rgba(63, 185, 80, 0.15); color: #3fb950; }
+      .badge-planned { background: rgba(210, 168, 34, 0.15); color: #d29922; }
+      
+      .api-method { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+      .method-get { background: rgba(88, 166, 255, 0.2); color: #58a6ff; }
+      .method-post { background: rgba(63, 185, 80, 0.2); color: #3fb950; }
+      .method-put { background: rgba(210, 168, 34, 0.2); color: #d29922; }
+      .method-delete { background: rgba(248, 81, 73, 0.2); color: #f85149; }
+      
+      .stack-card { background: linear-gradient(135deg, rgba(63, 185, 80, 0.05), rgba(88, 166, 255, 0.05)); border: 1px solid #30363d; transition: all 0.2s ease; }
+      .stack-card:hover { border-color: #3fb950; transform: translateY(-2px); }
+      
+      .reveal { opacity: 0; transform: translateY(20px); transition: all 0.6s ease; }
+      .reveal.visible { opacity: 1; transform: translateY(0); }
+      
+      ::-webkit-scrollbar { width: 8px; height: 8px; }
+      ::-webkit-scrollbar-track { background: #0d1117; }
+      ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+      
+      @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+      .cursor-blink { animation: blink 1s infinite; }
+      
+      .toc-progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3fb950, #58a6ff); z-index: 100; transition: width 0.1s ease; }
+    </style>
+  </head>
+  <body class="bg-surface-950 text-white font-sans antialiased">
+    <div class="toc-progress" id="progress-bar" style="width: 0%"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-surface-950/95 backdrop-blur-lg border-b border-surface-800">
+      <div class="max-w-7xl mx-auto px-6 py-3">
+        <div class="flex items-center justify-between">
+          <a href="index.html" class="flex items-center gap-3 group">
+            <div class="w-8 h-8 rounded-lg bg-terminal-green/20 flex items-center justify-center border border-terminal-green/30">
+              <span class="material-symbols-outlined text-terminal-green text-lg">terminal</span>
+            </div>
+            <span class="font-mono font-bold text-lg">DEVCON<span class="text-terminal-green">/</span>docs</span>
+          </a>
+          
+          <div class="hidden md:flex items-center gap-6 text-sm">
+            <a href="#architecture" class="text-surface-200 hover:text-white transition-colors">Architecture</a>
+            <a href="#mailflow" class="text-surface-200 hover:text-white transition-colors">MailFlow</a>
+            <a href="#mailflow-addons" class="text-surface-200 hover:text-white transition-colors">Addons</a>
+            <a href="#panel" class="text-surface-200 hover:text-white transition-colors">Panel</a>
+            <a href="#fleet" class="text-surface-200 hover:text-white transition-colors">Fleet</a>
+            <a href="#api" class="text-surface-200 hover:text-white transition-colors">API</a>
+            <a href="https://github.com" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-surface-800 hover:bg-surface-700 border border-surface-700 transition-colors">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+              Source
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="flex pt-16">
+      <!-- Sidebar -->
+      <aside class="hidden lg:block w-64 fixed left-0 top-16 bottom-0 overflow-y-auto border-r border-surface-800 bg-surface-950 p-4">
+        <div class="space-y-6 text-sm">
+          <div>
+            <h3 class="font-semibold text-surface-400 uppercase text-xs tracking-wider mb-2 px-3">Overview</h3>
+            <a href="#intro" class="sidebar-link block px-3 py-1.5 text-surface-300 rounded">Introduction</a>
+            <a href="#architecture" class="sidebar-link block px-3 py-1.5 text-surface-300 rounded">Architecture</a>
+            <a href="#stack" class="sidebar-link block px-3 py-1.5 text-surface-300 rounded">Tech Stack</a>
+          </div>
+          
+          <div>
+            <h3 class="font-semibold text-surface-400 uppercase text-xs tracking-wider mb-2 px-3">MailFlow</h3>
+            <a href="#mailflow" class="sidebar-link block px-3 py-1.5 text-surface-300 rounded">Overview</a>
+            <a href="#mailflow-email" class="sidebar-link block px-3 py-1.5 text-surface-300 rounded">Email Core</a>
+            <a href="#mailflow-drive" class="sidebar-link block px-3 py-1.5 text-surface-300 rounded">Drive Storage</a>
+            <a href="#mailflow-collab" class="sidebar-link block px-3 py-1.5 text-surface-300 rounded">Collaboration</a>
+            <a href="#mailflow-boards" class="sidebar-link block px-3 py-1.5 text-surface-300 rounded">Boards PRO</a>
+            <a href="#mailflow-clients" class="sidebar-link block px-3 py-1.5 text-surface-300 rounded">CRM PRO</a>
+            <a href="#mailflow-chat" class="sidebar-link block px-3 py-1.5 text-surface-300 rounded">Chat & Video</a>
+            <a href="#mailflow-automations" class="sidebar-link block px-3 py-1.5 text-surface-300 rounded">Automations</a>
+            <a href="#mailflow-marketing" class="sidebar-link block px-3 py-1.5 text-surface-300 rounded">Email Marketing</a>
+            <a href="#mailflow-addons" class="sidebar-link block px-3 py-1.5 text-surface-300 rounded">Modular Addons</a>
+            <a href="#mailflow-i18n" class="sidebar-link block px-3 py-1.5 text-surface-300 rounded">Multilingual</a>
+          </div>
+          
+          <div>
+            <h3 class="font-semibold text-surface-400 uppercase text-xs tracking-wider mb-2 px-3">DEVCON Panel</h3>
+            <a href="#panel" class="sidebar-link block px-3 py-1.5 text-surface-300 rounded">Overview</a>
+            <a href="#panel-services" class="sidebar-link block px-3 py-1.5 text-surface-300 rounded">Services</a>
+            <a href="#panel-security" class="sidebar-link block px-3 py-1.5 text-surface-300 rounded">Security</a>
+            <a href="#panel-backups" class="sidebar-link block px-3 py-1.5 text-surface-300 rounded">Backups</a>
+          </div>
+          
+          <div>
+            <h3 class="font-semibold text-surface-400 uppercase text-xs tracking-wider mb-2 px-3">Fleet Manager</h3>
+            <a href="#fleet" class="sidebar-link block px-3 py-1.5 text-surface-300 rounded">Overview</a>
+            <a href="#fleet-provision" class="sidebar-link block px-3 py-1.5 text-surface-300 rounded">Provisioning</a>
+            <a href="#fleet-agent" class="sidebar-link block px-3 py-1.5 text-surface-300 rounded">Agent</a>
+          </div>
+          
+          <div>
+            <h3 class="font-semibold text-surface-400 uppercase text-xs tracking-wider mb-2 px-3">Reference</h3>
+            <a href="#api" class="sidebar-link block px-3 py-1.5 text-surface-300 rounded">API Endpoints</a>
+            <a href="#deployment" class="sidebar-link block px-3 py-1.5 text-surface-300 rounded">Deployment</a>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="flex-1 lg:ml-64 min-h-screen">
+        <div class="max-w-4xl mx-auto px-6 py-12">
+          
+          <!-- Hero -->
+          <section id="intro" class="doc-section mb-20 reveal">
+            <div class="terminal mb-8">
+              <div class="terminal-header">
+                <div class="terminal-dot bg-red-500"></div>
+                <div class="terminal-dot bg-yellow-500"></div>
+                <div class="terminal-dot bg-green-500"></div>
+                <span class="text-xs text-surface-400 ml-2 font-mono">devcon@fleet ~ </span>
+              </div>
+              <div class="terminal-body">
+                <div><span class="prompt">$</span> cat /etc/devcon/ecosystem.txt</div>
+                <div class="mt-2 text-terminal-green">
+                  ╔══════════════════════════════════════════════════════════════╗
+                  ║                                                              ║
+                  ║   DEVCON ECOSYSTEM - Complete Self-Hosted Infrastructure    ║
+                  ║                                                              ║
+                  ║   MailFlow ........ Business Email + Productivity Suite     ║
+                  ║     ├─ Boards PRO .. Kanban + Automations + Revenue         ║
+                  ║     ├─ CRM PRO .... Auto-discovery + Pipeline              ║
+                  ║     ├─ 15 Addons .. Modular enable/disable                 ║
+                  ║     └─ i18n ....... Multilingual (HU/EN)                   ║
+                  ║   DEVCON Panel .... VPS/Server Administration Panel         ║
+                  ║   Fleet Manager ... Multi-Server Deployment & Management    ║
+                  ║                                                              ║
+                  ║   Stack: PHP 8.3 | Vue 3 | MariaDB | OpenLiteSpeed          ║
+                  ║   License: Proprietary (One-time purchase)                   ║
+                  ║                                                              ║
+                  ╚══════════════════════════════════════════════════════════════╝
+                </div>
+                <div class="mt-4"><span class="prompt">$</span> <span class="cursor-blink">_</span></div>
+              </div>
+            </div>
+            
+            <h1 class="text-4xl md:text-5xl font-bold mb-6">
+              <span class="gradient-text">DEVCON Ecosystem</span>
+              <span class="block text-2xl md:text-3xl text-surface-400 mt-2 font-normal">Technical Documentation</span>
+            </h1>
+            
+            <p class="text-xl text-surface-300 mb-8 leading-relaxed">
+              Three interconnected applications providing complete self-hosted business infrastructure. 
+              Email, file storage, Boards PRO with automations, CRM, 15 modular addons, multilingual (HU/EN), 
+              server administration, and multi-server deployment — all on infrastructure you own and control.
+            </p>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="stack-card rounded-xl p-4 text-center">
+                <div class="text-3xl font-bold text-terminal-green">400+</div>
+                <div class="text-sm text-surface-400">API Endpoints</div>
+              </div>
+              <div class="stack-card rounded-xl p-4 text-center">
+                <div class="text-3xl font-bold text-terminal-blue">3</div>
+                <div class="text-sm text-surface-400">Applications</div>
+              </div>
+              <div class="stack-card rounded-xl p-4 text-center">
+                <div class="text-3xl font-bold text-terminal-orange">15</div>
+                <div class="text-sm text-surface-400">Modular Addons</div>
+              </div>
+              <div class="stack-card rounded-xl p-4 text-center">
+                <div class="text-3xl font-bold text-terminal-purple">100%</div>
+                <div class="text-sm text-surface-400">Self-Hosted</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Architecture -->
+          <section id="architecture" class="doc-section mb-20 reveal">
+            <h2 class="text-3xl font-bold mb-6 flex items-center gap-3">
+              <span class="material-symbols-outlined text-terminal-green">account_tree</span>
+              Architecture
+            </h2>
+            
+            <div class="terminal mb-6">
+              <div class="terminal-header">
+                <span class="text-xs text-surface-400 font-mono">architecture.diagram</span>
+              </div>
+              <div class="terminal-body text-xs leading-relaxed whitespace-pre">
+<span class="comment">                        ┌─────────────────────────────────────┐</span>
+<span class="comment">                        │</span>       <span class="function">Fleet Manager</span>                   <span class="comment">│</span>
+<span class="comment">                        │</span>    <span class="string">fleet.devcon1.hu</span>                  <span class="comment">│</span>
+<span class="comment">                        │</span>                                     <span class="comment">│</span>
+<span class="comment">                        │</span>  - Multi-server deployment          <span class="comment">│</span>
+<span class="comment">                        │</span>  - Blueprint management              <span class="comment">│</span>
+<span class="comment">                        │</span>  - Real-time monitoring              <span class="comment">│</span>
+<span class="comment">                        └───────────────┬─────────────────────┘</span>
+<span class="comment">                                        │</span>
+<span class="comment">           ┌────────────────────────────┼────────────────────────────┐</span>
+<span class="comment">           │                            │                            │</span>
+<span class="comment">           ▼                            ▼                            ▼</span>
+<span class="comment">┌──────────────────────┐  ┌──────────────────────┐  ┌──────────────────────┐</span>
+<span class="comment">│</span>  <span class="keyword">Server 1</span>             <span class="comment">│</span>  <span class="comment">│</span>  <span class="keyword">Server 2</span>             <span class="comment">│</span>  <span class="comment">│</span>  <span class="keyword">Server N</span>             <span class="comment">│</span>
+<span class="comment">│</span>  ┌────────────────┐  <span class="comment">│</span>  <span class="comment">│</span>  ┌────────────────┐  <span class="comment">│</span>  <span class="comment">│</span>  ┌────────────────┐  <span class="comment">│</span>
+<span class="comment">│</span>  │ <span class="function">DEVCON Panel</span>   │  <span class="comment">│</span>  <span class="comment">│</span>  │ <span class="function">DEVCON Panel</span>   │  <span class="comment">│</span>  <span class="comment">│</span>  │ <span class="function">DEVCON Panel</span>   │  <span class="comment">│</span>
+<span class="comment">│</span>  │ <span class="function">MailFlow</span>       │  <span class="comment">│</span>  <span class="comment">│</span>  │ <span class="function">MailFlow</span>       │  <span class="comment">│</span>  <span class="comment">│</span>  │ <span class="function">MailFlow</span>       │  <span class="comment">│</span>
+<span class="comment">│</span>  │ <span class="variable">Fleet Agent</span>    │  <span class="comment">│</span>  <span class="comment">│</span>  │ <span class="variable">Fleet Agent</span>    │  <span class="comment">│</span>  <span class="comment">│</span>  │ <span class="variable">Fleet Agent</span>    │  <span class="comment">│</span>
+<span class="comment">│</span>  └────────────────┘  <span class="comment">│</span>  <span class="comment">│</span>  └────────────────┘  <span class="comment">│</span>  <span class="comment">│</span>  └────────────────┘  <span class="comment">│</span>
+<span class="comment">│</span>  <span class="string">OLS|MariaDB|Mail</span>   <span class="comment">│</span>  <span class="comment">│</span>  <span class="string">OLS|MariaDB|Mail</span>   <span class="comment">│</span>  <span class="comment">│</span>  <span class="string">OLS|MariaDB|Mail</span>   <span class="comment">│</span>
+<span class="comment">└──────────────────────┘  └──────────────────────┘  └──────────────────────┘</span>
+              </div>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-4">
+              <div class="stack-card rounded-xl p-5">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="material-symbols-outlined text-terminal-green">mail</span>
+                  <h3 class="font-semibold">MailFlow</h3>
+                </div>
+                <p class="text-sm text-surface-400">Business email with Boards PRO, CRM PRO, Automations, 15 modular addons, multilingual (HU/EN).</p>
+              </div>
+              <div class="stack-card rounded-xl p-5">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="material-symbols-outlined text-terminal-purple">dashboard</span>
+                  <h3 class="font-semibold">DEVCON Panel</h3>
+                </div>
+                <p class="text-sm text-surface-400">Server administration panel. Manages OLS, MariaDB, Postfix, Dovecot, security stack.</p>
+              </div>
+              <div class="stack-card rounded-xl p-5">
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="material-symbols-outlined text-terminal-blue">cloud_sync</span>
+                  <h3 class="font-semibold">Fleet Manager</h3>
+                </div>
+                <p class="text-sm text-surface-400">Multi-server orchestration. Deploy to barebone Ubuntu, monitor fleet health.</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- Tech Stack -->
+          <section id="stack" class="doc-section mb-20 reveal">
+            <h2 class="text-3xl font-bold mb-6 flex items-center gap-3">
+              <span class="material-symbols-outlined text-terminal-green">layers</span>
+              Tech Stack
+            </h2>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+              <div>
+                <h3 class="font-semibold mb-4 text-terminal-green">Backend</h3>
+                <div class="space-y-2">
+                  <div class="flex justify-between items-center py-2 px-3 bg-surface-900 rounded border border-surface-800">
+                    <span>PHP</span>
+                    <span class="font-mono text-sm text-terminal-blue">8.3</span>
+                  </div>
+                  <div class="flex justify-between items-center py-2 px-3 bg-surface-900 rounded border border-surface-800">
+                    <span>MariaDB</span>
+                    <span class="font-mono text-sm text-terminal-blue">10.11+</span>
+                  </div>
+                  <div class="flex justify-between items-center py-2 px-3 bg-surface-900 rounded border border-surface-800">
+                    <span>Node.js (Collab)</span>
+                    <span class="font-mono text-sm text-terminal-blue">18+</span>
+                  </div>
+                  <div class="flex justify-between items-center py-2 px-3 bg-surface-900 rounded border border-surface-800">
+                    <span>Redis (Optional)</span>
+                    <span class="font-mono text-sm text-terminal-blue">7+</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h3 class="font-semibold mb-4 text-terminal-purple">Frontend</h3>
+                <div class="space-y-2">
+                  <div class="flex justify-between items-center py-2 px-3 bg-surface-900 rounded border border-surface-800">
+                    <span>Vue.js</span>
+                    <span class="font-mono text-sm text-terminal-blue">3.x</span>
+                  </div>
+                  <div class="flex justify-between items-center py-2 px-3 bg-surface-900 rounded border border-surface-800">
+                    <span>Vite</span>
+                    <span class="font-mono text-sm text-terminal-blue">5.x</span>
+                  </div>
+                  <div class="flex justify-between items-center py-2 px-3 bg-surface-900 rounded border border-surface-800">
+                    <span>Tailwind CSS</span>
+                    <span class="font-mono text-sm text-terminal-blue">3.x</span>
+                  </div>
+                  <div class="flex justify-between items-center py-2 px-3 bg-surface-900 rounded border border-surface-800">
+                    <span>Pinia</span>
+                    <span class="font-mono text-sm text-terminal-blue">2.x</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <h3 class="font-semibold mb-4 mt-8 text-terminal-orange">Server Stack (Managed by Panel)</h3>
+            <div class="grid md:grid-cols-3 gap-3">
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800 text-sm">
+                <span class="text-terminal-green">Web:</span> OpenLiteSpeed
+              </div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800 text-sm">
+                <span class="text-terminal-green">SMTP:</span> Postfix
+              </div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800 text-sm">
+                <span class="text-terminal-green">IMAP:</span> Dovecot
+              </div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800 text-sm">
+                <span class="text-terminal-green">DNS:</span> PowerDNS
+              </div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800 text-sm">
+                <span class="text-terminal-green">IDS:</span> Fail2ban
+              </div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800 text-sm">
+                <span class="text-terminal-green">Firewall:</span> FirewallD
+              </div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800 text-sm">
+                <span class="text-terminal-green">WAF:</span> ModSecurity
+              </div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800 text-sm">
+                <span class="text-terminal-green">Scanner:</span> CPGuard
+              </div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800 text-sm">
+                <span class="text-terminal-green">SSL:</span> Let's Encrypt
+              </div>
+            </div>
+          </section>
+
+          <!-- MailFlow Section -->
+          <section id="mailflow" class="doc-section mb-20 reveal">
+            <div class="flex items-center gap-4 mb-6">
+              <div class="w-12 h-12 rounded-xl bg-terminal-green/20 flex items-center justify-center border border-terminal-green/30">
+                <span class="material-symbols-outlined text-terminal-green text-2xl">mail</span>
+              </div>
+              <div>
+                <h2 class="text-3xl font-bold">MailFlow</h2>
+                <p class="text-surface-400">Business Email + Productivity Suite</p>
+              </div>
+            </div>
+            
+            <p class="text-surface-300 mb-8">
+              Full-featured business webmail replacing Gmail Workspace / Outlook 365. Includes Drive storage, 
+              Calendar with Google/Microsoft sync, Boards PRO with automations, CRM PRO, Chat &amp; Video Calls, 
+              Email Marketing, Time Tracking, 15 modular addons, multilingual (HU/EN), and AI features.
+            </p>
+
+            <!-- Email Core -->
+            <div id="mailflow-email" class="mb-12">
+              <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-terminal-blue text-lg">inbox</span>
+                Email Core
+              </h3>
+              
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="border-b border-surface-800">
+                      <th class="text-left py-3 px-4 font-semibold">Feature</th>
+                      <th class="text-left py-3 px-4 font-semibold">Description</th>
+                      <th class="text-center py-3 px-4 font-semibold">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody class="text-surface-300">
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">IMAP/SMTP</td><td class="py-3 px-4">Full Postfix/Dovecot integration, any IMAP server</td><td class="py-3 px-4 text-center"><span class="feature-badge badge-complete">Complete</span></td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Conversation Threading</td><td class="py-3 px-4">Smart thread grouping with DB-backed indexing</td><td class="py-3 px-4 text-center"><span class="feature-badge badge-complete">Complete</span></td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Multi-Account</td><td class="py-3 px-4">Multiple email accounts in unified inbox</td><td class="py-3 px-4 text-center"><span class="feature-badge badge-complete">Complete</span></td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Email Tracking</td><td class="py-3 px-4">Pixel-based open/read notifications</td><td class="py-3 px-4 text-center"><span class="feature-badge badge-complete">Complete</span></td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Email Reactions</td><td class="py-3 px-4">Outlook-style emoji reactions</td><td class="py-3 px-4 text-center"><span class="feature-badge badge-complete">Complete</span></td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Server-Side Filters</td><td class="py-3 px-4">Sieve filter support with visual editor</td><td class="py-3 px-4 text-center"><span class="feature-badge badge-complete">Complete</span></td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Spam Management</td><td class="py-3 px-4">Block/safe senders, SpamAssassin integration</td><td class="py-3 px-4 text-center"><span class="feature-badge badge-complete">Complete</span></td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Labels & Folders</td><td class="py-3 px-4">Custom labels with colors, nested folders</td><td class="py-3 px-4 text-center"><span class="feature-badge badge-complete">Complete</span></td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Rich Text Compose</td><td class="py-3 px-4">Full HTML editor with inline images</td><td class="py-3 px-4 text-center"><span class="feature-badge badge-complete">Complete</span></td></tr>
+                    <tr><td class="py-3 px-4 font-medium">Unsubscribe Detection</td><td class="py-3 px-4">One-click unsubscribe from newsletters</td><td class="py-3 px-4 text-center"><span class="feature-badge badge-complete">Complete</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Drive -->
+            <div id="mailflow-drive" class="mb-12">
+              <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-terminal-orange text-lg">folder</span>
+                Drive Storage
+              </h3>
+              
+              <div class="grid md:grid-cols-2 gap-4">
+                <div class="stack-card rounded-lg p-4">
+                  <h4 class="font-medium mb-2">File Management</h4>
+                  <ul class="text-sm text-surface-400 space-y-1">
+                    <li>Upload, download, organize</li>
+                    <li>Folder sharing (view/edit)</li>
+                    <li>Password-protected public links</li>
+                    <li>File versioning & restore</li>
+                  </ul>
+                </div>
+                <div class="stack-card rounded-lg p-4">
+                  <h4 class="font-medium mb-2">Desktop Client</h4>
+                  <ul class="text-sm text-surface-400 space-y-1">
+                    <li>Electron-based (Win/Mac/Linux)</li>
+                    <li>Two-way sync</li>
+                    <li>System tray background op</li>
+                    <li>Conflict resolution</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Collaboration -->
+            <div id="mailflow-collab" class="mb-12">
+              <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-terminal-purple text-lg">edit_document</span>
+                Real-Time Collaboration
+              </h3>
+              
+              <div class="terminal mb-4">
+                <div class="terminal-header">
+                  <span class="text-xs text-surface-400 font-mono">collab-server.js</span>
+                </div>
+                <div class="terminal-body text-xs">
+<span class="comment">// Y.js CRDT-based real-time collaboration</span>
+<span class="keyword">const</span> <span class="variable">ydoc</span> = <span class="keyword">new</span> <span class="function">Y.Doc</span>()
+<span class="keyword">const</span> <span class="variable">wsProvider</span> = <span class="keyword">new</span> <span class="function">WebsocketProvider</span>(<span class="string">'wss://collab.domain.com'</span>, <span class="variable">docId</span>, <span class="variable">ydoc</span>)
+
+<span class="comment">// Supports: Documents, Presentations</span>
+<span class="comment">// Features: Presence, Cursors, Comments, Version History</span>
+                </div>
+              </div>
+              
+              <p class="text-sm text-surface-400">
+                Google Docs-style editing powered by Y.js CRDT. Node.js WebSocket server handles presence and awareness. 
+                Supports documents and presentations with version history and inline comments.
+              </p>
+            </div>
+
+            <!-- Boards PRO -->
+            <div id="mailflow-boards" class="mb-12">
+              <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-terminal-blue text-lg">dashboard</span>
+                Boards PRO
+                <span class="feature-badge badge-complete">PRO</span>
+              </h3>
+              
+              <p class="text-sm text-surface-400 mb-4">
+                Advanced project management with Kanban boards, built-in automations, revenue tracking, 
+                executive dashboards, and deep email integration. Replaces Trello + project management tools.
+              </p>
+              
+              <div class="overflow-x-auto mb-6">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="border-b border-surface-800">
+                      <th class="text-left py-3 px-4 font-semibold">Feature</th>
+                      <th class="text-left py-3 px-4 font-semibold">Description</th>
+                      <th class="text-center py-3 px-4 font-semibold">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody class="text-surface-300">
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Kanban Boards</td><td class="py-3 px-4">Trello-style drag & drop columns and cards</td><td class="py-3 px-4 text-center"><span class="feature-badge badge-complete">Complete</span></td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Automations</td><td class="py-3 px-4">Rule-based triggers: card moved, due date, status change → actions</td><td class="py-3 px-4 text-center"><span class="feature-badge badge-complete">Complete</span></td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Email-to-Card Rules</td><td class="py-3 px-4">Auto-create cards from incoming emails by sender, subject, label</td><td class="py-3 px-4 text-center"><span class="feature-badge badge-complete">Complete</span></td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Revenue Tracking</td><td class="py-3 px-4">Track revenue per board, per card, per client</td><td class="py-3 px-4 text-center"><span class="feature-badge badge-complete">Complete</span></td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Executive Dashboard</td><td class="py-3 px-4">Aggregated metrics, progress charts, team performance</td><td class="py-3 px-4 text-center"><span class="feature-badge badge-complete">Complete</span></td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Mood Board Split View</td><td class="py-3 px-4">Visual inspiration boards alongside kanban workflow</td><td class="py-3 px-4 text-center"><span class="feature-badge badge-complete">Complete</span></td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Card Invoicing</td><td class="py-3 px-4">Generate invoices directly from card data</td><td class="py-3 px-4 text-center"><span class="feature-badge badge-complete">Complete</span></td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Time Tracking per Card</td><td class="py-3 px-4">Built-in timer with per-card and per-member tracking</td><td class="py-3 px-4 text-center"><span class="feature-badge badge-complete">Complete</span></td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Cards with Checklists</td><td class="py-3 px-4">Nested checklists, due dates, labels, attachments</td><td class="py-3 px-4 text-center"><span class="feature-badge badge-complete">Complete</span></td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Email Linking</td><td class="py-3 px-4">Link emails to cards, view thread context on board</td><td class="py-3 px-4 text-center"><span class="feature-badge badge-complete">Complete</span></td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Client-Linked Boards</td><td class="py-3 px-4">CRM integration — boards linked to client records</td><td class="py-3 px-4 text-center"><span class="feature-badge badge-complete">Complete</span></td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Milestones</td><td class="py-3 px-4">Set milestones with progress tracking per board</td><td class="py-3 px-4 text-center"><span class="feature-badge badge-complete">Complete</span></td></tr>
+                    <tr><td class="py-3 px-4 font-medium">Activity Log</td><td class="py-3 px-4">Full audit trail of all card/board changes</td><td class="py-3 px-4 text-center"><span class="feature-badge badge-complete">Complete</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="terminal">
+                <div class="terminal-header">
+                  <span class="text-xs text-surface-400 font-mono">board-automation-example.json</span>
+                </div>
+                <div class="terminal-body text-xs">
+{
+  <span class="string">"trigger"</span>: <span class="string">"card_moved"</span>,
+  <span class="string">"conditions"</span>: {
+    <span class="string">"to_column"</span>: <span class="string">"Done"</span>,
+    <span class="string">"has_label"</span>: <span class="string">"billable"</span>
+  },
+  <span class="string">"actions"</span>: [
+    { <span class="string">"type"</span>: <span class="string">"send_notification"</span>, <span class="string">"to"</span>: <span class="string">"board_owner"</span> },
+    { <span class="string">"type"</span>: <span class="string">"generate_invoice"</span> },
+    { <span class="string">"type"</span>: <span class="string">"update_revenue"</span>, <span class="string">"source"</span>: <span class="string">"card_value"</span> }
+  ]
+}
+                </div>
+              </div>
+            </div>
+
+            <!-- CRM PRO -->
+            <div id="mailflow-clients" class="mb-12">
+              <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-terminal-green text-lg">groups</span>
+                CRM PRO
+                <span class="feature-badge badge-complete">PRO</span>
+              </h3>
+              
+              <p class="text-sm text-surface-400 mb-4">
+                Auto-generated CRM from email activity. Contacts are auto-discovered from email domains. 
+                Tracks all conversations, time spent, linked projects, and financials. Cross-module automations 
+                with Boards PRO — auto-create boards from new clients, trigger CRM updates from card actions.
+              </p>
+              
+              <div class="grid md:grid-cols-2 gap-3 text-sm">
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Auto-discovery from emails</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Email history per client</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Time tracking</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Linked Boards PRO</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Drive folders per client</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Financial tracking</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Signature extraction</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Status indicators</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Cross-module automations</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Pipeline management</div>
+              </div>
+            </div>
+
+            <!-- Chat & Video Calls -->
+            <div id="mailflow-chat" class="mb-12">
+              <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-terminal-purple text-lg">forum</span>
+                Chat & Video Calls
+              </h3>
+              
+              <p class="text-sm text-surface-400 mb-4">
+                Built-in team communication replacing Slack and Zoom. Real-time messaging with channels, 
+                direct messages, and WebRTC-based video/voice calls with TURN/STUN support.
+              </p>
+              
+              <div class="grid md:grid-cols-2 gap-4">
+                <div class="stack-card rounded-lg p-4">
+                  <h4 class="font-medium mb-2 text-terminal-purple">Team Chat</h4>
+                  <ul class="text-sm text-surface-400 space-y-1">
+                    <li>Public & private channels</li>
+                    <li>Direct messages</li>
+                    <li>File sharing & attachments</li>
+                    <li>Message reactions & threads</li>
+                    <li>Typing indicators & presence</li>
+                    <li>Search across all messages</li>
+                  </ul>
+                </div>
+                <div class="stack-card rounded-lg p-4">
+                  <h4 class="font-medium mb-2 text-terminal-blue">Video Calls</h4>
+                  <ul class="text-sm text-surface-400 space-y-1">
+                    <li>WebRTC peer-to-peer</li>
+                    <li>TURN/STUN server support</li>
+                    <li>Screen sharing</li>
+                    <li>Multi-participant conferences</li>
+                    <li>In-call chat</li>
+                    <li>Audio-only mode</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Automations -->
+            <div id="mailflow-automations" class="mb-12">
+              <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-terminal-orange text-lg">bolt</span>
+                Automations Engine
+              </h3>
+              
+              <p class="text-sm text-surface-400 mb-4">
+                Cross-module automation system spanning Boards PRO and CRM PRO. Rule-based triggers 
+                with conditional logic and chained actions. No external tools needed.
+              </p>
+              
+              <div class="overflow-x-auto mb-6">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="border-b border-surface-800">
+                      <th class="text-left py-3 px-4 font-semibold">Trigger</th>
+                      <th class="text-left py-3 px-4 font-semibold">Actions</th>
+                      <th class="text-left py-3 px-4 font-semibold">Module</th>
+                    </tr>
+                  </thead>
+                  <tbody class="text-surface-300">
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Card Moved</td><td class="py-3 px-4">Send notification, update revenue, generate invoice</td><td class="py-3 px-4"><span class="feature-badge badge-complete">Boards</span></td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Due Date Reached</td><td class="py-3 px-4">Send reminder, move card, escalate to owner</td><td class="py-3 px-4"><span class="feature-badge badge-complete">Boards</span></td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Email Received</td><td class="py-3 px-4">Create card, assign to board, tag with label</td><td class="py-3 px-4"><span class="feature-badge badge-complete">Boards</span></td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">New Client Created</td><td class="py-3 px-4">Create board, assign template, send welcome email</td><td class="py-3 px-4"><span class="feature-badge badge-complete">CRM</span></td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Status Changed</td><td class="py-3 px-4">Update CRM record, notify team, log activity</td><td class="py-3 px-4"><span class="feature-badge badge-complete">CRM</span></td></tr>
+                    <tr><td class="py-3 px-4 font-medium">Label Applied</td><td class="py-3 px-4">Move card, assign member, trigger webhook</td><td class="py-3 px-4"><span class="feature-badge badge-complete">Both</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Email Marketing -->
+            <div id="mailflow-marketing" class="mb-12">
+              <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-terminal-red text-lg">campaign</span>
+                Email Marketing
+              </h3>
+              
+              <div class="grid md:grid-cols-3 gap-3 text-sm">
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Campaign builder</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Contact lists & segments</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">HTML templates</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Open/click tracking</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Bounce management</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Unsubscribe handling</div>
+              </div>
+            </div>
+
+            <!-- Modular Addons -->
+            <div id="mailflow-addons" class="mb-12">
+              <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-terminal-green text-lg">extension</span>
+                Modular Addons Architecture
+              </h3>
+              
+              <p class="text-sm text-surface-400 mb-4">
+                All features are delivered as modular addons that can be individually enabled or disabled 
+                by the admin. Each addon registers its own routes, components, sidebar entries, and API endpoints.
+                The addon system uses a composable (<code class="text-terminal-green">useAddons.js</code>) for runtime 
+                feature flag checks.
+              </p>
+
+              <div class="terminal mb-4">
+                <div class="terminal-header">
+                  <span class="text-xs text-surface-400 font-mono">useAddons.js — addon feature flags</span>
+                </div>
+                <div class="terminal-body text-xs">
+<span class="comment">// Composable for checking addon state</span>
+<span class="keyword">export function</span> <span class="function">useAddons</span>() {
+  <span class="keyword">const</span> <span class="variable">isAddonEnabled</span> = (<span class="variable">addonSlug</span>) => {
+    <span class="keyword">return</span> <span class="variable">enabledAddons</span>.<span class="function">value</span>.<span class="function">includes</span>(<span class="variable">addonSlug</span>)
+  }
+  <span class="keyword">return</span> { <span class="variable">isAddonEnabled</span>, <span class="variable">enabledAddons</span>, <span class="variable">addonList</span> }
+}
+                </div>
+              </div>
+              
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="border-b border-surface-800">
+                      <th class="text-left py-3 px-4 font-semibold">Addon</th>
+                      <th class="text-left py-3 px-4 font-semibold">Slug</th>
+                      <th class="text-left py-3 px-4 font-semibold">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody class="text-surface-300">
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Email</td><td class="py-3 px-4 font-mono text-xs text-terminal-green">email</td><td class="py-3 px-4">Core email client (IMAP/SMTP)</td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Team Chat</td><td class="py-3 px-4 font-mono text-xs text-terminal-green">chat</td><td class="py-3 px-4">Real-time messaging & channels</td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Kanban Boards</td><td class="py-3 px-4 font-mono text-xs text-terminal-green">kanban_boards</td><td class="py-3 px-4">Basic kanban project boards</td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Board PRO</td><td class="py-3 px-4 font-mono text-xs text-terminal-green">board_pro</td><td class="py-3 px-4">Automations, revenue, executive dashboard</td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">CRM PRO</td><td class="py-3 px-4 font-mono text-xs text-terminal-green">crm_pro</td><td class="py-3 px-4">Advanced CRM with pipeline & automations</td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Moodboards</td><td class="py-3 px-4 font-mono text-xs text-terminal-green">moodboards</td><td class="py-3 px-4">Visual inspiration boards with split view</td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Calendar</td><td class="py-3 px-4 font-mono text-xs text-terminal-green">calendar</td><td class="py-3 px-4">Google/Microsoft CalDAV sync</td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Drive</td><td class="py-3 px-4 font-mono text-xs text-terminal-green">drive</td><td class="py-3 px-4">File storage, sharing, desktop sync</td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Email Tracking</td><td class="py-3 px-4 font-mono text-xs text-terminal-green">email_tracking</td><td class="py-3 px-4">Open/read pixel tracking</td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Time Tracker</td><td class="py-3 px-4 font-mono text-xs text-terminal-green">time_tracker</td><td class="py-3 px-4">Per-task and per-client time logging</td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Email Marketing</td><td class="py-3 px-4 font-mono text-xs text-terminal-green">email_marketing</td><td class="py-3 px-4">Campaigns, lists, templates</td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Tasks</td><td class="py-3 px-4 font-mono text-xs text-terminal-green">tasks</td><td class="py-3 px-4">Personal & team task management</td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Team</td><td class="py-3 px-4 font-mono text-xs text-terminal-green">team</td><td class="py-3 px-4">Team management & member roles</td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium">Reactions</td><td class="py-3 px-4 font-mono text-xs text-terminal-green">reactions</td><td class="py-3 px-4">Outlook-style email emoji reactions</td></tr>
+                    <tr><td class="py-3 px-4 font-medium">AI Assistant</td><td class="py-3 px-4 font-mono text-xs text-terminal-green">ai_assistant</td><td class="py-3 px-4">AI compose, summarize, translate</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Multilingual -->
+            <div id="mailflow-i18n" class="mb-12">
+              <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-terminal-blue text-lg">translate</span>
+                Multilingual (i18n)
+              </h3>
+              
+              <p class="text-sm text-surface-400 mb-4">
+                Full internationalization using Vue i18n with lazy-loaded locale files. Currently supports 
+                English and Hungarian with per-module translation namespaces. Locale files are organized 
+                per addon for scalability.
+              </p>
+              
+              <div class="terminal mb-4">
+                <div class="terminal-header">
+                  <span class="text-xs text-surface-400 font-mono">i18n file structure</span>
+                </div>
+                <div class="terminal-body text-xs">
+<span class="prompt">$</span> tree src/i18n/locales/
+<span class="string">src/i18n/locales/</span>
+├── <span class="variable">en/</span>
+│   ├── common.json
+│   ├── email.json
+│   ├── board-pro.json
+│   ├── crm.json
+│   ├── chat.json
+│   └── ... <span class="comment">(per-addon namespace)</span>
+└── <span class="variable">hu/</span>
+    ├── common.json
+    ├── email.json
+    ├── board-pro.json
+    ├── crm.json
+    ├── chat.json
+    └── ... <span class="comment">(per-addon namespace)</span>
+
+<span class="comment"># Languages: English (en), Hungarian (hu)</span>
+<span class="comment"># Lazy-loaded at runtime per user preference</span>
+                </div>
+              </div>
+
+              <div class="grid md:grid-cols-2 gap-3 text-sm">
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Vue i18n integration</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Lazy-loaded locales</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Per-addon namespaces</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">English & Hungarian</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">User preference saved</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Extensible to more locales</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- DEVCON Panel -->
+          <section id="panel" class="doc-section mb-20 reveal">
+            <div class="flex items-center gap-4 mb-6">
+              <div class="w-12 h-12 rounded-xl bg-terminal-purple/20 flex items-center justify-center border border-terminal-purple/30">
+                <span class="material-symbols-outlined text-terminal-purple text-2xl">dashboard</span>
+              </div>
+              <div>
+                <h2 class="text-3xl font-bold">DEVCON Panel</h2>
+                <p class="text-surface-400">VPS/Server Administration</p>
+              </div>
+            </div>
+            
+            <div class="bg-terminal-orange/10 border border-terminal-orange/30 rounded-lg p-4 mb-8">
+              <h4 class="font-semibold text-terminal-orange mb-2">Security-First Architecture</h4>
+              <ul class="text-sm text-surface-300 space-y-1">
+                <li><strong>No shell exposure</strong> - Action-based API only</li>
+                <li><strong>Agent + UI separation</strong> - Privileged agent runs locally</li>
+                <li><strong>Full auditability</strong> - Every action creates backups, diffs, logs</li>
+              </ul>
+            </div>
+
+            <!-- Services -->
+            <div id="panel-services" class="mb-12">
+              <h3 class="text-xl font-semibold mb-4">Managed Services</h3>
+              
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="border-b border-surface-800">
+                      <th class="text-left py-3 px-4 font-semibold">Service</th>
+                      <th class="text-left py-3 px-4 font-semibold">Capabilities</th>
+                    </tr>
+                  </thead>
+                  <tbody class="text-surface-300">
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium text-terminal-green">OpenLiteSpeed</td><td class="py-3 px-4">Virtual hosts, SSL, listeners, rewrites, caching</td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium text-terminal-blue">MariaDB</td><td class="py-3 px-4">Databases, users, permissions, backups</td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium text-terminal-orange">Postfix</td><td class="py-3 px-4">SMTP, mail queue, domains, DKIM/SPF/DMARC</td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium text-terminal-purple">Dovecot</td><td class="py-3 px-4">IMAP, mailboxes, connections, quotas</td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium text-white">PowerDNS</td><td class="py-3 px-4">DNS zones, records, DNSSEC</td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium text-terminal-red">Fail2ban</td><td class="py-3 px-4">Jails, bans, custom rules</td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium text-terminal-orange">FirewallD</td><td class="py-3 px-4">Zones, ports, services, rich rules</td></tr>
+                    <tr class="border-b border-surface-800/50"><td class="py-3 px-4 font-medium text-terminal-red">ModSecurity</td><td class="py-3 px-4">WAF modes, rule management, audit logs</td></tr>
+                    <tr><td class="py-3 px-4 font-medium text-terminal-green">CPGuard</td><td class="py-3 px-4">Malware scanning, WAF integration</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Security -->
+            <div id="panel-security" class="mb-12">
+              <h3 class="text-xl font-semibold mb-4">Security Features</h3>
+              
+              <div class="grid md:grid-cols-2 gap-4">
+                <div class="stack-card rounded-lg p-4">
+                  <h4 class="font-medium mb-2 text-terminal-red">Access Control</h4>
+                  <ul class="text-sm text-surface-400 space-y-1">
+                    <li>Two-Factor Auth (TOTP)</li>
+                    <li>Session management</li>
+                    <li>Role-based access</li>
+                    <li>Audit logging</li>
+                  </ul>
+                </div>
+                <div class="stack-card rounded-lg p-4">
+                  <h4 class="font-medium mb-2 text-terminal-red">Server Security</h4>
+                  <ul class="text-sm text-surface-400 space-y-1">
+                    <li>Fail2ban jail management</li>
+                    <li>Firewall rule editor</li>
+                    <li>ModSecurity WAF</li>
+                    <li>CPGuard scanner</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Backups -->
+            <div id="panel-backups" class="mb-12">
+              <h3 class="text-xl font-semibold mb-4">Backup System</h3>
+              
+              <div class="grid md:grid-cols-3 gap-3 text-sm">
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Site backups (files+DB)</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Config backups</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Email backups</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Database dumps</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">NAS remote push</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Scheduled (cron)</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Backup inspection</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Selective restore</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800">Retention policies</div>
+              </div>
+            </div>
+
+            <!-- Additional Features -->
+            <div class="mb-8">
+              <h3 class="text-xl font-semibold mb-4">Additional Features</h3>
+              <div class="grid md:grid-cols-4 gap-3 text-sm">
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800 text-center">File Manager</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800 text-center">Docker Management</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800 text-center">Cron Jobs</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800 text-center">WordPress Admin</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800 text-center">IMAP Migration</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800 text-center">App Installer</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800 text-center">AI Helper</div>
+                <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800 text-center">NAS Management</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Fleet Manager -->
+          <section id="fleet" class="doc-section mb-20 reveal">
+            <div class="flex items-center gap-4 mb-6">
+              <div class="w-12 h-12 rounded-xl bg-terminal-blue/20 flex items-center justify-center border border-terminal-blue/30">
+                <span class="material-symbols-outlined text-terminal-blue text-2xl">cloud_sync</span>
+              </div>
+              <div>
+                <h2 class="text-3xl font-bold">Fleet Manager</h2>
+                <p class="text-surface-400">Multi-Server Deployment & Management</p>
+              </div>
+            </div>
+
+            <!-- Provisioning -->
+            <div id="fleet-provision" class="mb-12">
+              <h3 class="text-xl font-semibold mb-4">Provisioning Engine</h3>
+              
+              <div class="terminal mb-4">
+                <div class="terminal-header">
+                  <span class="text-xs text-surface-400 font-mono">provisioning_steps.php</span>
+                </div>
+                <div class="terminal-body text-xs">
+<span class="keyword">private const</span> <span class="variable">STEPS</span> = [
+    <span class="string">'connect'</span>          => [<span class="string">'name'</span> => <span class="string">'Connecting to server'</span>],
+    <span class="string">'system_update'</span>    => [<span class="string">'name'</span> => <span class="string">'Updating system packages'</span>],
+    <span class="string">'install_deps'</span>     => [<span class="string">'name'</span> => <span class="string">'Installing dependencies'</span>],
+    <span class="string">'install_ols'</span>      => [<span class="string">'name'</span> => <span class="string">'Installing OpenLiteSpeed'</span>],
+    <span class="string">'deploy_vhosts'</span>    => [<span class="string">'name'</span> => <span class="string">'Creating vhost configs'</span>],
+    <span class="string">'install_php'</span>      => [<span class="string">'name'</span> => <span class="string">'Installing PHP 8.3'</span>],
+    <span class="string">'install_mariadb'</span>  => [<span class="string">'name'</span> => <span class="string">'Installing MariaDB'</span>],
+    <span class="string">'install_postfix'</span>  => [<span class="string">'name'</span> => <span class="string">'Installing Postfix'</span>],
+    <span class="string">'install_dovecot'</span>  => [<span class="string">'name'</span> => <span class="string">'Installing Dovecot'</span>],
+    <span class="string">'install_security'</span> => [<span class="string">'name'</span> => <span class="string">'Installing security tools'</span>],
+    <span class="string">'deploy_panel'</span>     => [<span class="string">'name'</span> => <span class="string">'Deploying DEVCON Panel'</span>],
+    <span class="string">'deploy_email'</span>     => [<span class="string">'name'</span> => <span class="string">'Deploying MailFlow'</span>],
+    <span class="string">'install_agent'</span>    => [<span class="string">'name'</span> => <span class="string">'Installing Fleet Agent'</span>],
+    <span class="string">'setup_ssl'</span>        => [<span class="string">'name'</span> => <span class="string">'Setting up SSL'</span>],
+    <span class="string">'finalize'</span>         => [<span class="string">'name'</span> => <span class="string">'Finalizing installation'</span>],
+];
+                </div>
+              </div>
+              
+              <p class="text-sm text-surface-400">
+                One-click deployment from barebone Ubuntu 22.04 to fully configured server with Panel, 
+                MailFlow, and all services running. Idempotent execution - safe to re-run.
+              </p>
+            </div>
+
+            <!-- Agent -->
+            <div id="fleet-agent" class="mb-12">
+              <h3 class="text-xl font-semibold mb-4">Fleet Agent</h3>
+              
+              <div class="grid md:grid-cols-2 gap-4">
+                <div class="stack-card rounded-lg p-4">
+                  <h4 class="font-medium mb-2">Heartbeat (60s)</h4>
+                  <ul class="text-sm text-surface-400 space-y-1">
+                    <li>Service status reporting</li>
+                    <li>CPU, memory, disk metrics</li>
+                    <li>SSL certificate expiry</li>
+                    <li>Error log aggregation</li>
+                  </ul>
+                </div>
+                <div class="stack-card rounded-lg p-4">
+                  <h4 class="font-medium mb-2">Command Execution</h4>
+                  <ul class="text-sm text-surface-400 space-y-1">
+                    <li>Receive tasks from Fleet</li>
+                    <li>Config updates via agent</li>
+                    <li>Service restarts</li>
+                    <li>Package deployments</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Blueprint Variables -->
+            <div class="mb-8">
+              <h3 class="text-xl font-semibold mb-4">Template Variables</h3>
+              
+              <div class="terminal">
+                <div class="terminal-header">
+                  <span class="text-xs text-surface-400 font-mono">variables.json</span>
+                </div>
+                <div class="terminal-body text-xs">
+{
+  <span class="string">"{{SERVER_IP}}"</span>:       <span class="comment">"Server's IP address"</span>,
+  <span class="string">"{{SERVER_HOSTNAME}}"</span>: <span class="comment">"Server hostname"</span>,
+  <span class="string">"{{PANEL_DOMAIN}}"</span>:    <span class="comment">"panel.example.com"</span>,
+  <span class="string">"{{EMAIL_DOMAIN}}"</span>:    <span class="comment">"email.example.com"</span>,
+  <span class="string">"{{MAIL_DOMAIN}}"</span>:     <span class="comment">"example.com (MX domain)"</span>,
+  <span class="string">"{{DB_ROOT_PASS}}"</span>:    <span class="comment">"Auto-generated"</span>,
+  <span class="string">"{{PANEL_DB_PASS}}"</span>:   <span class="comment">"Auto-generated"</span>,
+  <span class="string">"{{EMAIL_DB_PASS}}"</span>:   <span class="comment">"Auto-generated"</span>
+}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- API Reference -->
+          <section id="api" class="doc-section mb-20 reveal">
+            <h2 class="text-3xl font-bold mb-6 flex items-center gap-3">
+              <span class="material-symbols-outlined text-terminal-green">api</span>
+              API Reference
+            </h2>
+            
+            <div class="grid md:grid-cols-3 gap-6 mb-8">
+              <div class="stack-card rounded-lg p-4 text-center">
+                <div class="text-2xl font-bold text-terminal-green">200+</div>
+                <div class="text-sm text-surface-400">MailFlow Endpoints</div>
+              </div>
+              <div class="stack-card rounded-lg p-4 text-center">
+                <div class="text-2xl font-bold text-terminal-purple">150+</div>
+                <div class="text-sm text-surface-400">Panel Endpoints</div>
+              </div>
+              <div class="stack-card rounded-lg p-4 text-center">
+                <div class="text-2xl font-bold text-terminal-blue">50+</div>
+                <div class="text-sm text-surface-400">Fleet Endpoints</div>
+              </div>
+            </div>
+
+            <h3 class="text-xl font-semibold mb-4">MailFlow API Categories</h3>
+            <div class="grid md:grid-cols-3 gap-2 text-sm mb-8">
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800"><span class="text-terminal-green">/auth/*</span> Authentication</div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800"><span class="text-terminal-green">/mailbox/*</span> Folders, Messages</div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800"><span class="text-terminal-green">/messages/*</span> Send, Reply</div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800"><span class="text-terminal-green">/drive/*</span> Files, Sharing</div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800"><span class="text-terminal-green">/calendar/*</span> Events, Sync</div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800"><span class="text-terminal-green">/boards/*</span> Boards PRO</div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800"><span class="text-terminal-green">/clients/*</span> CRM PRO</div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800"><span class="text-terminal-green">/chat/*</span> Team Chat</div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800"><span class="text-terminal-green">/automations/*</span> Automations</div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800"><span class="text-terminal-green">/marketing/*</span> Email Marketing</div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800"><span class="text-terminal-green">/addons/*</span> Addon Management</div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800"><span class="text-terminal-green">/ai/*</span> AI Features</div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800"><span class="text-terminal-green">/time-tracker/*</span> Time Tracking</div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800"><span class="text-terminal-green">/tasks/*</span> Task Management</div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800"><span class="text-terminal-green">/statistics/*</span> Analytics</div>
+            </div>
+
+            <h3 class="text-xl font-semibold mb-4">Panel API Categories</h3>
+            <div class="grid md:grid-cols-3 gap-2 text-sm">
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800"><span class="text-terminal-purple">/api/sites/*</span> Virtual Hosts</div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800"><span class="text-terminal-purple">/api/ssl/*</span> Certificates</div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800"><span class="text-terminal-purple">/api/databases/*</span> MySQL</div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800"><span class="text-terminal-purple">/api/mail/*</span> Email Config</div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800"><span class="text-terminal-purple">/api/dns/*</span> DNS Zones</div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800"><span class="text-terminal-purple">/api/fail2ban/*</span> Security</div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800"><span class="text-terminal-purple">/api/backups/*</span> Backups</div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800"><span class="text-terminal-purple">/api/docker/*</span> Containers</div>
+              <div class="py-2 px-3 bg-surface-900 rounded border border-surface-800"><span class="text-terminal-purple">/api/ai-helper/*</span> Diagnostics</div>
+            </div>
+          </section>
+
+          <!-- Deployment -->
+          <section id="deployment" class="doc-section mb-20 reveal">
+            <h2 class="text-3xl font-bold mb-6 flex items-center gap-3">
+              <span class="material-symbols-outlined text-terminal-green">rocket_launch</span>
+              Deployment
+            </h2>
+            
+            <div class="terminal mb-6">
+              <div class="terminal-header">
+                <span class="text-xs text-surface-400 font-mono">deployment paths</span>
+              </div>
+              <div class="terminal-body text-xs">
+<span class="comment"># Production Paths</span>
+<span class="variable">PANEL_PATH</span>=<span class="string">"/var/www/vps-admin"</span>
+<span class="variable">EMAIL_PATH</span>=<span class="string">"/var/www/vps-email"</span>
+<span class="variable">FLEET_PATH</span>=<span class="string">"/var/www/vps-fleet"</span>
+
+<span class="comment"># Agent Services (systemd)</span>
+<span class="variable">PANEL_AGENT</span>=<span class="string">"vpsadmin-agent.service"</span>
+<span class="variable">FLEET_AGENT</span>=<span class="string">"fleet-agent.service"</span>
+<span class="variable">COLLAB_SERVER</span>=<span class="string">"collab-server.service"</span>
+
+<span class="comment"># URLs</span>
+panel.devcon1.hu     <span class="comment"># DEVCON Panel</span>
+email.devcon1.hu     <span class="comment"># MailFlow</span>
+fleet.devcon1.hu     <span class="comment"># Fleet Manager</span>
+              </div>
+            </div>
+
+            <h3 class="text-xl font-semibold mb-4">Requirements</h3>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div class="stack-card rounded-lg p-4">
+                <h4 class="font-medium mb-2">Managed Server</h4>
+                <ul class="text-sm text-surface-400 space-y-1">
+                  <li>Ubuntu 22.04 LTS</li>
+                  <li>4GB RAM minimum (8GB recommended)</li>
+                  <li>2 vCPU minimum</li>
+                  <li>50GB SSD storage</li>
+                  <li>Public IP address</li>
+                </ul>
+              </div>
+              <div class="stack-card rounded-lg p-4">
+                <h4 class="font-medium mb-2">Fleet Manager Server</h4>
+                <ul class="text-sm text-surface-400 space-y-1">
+                  <li>PHP 8.1+</li>
+                  <li>MariaDB 10.4+</li>
+                  <li>Node.js 18+ (dashboard build)</li>
+                  <li>Composer</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+
+        </div>
+      </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="lg:ml-64 border-t border-surface-800 py-8 px-6">
+      <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-surface-500">
+        <div>2026 DEVCON Ecosystem. Built for developers who own their infrastructure.</div>
+        <div class="flex items-center gap-4">
+          <a href="index.html" class="hover:text-white transition-colors">Main Site</a>
+          <a href="business.html" class="hover:text-white transition-colors">For Business</a>
+          <a href="managed.html" class="hover:text-white transition-colors">Managed Hosting</a>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Reveal animations
+      const reveals = document.querySelectorAll('.reveal');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) entry.target.classList.add('visible');
+        });
+      }, { threshold: 0.1 });
+      reveals.forEach(el => observer.observe(el));
+
+      // Progress bar
+      window.addEventListener('scroll', () => {
+        const winScroll = document.documentElement.scrollTop;
+        const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        document.getElementById('progress-bar').style.width = (winScroll / height * 100) + '%';
+      });
+
+      // Active sidebar link
+      const sections = document.querySelectorAll('.doc-section');
+      const sidebarLinks = document.querySelectorAll('.sidebar-link');
+      
+      window.addEventListener('scroll', () => {
+        let current = '';
+        sections.forEach(section => {
+          const sectionTop = section.offsetTop;
+          if (scrollY >= sectionTop - 150) current = section.getAttribute('id');
+        });
+        
+        sidebarLinks.forEach(link => {
+          link.classList.remove('active');
+          if (link.getAttribute('href') === '#' + current) link.classList.add('active');
+        });
+      });
+
+      // Smooth scroll
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute('href'));
+          if (target) target.scrollIntoView({ behavior: 'smooth' });
+        });
+      });
+    </script>
+  </body>
+</html>
+
+

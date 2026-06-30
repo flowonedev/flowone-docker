@@ -1,0 +1,154 @@
+# Dovecot main configuration
+# Template for Fleet Manager deployment
+# Variables: {{MAIL_DOMAIN}}
+#
+# Mirrors the reference (production) server: Maildir under
+# /home/vmail/<domain>/<user>/Maildir, "INBOX." namespace with "." separator,
+# delivery via the Dovecot LDA (Postfix "dovecot" pipe transport), POP3 +
+# ManageSieve enabled. The mail security learn loop (imap_sieve plugin wiring,
+# /etc/dovecot/conf.d/99-devcon-mailsec*.conf) is installed at RUNTIME by the
+# panel agent - do not add it here.
+
+# Protocols (sieve = ManageSieve on 4190, used by webmail filter management)
+protocols = imap pop3 sieve
+
+# Logging
+log_timestamp = "%Y-%m-%d %H:%M:%S "
+login_greeting = Mail Server Ready
+
+# SSL
+ssl = required
+ssl_cert = </etc/letsencrypt/live/{{MAIL_DOMAIN}}/fullchain.pem
+ssl_key = </etc/letsencrypt/live/{{MAIL_DOMAIN}}/privkey.pem
+ssl_min_protocol = TLSv1.2
+ssl_prefer_server_ciphers = yes
+
+# Mail location - uid/gid come from the SQL userdb (5000 = vmail)
+mail_location = maildir:/home/vmail/%d/%n/Maildir
+mail_max_userip_connections = 50
+mail_plugins = zlib
+
+# Namespace - legacy "INBOX." prefix layout with "." separator (folders live as
+# .Sent/.Junk/... maildirs). The webmail app and the mail security learn loop
+# (Junk / INBOX.Junk watchers) are built around this layout.
+namespace {
+    type = private
+    inbox = yes
+    prefix = INBOX.
+    separator = .
+    location =
+
+    mailbox Drafts {
+        auto = subscribe
+        special_use = \Drafts
+    }
+    mailbox Sent {
+        auto = subscribe
+        special_use = \Sent
+    }
+    mailbox Trash {
+        auto = subscribe
+        special_use = \Trash
+    }
+    mailbox Junk {
+        auto = subscribe
+        special_use = \Junk
+    }
+    mailbox Archive {
+        auto = subscribe
+        special_use = \Archive
+    }
+}
+
+# Authentication
+auth_mechanisms = plain login
+disable_plaintext_auth = yes
+
+passdb {
+    driver = sql
+    args = /etc/dovecot/dovecot-sql.conf.ext
+}
+
+userdb {
+    driver = sql
+    args = /etc/dovecot/dovecot-sql.conf.ext
+}
+
+# Service configuration
+service imap-login {
+    inet_listener imap {
+        port = 143
+    }
+    inet_listener imaps {
+        port = 993
+        ssl = yes
+    }
+}
+
+service auth {
+    user = root
+    unix_listener /var/spool/postfix/private/auth {
+        mode = 0666
+        user = postfix
+        group = postfix
+    }
+    # Used by the LDA (deliver) for userdb lookups
+    unix_listener auth-master {
+        mode = 0600
+        user = vmail
+    }
+}
+
+service auth-worker {
+    user = root
+}
+
+service stats {
+    unix_listener stats-reader {
+        user = vmail
+        group = vmail
+        mode = 0660
+    }
+    unix_listener stats-writer {
+        user = vmail
+        group = vmail
+        mode = 0660
+    }
+}
+
+# Sieve "vacation" / "redirect" sends mail through the local Postfix
+submission_host = 127.0.0.1:25
+
+# Delivery (Postfix "dovecot" pipe transport -> dovecot-lda). Sieve runs here:
+# per-user webmail filters, then the global after-script.
+protocol lda {
+    auth_socket_path = /var/run/dovecot/auth-master
+    postmaster_address = postmaster@{{MAIL_DOMAIN}}
+    mail_plugins = zlib sieve
+    log_path = /home/vmail/dovecot-deliver.log
+}
+
+protocol imap {
+    mail_plugins = zlib imap_zlib
+}
+
+protocol pop3 {
+    mail_plugins = zlib
+    pop3_uidl_format = %08Xu%08Xv
+}
+
+plugin {
+    # Personal Sieve storage: named scripts live in ~/sieve, and the ACTIVE script
+    # symlink is also kept INSIDE ~/sieve (not in the mailbox home root). On layouts
+    # where the userdb home == the Maildir namespace root (separator "."), a
+    # ~/.dovecot.sieve symlink sitting among the .Folder dirs makes Dovecot's maildir
+    # lister probe it as a mailbox and log on every IMAP enumeration:
+    #   stat(~/.dovecot.sieve/tmp) failed: Not a directory
+    # Placing the active link under ~/sieve/ keeps it out of the namespace root.
+    sieve = file:~/sieve;active=~/sieve/.dovecot.sieve
+    sieve_after = /home/vmail/global.sieve
+
+    # Compressed mail storage
+    zlib_save = gz
+    zlib_save_level = 6
+}

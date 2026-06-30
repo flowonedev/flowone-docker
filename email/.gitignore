@@ -1,0 +1,18 @@
+node_modules/
+FlowOneEmail/node_modules/
+dist/
+build/
+.env
+.DS_Store
+release/
+FlowOneEmail/release/
+FlowOneDrive/release/
+*.exe
+*.asar
+
+# Dev-only local config overrides. Must NEVER be uploaded to production.
+# (If uploaded, it overrides smtp.host / imap.host / session.secure with
+# dev values that break outbound mail and HTTPS cookies on the VPS.)
+backend/src/config.local.php
+src/config.local.php
+config.local.php

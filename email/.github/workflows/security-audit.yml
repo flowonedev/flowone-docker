@@ -1,0 +1,86 @@
+name: Security Audit
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    # Run weekly on Monday at 08:00 UTC
+    - cron: '0 8 * * 1'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  frontend-audit:
+    name: Frontend Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Audit frontend packages
+        working-directory: frontend
+        run: |
+          npm ci --ignore-scripts
+          npm audit --audit-level=high
+        continue-on-error: false
+
+  backend-audit:
+    name: Backend Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer
+
+      - name: Audit backend packages
+        working-directory: backend
+        run: |
+          composer install --no-dev --no-interaction
+          composer audit --format=plain
+        continue-on-error: false
+
+  drive-audit:
+    name: FlowOneDrive Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Audit FlowOneDrive packages
+        working-directory: FlowOneDrive
+        run: |
+          npm ci --ignore-scripts
+          npm audit --audit-level=high
+        continue-on-error: false
+
+  desktop-audit:
+    name: FlowOneEmail Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Audit FlowOneEmail packages
+        working-directory: FlowOneEmail
+        run: |
+          npm ci --ignore-scripts
+          npm audit --audit-level=high
+        continue-on-error: false
+

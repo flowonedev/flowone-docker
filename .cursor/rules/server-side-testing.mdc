@@ -1,0 +1,107 @@
+---
+description: Mandate server-side test scripts for every new system or system fix
+alwaysApply: true
+---
+
+# Server-Side Test Scripts
+
+## The Rule
+
+Every new system, feature, or bug fix that touches backend logic MUST include a **runnable server-side test script** (PHP or shell). No exceptions. Tests run on the server via CLI, never in the browser.
+
+## When to Create a Test
+
+- Building a new system or subsystem (email, drive, sync, cron, etc.)
+- Fixing a bug in an existing system
+- Adding a new integration (OAuth, webhook, API, etc.)
+- Changing database schema or migrations
+- Modifying cron jobs or background processes
+- Touching encryption, auth, or credentials
+
+## Test Script Requirements
+
+### Format
+- **PHP** (`#!/usr/bin/env php`) or **Shell** (`#!/bin/bash`) -- whichever matches the system under test
+- Must run from CLI only (`php_sapi_name() !== 'cli'` guard for PHP)
+- Must accept `--help` with usage instructions
+- Must accept `--verbose` for extra debug output
+
+### Required CLI Flags
+- `--help` -- usage instructions
+- `--verbose` -- extra debug output (stack traces, raw responses)
+- `--skip-send` (or equivalent) -- skip destructive/external operations
+- `--only=group1,group2` -- run only specific test categories
+- `--smoke` -- quick health check mode (connectivity + config only, no business logic)
+- `--json` -- output results as JSON (for automation/monitoring)
+
+### Structure
+- Use the cron bootstrap (`require_once __DIR__ . '/../cron/bootstrap.php'`) so `.env` and autoloader are available
+- Accept credentials via CLI args (`--email=`, `--password=`, etc.), never hardcode them in the script
+- Group tests by category with section headers (`--- N. CATEGORY ---`)
+- Each test is a named callable with pass/fail/warn outcome and elapsed time
+
+### Pre-Flight Checks (run before any tests)
+- Verify required PHP extensions are loaded (`imap`, `redis`, `openssl`, `mbstring`, etc.)
+- Verify required services are reachable (DB, Redis, IMAP, SMTP)
+- Verify sufficient disk space in temp and storage directories
+- Verify required config values are present and non-empty
+- If any pre-flight fails, abort early with a clear message -- do not run tests against a broken environment
+
+### Logging
+- Every test run writes a timestamped log file to `storage/logs/` (e.g. `email-test-20260409-143022.log`)
+- Log format: `[HH:MM:SS] [PASS|FAIL|WARN] Test Name (Xms)`
+- On failure, log the error message and (in verbose mode) file + line
+- Print a summary at the end: passed, failed, warnings, total
+- List all failed tests with their error messages in the summary
+- Use color-coded terminal output: green for PASS, red for FAIL, yellow for WARN
+
+### Coverage Depth
+- Test the full chain, not just one layer (e.g. DB -> Service -> SMTP -> IMAP, not just "can I connect")
+- Test error paths: what happens with bad credentials, missing files, invalid data
+- Test roundtrips: encrypt then decrypt, schedule then retrieve, send then verify in Sent folder
+- Test permissions: directory writable, crontab entry exists, config values present
+- Clean up all test data at the end (remove test DB rows, temp files)
+
+### Safety / Non-Destructive Guarantee
+- Tests MUST NEVER modify, delete, or corrupt production data
+- All test data must use a recognizable prefix (e.g. `[FLOWONE-TEST]` in subjects, `flowone_test_` in filenames) so it can never be confused with real data
+- Cleanup MUST run even if tests fail -- use try/finally or register a shutdown handler
+- Register `pcntl_signal` handlers (SIGINT, SIGTERM) to run cleanup if the script is killed mid-run
+- Tests must be **idempotent** -- safe to run 10 times in a row with identical results
+
+### Timeout Protection
+- Individual tests should have a timeout (default 30 seconds, configurable)
+- If a test hangs (e.g. SMTP connection to a dead host), it must not block the entire suite
+- Use `set_time_limit()` or `pcntl_alarm()` per test in PHP, or `timeout` command in shell
+
+### Exit Code
+- Exit `0` on all pass
+- Exit `1` on any failure
+
+## File Location
+
+Place test scripts in `tests/` next to the system they test:
+
+```
+email/backend/tests/email-system-test.php
+email/backend/tests/drive-system-test.php
+email/backend/tests/sync-system-test.php
+```
+
+## Run Command Template
+
+Always provide the exact server run command in the script header:
+
+```
+/usr/local/lsws/lsphp83/bin/php /var/www/vps-email/backend/tests/SCRIPT.php --email=USER --password=PASS --verbose
+```
+
+## What NOT to Do
+
+- Do NOT create browser-based test pages
+- Do NOT hardcode passwords or secrets in the test file
+- Do NOT leave test data in the database after the script finishes
+- Do NOT skip logging -- every test must be traceable after the fact
+- Do NOT write tests that only check "can I connect" -- test the actual business logic end-to-end
+- Do NOT let one hanging test block the entire suite -- always use timeouts
+- Do NOT create test data without a recognizable prefix -- it must be distinguishable from real data

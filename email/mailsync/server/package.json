@@ -1,0 +1,25 @@
+{
+  "name": "mailsync-server",
+  "version": "1.0.0",
+  "description": "WebSocket server for real-time email synchronization with IMAP IDLE and Redis pub/sub",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "firebase-admin": "^14.0.0",
+    "imapflow": "^1.0.171",
+    "ioredis": "^5.3.2",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.11.0",
+    "uuid": "^14.0.0",
+    "web-push": "^3.6.7",
+    "ws": "^8.14.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

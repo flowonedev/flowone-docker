@@ -1,0 +1,214 @@
+---
+description: Migration plan for mailbox store canonical message architecture (Gmail-style)
+globs: email/frontend/src/stores/mailbox.js, email/frontend/src/composables/useConversationGrouping.js
+alwaysApply: false
+---
+
+# Mailbox Store -- Canonical Message Architecture Refactor
+
+## Problem
+
+The store has 4 overlapping data structures for messages:
+
+- `messages` (reactive array) -- current folder list
+- `threadMessages` (reactive object) -- conversation thread cache
+- `memoryCache` (Map) -- LRU body content cache
+- `messageIndex` (reactive object) -- O(1) UID lookup index
+
+The same message can exist as 3 different objects simultaneously. This causes:
+- State sync bugs (marking one copy read doesn't update others)
+- Complex merge/dedup logic (`smartMergeMessages`, `loadConversationMessagesBackground`)
+- Index rebuilds on every fetch (`rebuildMessageIndex`)
+- Cache invalidation complexity (30 `memoryCache` references)
+
+## Target Architecture
+
+One canonical message store. A message exists once in memory.
+
+```
+messagesByKey: reactive(new Map())     // folder:uid -> message object
+folderViews:   reactive(new Map())     // folder -> ordered key[]
+conversationKeys: reactive(new Map())  // convId -> ordered key[]
+```
+
+All views store only keys. UI resolves via `messagesByKey.get(key)`.
+
+## Core Helper -- `upsertMessage`
+
+All message data enters the store through a single function:
+
+```js
+function upsertMessage(msg, folder = null) {
+  const f = folder || msg.folder || currentFolder.value
+  const key = `${f}:${Number(msg.uid)}`
+  const existing = messagesByKey.get(key)
+  if (existing) {
+    // Update changed fields on the existing object (preserves Vue reactivity reference)
+    for (const [k, v] of Object.entries(msg)) {
+      if (existing[k] !== v) existing[k] = v
+    }
+  } else {
+    messagesByKey.set(key, { ...msg, folder: f })
+  }
+  return key
+}
+```
+
+Used by: fetch responses, WebSocket events, batch operations, body fetches.
+
+## Migration Steps
+
+Each step is independently deployable and testable.
+
+### Step 1 -- Add `messagesByKey` + `upsertMessage` (low risk, ~15 min)
+
+- Add `const messagesByKey = reactive(new Map())`
+- Add `upsertMessage()` helper (canonical write path from day one)
+- After each existing `rebuildMessageIndex()` call, also upsert into `messagesByKey`
+- Both old and new systems coexist with same data
+- **Risk: zero.** Nothing reads from the new map yet.
+- **Key principle:** Start with the canonical write path immediately. Don't dual-populate `rebuildMessageIndex` -- that creates throwaway coupling.
+
+### Step 2 -- Route lookups, delete `messageIndex` (~30 min)
+
+- `findMessageByUid()` reads from `messagesByKey` (direct key lookup)
+- All 8 `rebuildMessageIndex()` call sites become `upsertMessage()` loops
+- Delete `messageIndex` ref and `rebuildMessageIndex()` function
+- **Risk: low.** Same logic, different backing structure. All internal.
+
+### Step 3 -- Merge `memoryCache` into `messagesByKey` (~20 min)
+
+- Body fetches write `body_html`/`body_text` directly onto canonical objects via `upsertMessage` or direct field assignment
+- "Has body?" check: `messagesByKey.get(key)?.body_html != null`
+- Delete: `memoryCache`, `MEMORY_CACHE_MAX`, `clearMemoryCache()`, `renameFolderInCache()`, `clearFolderFromCache()`
+- **Eviction must be view-aware** (see eviction rules below)
+- **Risk: medium.** LRU eviction changes. Test body caching thoroughly.
+
+### Step 4 -- Add `folderViews`, keep `messages` as computed (~45 min)
+
+- Add `const folderViews = reactive(new Map())` -- folder name to ordered `folder:uid` key arrays
+- `messages` becomes computed alias:
+  ```js
+  const messages = computed(() =>
+    (folderViews.get(currentFolder.value) || [])
+      .map(k => messagesByKey.get(k))
+      .filter(Boolean)
+  )
+  ```
+- **Zero external file changes** -- all 13 consumer files keep reading `mailbox.messages`
+- `smartMergeMessages()` becomes a simple `upsertMessage` loop (no array diffing)
+- Folder switching instant for previously visited folders (view already populated)
+- **Performance:** The computed must depend only on `currentFolder` and the key array reference, not on individual message object fields. The existing `conversationsRefreshTrigger` handles conversation recomputation separately.
+- **Risk: medium.** Pivotal step. The computed derivation must stay performant.
+
+### Step 5 -- Replace `threadMessages` with `conversationKeys` (~60 min)
+
+- Add `const conversationKeys = reactive(new Map())` -- convId to `folder:uid` key arrays
+- `getConversationMessages(convId)` becomes:
+  ```js
+  conversationKeys.get(convId)?.map(k => messagesByKey.get(k)).filter(Boolean)
+  ```
+- `fetchThreadMessages()` populates `conversationKeys` and upserts into `messagesByKey`
+- **Keys must be sorted by timestamp** at storage time:
+  ```js
+  keys.sort((a, b) => messagesByKey.get(b)?.timestamp - messagesByKey.get(a)?.timestamp)
+  conversationKeys.set(convId, keys)
+  ```
+  Current thread code explicitly sorts (mailbox.js ~line 2140) -- this guarantee must survive the migration.
+- Simplify `useConversationGrouping.js` -- no more thread merge/dedup from `threadMessagesMap`
+- `EmailList.vue` lines ~1519-1523: change `threadMessages` invalidation to `conversationKeys.delete(id)`
+- `loadConversationMessagesBackground()` simplifies: fetch, upsert, store keys
+- `prefetchThreadBodies()` simplifies: fetch and write onto existing canonical objects
+- **Risk: highest.** Conversation grouping is the most complex consumer. Test thoroughly.
+
+### Step 6 -- Cleanup (~15 min)
+
+Delete:
+- `messageIndex` ref
+- `rebuildMessageIndex()` function (8 call sites)
+- `memoryCache` Map and all helpers (`clearMemoryCache`, `renameFolderInCache`, `clearFolderFromCache`)
+- `threadMessages` ref
+- `smartMergeMessages()` function
+- `prefetchThreadBodies()` in old form
+
+**Estimated net reduction: 600-900 lines.**
+
+## Eviction Rules
+
+Never evict messages currently visible. Build a protected set:
+
+```js
+const protectedKeys = new Set([
+  ...(folderViews.get(currentFolder.value) || []),
+  ...(currentMessage.value?.conversationKey
+    ? (conversationKeys.get(currentMessage.value.conversationKey) || [])
+    : []),
+])
+```
+
+Only keys NOT in `protectedKeys` are eligible for eviction. Simple size cap (e.g., 2000 entries) with sweep of unprotected keys when exceeded.
+
+This prevents:
+- Thread breakage (conversation key pointing to evicted message)
+- Current view corruption
+- Open message disappearing
+
+## Fetch Token Protection
+
+The existing `fetchMessagesToken` protects against folder-switch race conditions. With `folderViews`, a late-arriving response for folder A writing into `folderViews['A']` while viewing folder B is safe (doesn't affect current view). The risk is two fetches for the **same** folder overlapping. Solutions:
+- Per-folder token (or last-requested timestamp per folder)
+- The existing single token already covers most cases since `fetchMessages` sets `currentFolder` before awaiting
+
+## WebSocket Integration Update (after Step 4)
+
+In `useMailSyncIntegration.js`, update handlers to use canonical store:
+
+```
+WebSocket event arrives
+    |
+    v
+upsertMessage() into messagesByKey
+    |
+    v
+update folderViews[folder] (add/remove key)
+    |
+    v
+if folder === currentFolder -> UI updates instantly
+if folder !== currentFolder -> view is pre-warmed for next switch
+    |
+    v
+pendingFlags protects optimistic state
+conversationsRefreshTrigger bumps computed
+```
+
+Non-current folder views get pre-warmed by WebSocket events, enabling instant folder switching.
+
+## What Stays Unchanged
+
+- `pendingFlags` system (orthogonal concern)
+- `fetchMessagesToken` cancellation (still needed)
+- `conversationsRefreshTrigger` reactivity pattern (still needed for Vue computed)
+- All API endpoints and payloads
+- `selectedMessages` composite key system
+- `pagination`, `loading`, `bulkProgress`
+- `pinnedEmails`
+- All 13 external consumer files (thanks to `messages` computed alias)
+
+## Vue Reactivity Note
+
+`Map` mutations don't auto-trigger computed watchers:
+```js
+messagesByKey.get(key).seen = true  // won't trigger computed re-eval
+```
+Solution: bump `conversationsRefreshTrigger++` after mutations (already used throughout the store). The `messages` computed should depend only on `currentFolder` and key array references, not on message object fields.
+
+## External Files That Need Changes
+
+| File | Step | Change |
+|------|------|--------|
+| `stores/mailbox.js` | 1-6 | Core refactor |
+| `composables/useConversationGrouping.js` | 5 | Remove `threadMessagesMap` param, read from `messagesByKey` |
+| `components/EmailList.vue` | 5 | ~4 lines: `threadMessages` -> `conversationKeys` |
+| `composables/useMailSyncIntegration.js` | 4+ | Update handlers to upsert into canonical store |
+
+All other files (BulkActions, EmailView, EmailContextMenu, FolderTree, KeyboardShortcuts, MailboxView, labels, accounts, LabelPicker, NotificationPanel, debug-conversations) need **zero changes**.

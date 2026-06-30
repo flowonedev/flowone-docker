@@ -1,0 +1,20 @@
+[Unit]
+Description=FlowOne VPS Admin stuck-site recovery sweep (periodic)
+Documentation=file:///var/www/vps-admin/agent/site-state-recover.php
+
+[Timer]
+# Fire 90s after boot (after MariaDB and the first lease sweep), then
+# every 5 minutes. The sweeper's own 300s grace period means a row
+# must have been wedged for at least one full cadence before it is
+# touched, so a saga about to commit its terminal transition is never
+# raced.
+OnBootSec=90s
+OnUnitActiveSec=5min
+RandomizedDelaySec=15s
+AccuracySec=10s
+
+Unit=vpsadmin-site-state-recover.service
+Persistent=true
+
+[Install]
+WantedBy=timers.target

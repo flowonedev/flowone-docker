@@ -1,0 +1,267 @@
+{
+  "meta": {
+    "title": "MailFlow - Privát Üzleti Kommunikációs Platform",
+    "description": "A MailFlow egy privát, saját szerveren futó üzleti kommunikációs platform. Email, fájltárolás és munkafolyamatok — a saját szervereden. Te birtoklod az infrastruktúrát. Nulla Big Tech függőség."
+  },
+  "nav": {
+    "why_switch": "Miért Válts",
+    "features": "Funkciók",
+    "security": "Biztonság",
+    "pricing": "Árak",
+    "compare": "Összehasonlítás",
+    "log_in": "Bejelentkezés",
+    "get_started": "Kezdj Bele"
+  },
+  "hero": {
+    "badge_self_hosted": "Saját Szerver",
+    "badge_tagline": "A Te Szervered. A Te Adataid. A Te Kulcsaid.",
+    "headline": "Az Ügyfél Email Munkává Válik.",
+    "subheadline": "Amikor egy email érkezik, a MailFlow feladatokká, fájlokká, határidőkké és jelentésekké alakítja — a te tulajdonodban lévő infrastruktúrán.",
+    "subheadline_2": "Az ügyfelek normálisan emaileznek. Te rendszerezetten végrehajtasz.",
+    "cta_get_started": "Kezdj Bele",
+    "cta_watch_demo": "Demo Megtekintése",
+    "feature_projects": "Emailekből projektek lesznek",
+    "feature_calendar": "Határidők szinkronban a naptárral",
+    "feature_files": "Fájlok a munkához kapcsolódnak",
+    "feature_server": "A te szervered, a te adataid"
+  },
+  "problems": {
+    "section_title": "A SaaS Email Problémája",
+    "section_intro": "A munka emailből indul — de a SaaS email soha nem volt arra tervezve, hogy munkát hajtson végre.",
+    "section_subtitle": "A Gmail és az Outlook SaaS platformok. Hozzáférést bérelsz. Ők birtokolják az infrastruktúrát, az adatokat és a feltételeket. Amikor árat vagy szabályzatot módosítanak, nincs más választásod, mint elfogadni.",
+    "vendor_lockin_title": "Beszállítói Bezárás",
+    "vendor_lockin_desc": "Az emailjeid, névjegyeid és fájljaid csapdában vannak. Az átállás évek adatainak és munkafolyamatainak elvesztését jelenti.",
+    "per_seat_title": "Felhasználónkénti Árazás",
+    "per_seat_desc": "$6-25 felhasználónként, havonta, örökre. Egy 20 fős csapatnál ez évi $1,500-6,000 — és növekszik.",
+    "third_party_title": "Harmadik Fél Hozzáférése",
+    "third_party_desc": "Az üzleti emailjeid az ő szervereiken vannak. Az ő szabályzataiknak, adatszivárgásaiknak, megfelelési hibáiknak kitéve.",
+    "sovereignty_title": "Nincs Adatszuverenitás",
+    "sovereignty_desc": "Ismeretlen joghatóságokban tárolt adatok. Nem tudod kontrollálni, hol tárolódnak vagy ki férhet hozzájuk törvényesen."
+  },
+  "solution": {
+    "section_title": "A Tulajdonolt Infrastruktúra Alternatíva",
+    "section_subtitle": "A MailFlow a te VPS-edre települ. Te birtoklod a szervert és az adatokat. Nincs harmadik fél hozzáférés. Soha.",
+    "own_keys_title": "Te Birtoklod a Kulcsokat",
+    "own_keys_desc": "Root hozzáférés. Teljes kontroll. Mi telepítjük, konfiguráljuk, aztán átadjuk a kulcsokat. A tiéd.",
+    "flat_cost_title": "Fix Infrastruktúra Költség",
+    "flat_cost_desc": "Fizess egyszer a VPS-ért. Adj hozzá korlátlan felhasználót. Nincs felhasználónkénti díj, nincs skálázási meglepetés.",
+    "jurisdiction_title": "Válaszd a Joghatóságot",
+    "jurisdiction_desc": "Válassz VPS szolgáltatót az országodban. EU adat EU-ban marad. Teljes GDPR kontroll.",
+    "zero_access_title": "Nulla Harmadik Fél Hozzáférés",
+    "zero_access_desc": "Az adat sosem hagyja el a szerveredet. Nincs felhő függőség. Nincs szolgáltató, aki olvassa a leveled."
+  },
+  "workflow": {
+    "section_title": "Emailből Végrehajtás",
+    "section_subtitle": "A valós ügyfélkommunikáció strukturált munkává válik — feladatok, fájlok, határidők és jelentések — külön eszközök, manuális szinkronizálás vagy SaaS függőségek nélkül. A projektek ott élnek, ahol a beszélgetés kezdődött.",
+    "step_1_title": "Ügyfél Email Érkezik",
+    "step_1_desc": "Valós üzenet a postaládában",
+    "step_2_title": "Projekt Lesz Belőle",
+    "step_2_desc": "Feladatok, időegyenes, csatolt fájlok",
+    "step_3_title": "Jelentés az Ügyfélnek",
+    "step_3_desc": "Valós projekt státuszból generálva",
+    "outcome_1": "A munka valós emailekből indul",
+    "outcome_2": "Projektek a postaládához kapcsolva",
+    "outcome_3": "Határidők szinkronban a naptárral",
+    "outcome_4": "Jelentések valós státuszból",
+    "caption": "Emailből végrehajtás — minden a te szervereden."
+  },
+  "tracking": {
+    "section_title": "Email Intelligencia",
+    "section_subtitle": "Tudd, mikor nyitották meg az emaileket, mikor kattintottak linkekre, mikor töltötték le a csatolmányokat. Minden adat a szervereden tárolva.",
+    "opens_title": "Olvasási Visszaigazolás",
+    "opens_desc": "Tudd pontosan, mikor nyitották meg az emailt",
+    "clicks_title": "Link Követés",
+    "clicks_desc": "Lásd, melyik linkekre kattintottak",
+    "analytics_title": "Elemzések",
+    "analytics_desc": "Elköteleződési minták és válaszidők"
+  },
+  "multi_account": {
+    "section_title": "Egyesített Postaláda",
+    "section_subtitle": "Csatlakoztasd meglévő Gmail vagy Outlook fiókjaidat az átállás során. Kezelj minden fiókot egy felületről, majd fokozatosan szakadj el a SaaS függőségtől — vagy tartsd csatlakoztatva, ha szükséges.",
+    "feature_1": "Korlátlan külső fiók csatlakoztatása",
+    "feature_2": "Minden postaláda egységes nézetben",
+    "feature_3": "Fokozatos átállás a tempódban"
+  },
+  "filters": {
+    "section_title": "Haladó Szűrők",
+    "section_subtitle": "Szerveroldali szabályok, amik működnek, míg alszol. Automatikus rendszerezés, válasz, továbbítás az általad meghatározott feltételek alapján.",
+    "feature_1": "Korlátlan szűrési szabály",
+    "feature_2": "Komplex feltételek",
+    "feature_3": "Automatizált műveletek"
+  },
+  "tasks": {
+    "section_title": "Email Feladatok",
+    "section_subtitle": "Alakíts bármely emailt feladattá egyetlen kattintással. Határidők, prioritások és státuszkövetés — minden az eredeti beszélgetéshez kapcsolva.",
+    "feature_1": "Egykattintásos feladat létrehozás",
+    "feature_2": "Email szálhoz kapcsolva",
+    "feature_3": "Naptár integráció"
+  },
+  "analytics": {
+    "section_title": "Kommunikációs Elemzések",
+    "section_subtitle": "Értsd meg az email mintáidat. Válaszidők, csúcsidők, elköteleződési ráták — betekintés a valós kommunikációba a szervereden tárolva.",
+    "feature_1": "Válaszidő követés",
+    "feature_2": "Csúcs aktivitási órák",
+    "feature_3": "Csapat teljesítmény metrikák"
+  },
+  "drive": {
+    "section_title": "Személyes Meghajtó",
+    "section_subtitle": "Privát fájltárolás a szervereden. Email csatolmányok, projekt fájlok, dokumentumok — rendszerezve és kereshetően.",
+    "feature_1": "Korlátlan tárhely (VPS limitig)",
+    "feature_2": "Fájl verziókezelés",
+    "feature_3": "Keresés és rendszerezés"
+  },
+  "infrastructure": {
+    "layer_title": "Az Infrastruktúra Réteg",
+    "layer_subtitle": "Minden a fentiek a te tulajdonodban lévő rendszereken fut",
+    "server_title": "A Te Szervered. A Te Vállalkozásod.",
+    "server_subtitle": "A MailFlow egy általad kontrollált VPS-en fut. Mi telepítjük a teljes stacket — webszerver, mailszerver, adatbázis, biztonság. Aztán átadjuk a root hozzáférést. Ez a te infrastruktúrád.",
+    "install_title": "Mindent Mi Telepítünk és Konfigurálunk",
+    "install_desc": "Teljes telepítés a VPS-edre. OpenLiteSpeed, Dovecot, Postfix, MariaDB — minden konfigurálva és optimalizálva.",
+    "keys_title": "Te Birtoklod a Kulcsokat",
+    "keys_desc": "Root hozzáférés, teljes kontroll. Átadjuk a kulcsokat és hátralépünk. Ez a TE szervered.",
+    "zero_access_title": "Nulla Harmadik Fél Hozzáférés",
+    "zero_access_desc": "Az adat sosem hagyja el a szerveredet. Nincs felhő függőség. Teljes adatszuverenitás."
+  },
+  "panel": {
+    "section_title": "A Te Privát Üzleti Szerver OS-ed",
+    "section_subtitle": "A DEVCON Panel az üzleti infrastruktúrád irányítóközpontja. Kezeld az emailt, weboldalakat, adatbázisokat, DNS-t, SSL-t, biztonságot — mindent, amire a vállalkozásodnak szüksége van, egyetlen szerveren, amit te birtokolsz.",
+    "feature_hosting": "Multi-Site Hosting",
+    "feature_hosting_desc": "Korlátlan weboldal egy szerveren",
+    "feature_speed": "OpenLiteSpeed",
+    "feature_speed_desc": "10x gyorsabb az Apache-nál, örökre ingyenes",
+    "feature_email": "Email Szerver",
+    "feature_email_desc": "Postfix + Dovecot teljesen konfigurálva",
+    "feature_security": "Vállalati Biztonság",
+    "feature_security_desc": "Fail2ban, ModSec, CPGuard WAF"
+  },
+  "security": {
+    "section_title": "Biztonsági Stack, Amit Te Kezelsz",
+    "section_subtitle": "Fail2ban, ModSecurity WAF, CPGuard malware szkenner, firewalld — mind konfigurálva a szervereden. Te kontrollálod a biztonsági szabályzatokat. Teljes audit láthatóság.",
+    "fail2ban_title": "Fail2ban Jails",
+    "fail2ban_desc": "SSH, Postfix, Dovecot, LiteSpeed, FTP védelem",
+    "modsec_title": "ModSecurity WAF",
+    "modsec_desc": "OWASP szabályok, SQL injection és XSS megelőzés",
+    "cpguard_title": "CPGuard Szkenner",
+    "cpguard_desc": "Malware észlelés, brute force, CAPTCHA",
+    "firewall_title": "Firewalld",
+    "firewall_desc": "Zóna-alapú tűzfal gazdag szabályokkal"
+  },
+  "ai": {
+    "section_title": "Szerver Konfig Diagnosztika",
+    "section_subtitle": "Opcionálisan engedélyezhető AI-segített konfig elemzés. Alapértelmezetten kikapcsolva. Ha engedélyezed a saját API kulcsoddal, áttekinti a Postfix, Dovecot és egyéb konfigokat hibák után kutatva.",
+    "feature_1": "Alapértelmezetten kikapcsolva — csak ha szükséges",
+    "feature_2": "A saját OpenAI API kulcsodat használja — mi sosem látjuk az adataidat",
+    "feature_3": "Elemzi a szerver konfigokat biztonsági problémákra",
+    "feature_4": "Közérthető magyarázatok komplex beállításokról"
+  },
+  "backups": {
+    "section_title": "A Te Mentéseid. A Te Kontrolled.",
+    "section_subtitle": "Beépített mentési rendszer konfigokhoz, oldalakhoz és adatbázisokhoz. Tárolj helyileg vagy szinkronizálj a saját S3/SFTP célhelyedre. Teljes audit nyomvonal minden szerver műveletről.",
+    "config_title": "Konfig Mentések",
+    "config_desc": "Webszerver, virtuális hostok, PHP konfigok — mind verziókezelve",
+    "remote_title": "Távoli Tárolás",
+    "remote_desc": "Szinkronizálj mentéseket S3-ra, SFTP-re vagy bármely távoli célhelyre",
+    "audit_title": "Teljes Audit Nyomvonal",
+    "audit_desc": "Minden művelet naplózva — ki, mit, mikor, siker/hiba"
+  },
+  "security_privacy": {
+    "section_title": "Biztonság, Amit Te Kontrollálsz",
+    "section_subtitle": "Vállalati biztonsági stack, a szervereden konfigurálva. Te kezeled a hozzáférést, te állítod be a szabályzatokat, te birtoklod az audit nyomvonalat."
+  },
+  "who_for": {
+    "section_title": "Kinek Való a MailFlow",
+    "section_subtitle": "Olyan vállalkozásoknak készült, akik tulajdonjogot akarnak, nem bérleti szerződéseket.",
+    "good_1": "Ügynökségek, akik ügyfélkommunikációt kezelnek",
+    "good_2": "Tanácsadók érzékeny ügyféladatokkal",
+    "good_3": "GDPR megfelelőséget igénylő vállalkozások",
+    "good_4": "Csapatok, akik elegük van a felhasználónkénti árazásból",
+    "good_5": "Szervezetek, akik adatszuverenitást akarnak",
+    "bad_1": "Ingyenes emailt akaró felhasználók",
+    "bad_2": "Akiknek 24/7 menedzselt támogatás kell",
+    "bad_3": "Csapatok alapvető tech tudás nélkül"
+  },
+  "comparison": {
+    "section_title": "Tulajdonolt vs. Bérelt",
+    "section_subtitle": "Mit fizetsz 3 év alatt egy 20 fős csapattal",
+    "google": "Google Workspace",
+    "microsoft": "Microsoft 365",
+    "msp": "MSP / Tanácsadó",
+    "mailflow": "MailFlow",
+    "year_1": "1. Év",
+    "year_2": "2. Év",
+    "year_3": "3. Év",
+    "total": "3 Éves Összesen",
+    "per_user": "felhasználó/hó",
+    "one_time": "egyszeri",
+    "vps_cost": "+ ~€15-25/hó VPS",
+    "conclusion": "A legtöbb csapat 12-18 hónapon belül visszahozza az infrastruktúra költséget. Ezután közel nulla marginális költséggel működnek tulajdonolt rendszereken."
+  },
+  "pricing": {
+    "section_title": "Tulajdonolt Infrastruktúra Átadás",
+    "section_subtitle": "Egyszeri infrastruktúra átadás. Teljes tulajdonjogot kapsz az üzleti kommunikációs platformod felett. Opcionális menedzselt felügyelet, ha kihagyós karbantartást preferálsz.",
+    "owned_title": "Tulajdonolt Infrastruktúra Átadás",
+    "owned_price": "€3,490",
+    "owned_period": "egyszeri",
+    "owned_feature_1": "MailFlow platform",
+    "owned_feature_2": "DEVCON szerver panel",
+    "owned_feature_3": "Teljes telepítés és hardening",
+    "owned_feature_4": "Root hozzáférés átadás",
+    "owned_feature_5": "Korlátlan felhasználó",
+    "owned_feature_6": "Nincs bezárás",
+    "managed_title": "Opcionális: Menedzselt Felügyelet",
+    "managed_price": "€149",
+    "managed_period": "/ hó",
+    "managed_feature_1": "Biztonsági monitorozás",
+    "managed_feature_2": "Frissítések és javítások",
+    "managed_feature_3": "Mentések",
+    "managed_feature_4": "Incidens kezelés",
+    "managed_note": "Bármikor lemondható. Mindent megtartasz.",
+    "vps_note": "Tipikus VPS költség: €15-25/hó. Ajánljuk a Hetzner, Contabo vagy OVH szolgáltatókat európai hostinghoz."
+  },
+  "handover": {
+    "section_title": "Hogyan Működik az Átadás",
+    "step_1_title": "Konzultáció",
+    "step_1_desc": "Megbeszéljük az igényeidet és kiválasztjuk a megfelelő VPS szolgáltatót.",
+    "step_2_title": "Telepítés",
+    "step_2_desc": "Mindent beállítunk és konfigurálunk a szervereden.",
+    "step_3_title": "Tesztelés",
+    "step_3_desc": "Ellenőrizzük, hogy minden megfelelően működik.",
+    "step_4_title": "Átadás",
+    "step_4_desc": "Átadjuk a kulcsokat. Mostantól a te infrastruktúrád."
+  },
+  "cta": {
+    "title": "Készen Állsz a Saját Infrastruktúrára?",
+    "subtitle": "Hagyd abba a bérlést. Kezdj el tulajdonolni.",
+    "button": "Kezdj Bele"
+  },
+  "footer": {
+    "product": "Termék",
+    "features": "Funkciók",
+    "pricing": "Árak",
+    "compare": "Összehasonlítás",
+    "documentation": "Dokumentáció",
+    "changelog": "Változásnapló",
+    "resources": "Erőforrások",
+    "api_reference": "API Referencia",
+    "server_requirements": "Szerver Követelmények",
+    "community": "Közösség",
+    "blog": "Blog",
+    "legal": "Jogi",
+    "privacy_policy": "Adatvédelmi Szabályzat",
+    "terms_of_service": "Szolgáltatási Feltételek",
+    "contact": "Kapcsolat",
+    "copyright": "2026 MailFlow. Olyan vállalkozásoknak készült, akik birtokolják az infrastruktúrájukat."
+  },
+  "common": {
+    "unlimited_users": "Korlátlan felhasználó",
+    "root_access": "Teljes root hozzáférés",
+    "you_own_everything": "Mindent te birtokolsz",
+    "get_started": "Kezdj Bele",
+    "learn_more": "Tudj Meg Többet",
+    "contact_us": "Kapcsolat",
+    "running": "Fut",
+    "active": "Aktív",
+    "enabled": "Engedélyezve"
+  }
+}
+

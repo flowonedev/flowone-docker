@@ -1,0 +1,25 @@
+[Unit]
+Description=Fleet Manager Agent
+Documentation=https://fleet.devcon1.hu
+After=network.target
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/php /var/www/vps-fleet/agent/agent.php
+ExecStartPost=/bin/bash -c 'for i in 1 2 3 4 5; do sleep 1; [ -S /run/fleet-manager/agent.sock ] && chgrp www-data /run/fleet-manager /run/fleet-manager/agent.sock && break; done'
+ExecReload=/bin/kill -HUP $MAINPID
+PIDFile=/run/fleet-manager/agent.pid
+Restart=always
+RestartSec=5
+User=root
+Group=root
+
+# Runtime directory - created by systemd
+RuntimeDirectory=fleet-manager
+RuntimeDirectoryMode=0750
+
+# Environment
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+[Install]
+WantedBy=multi-user.target

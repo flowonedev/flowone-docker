@@ -1,0 +1,157 @@
+# SEED.sql — INITIAL DATA
+
+---
+
+# 1. CONFIG VERSION
+
+INSERT INTO config_versions (id) VALUES (1);
+
+---
+
+# 2. COMPANIES
+
+INSERT INTO companies (name) VALUES
+('Company A'),
+('Company B'),
+('Company C'),
+('Company D');
+
+---
+
+# 3. PERIODS
+
+INSERT INTO periods (year, quarter, status, config_version_id) VALUES
+(2025, 1, 'open', 1);
+
+---
+
+# 4. DATASET TYPES
+
+INSERT INTO dataset_types (name) VALUES
+('volume'),
+('flavor'),
+('sugar');
+
+---
+
+# 5. FLOW TYPES
+
+INSERT INTO flow_types (name) VALUES
+('domestic'),
+('export'),
+('import');
+
+---
+
+# 6. PACKAGING TYPES
+
+INSERT INTO packaging_types (name, config_version_id) VALUES
+('glass', 1),
+('plastic', 1);
+
+---
+
+# 7. RETURNABLE TYPES
+
+INSERT INTO returnable_types (name, config_version_id) VALUES
+('returnable', 1),
+('non_returnable', 1);
+
+---
+
+# 8. PRODUCT GROUPS (based on your Excel)
+
+INSERT INTO product_groups (name, config_version_id) VALUES
+('I. Vizek', 1),
+('II. Ízesített ásványvíz', 1),
+('III. Szénsavas üdítők', 1),
+('IV. Gyümölcslevek', 1);
+
+---
+
+# 9. SUBTYPES (example structure)
+
+-- For simplicity, A/B/C/D for each product group
+
+INSERT INTO subtypes (code, product_group_id, config_version_id) VALUES
+('A', 1, 1),
+('B', 1, 1),
+('C', 1, 1),
+('D', 1, 1),
+
+('A', 2, 1),
+('B', 2, 1),
+
+('A', 3, 1),
+('B', 3, 1),
+
+('A', 4, 1),
+('B', 4, 1);
+
+---
+
+# 10. SIZES (common industry sizes)
+
+INSERT INTO sizes (value, normalized_value, config_version_id, status) VALUES
+(0.10, 0.10, 1, 'approved'),
+(0.20, 0.20, 1, 'approved'),
+(0.25, 0.25, 1, 'approved'),
+(0.33, 0.33, 1, 'approved'),
+(0.50, 0.50, 1, 'approved'),
+(0.75, 0.75, 1, 'approved'),
+(1.00, 1.00, 1, 'approved'),
+(1.50, 1.50, 1, 'approved'),
+(2.00, 2.00, 1, 'approved');
+
+---
+
+# 11. DATASET STATES (initial)
+
+INSERT INTO dataset_states (company_id, period_id, status, version) VALUES
+(1, 1, 'draft', 1),
+(2, 1, 'draft', 1),
+(3, 1, 'draft', 1),
+(4, 1, 'draft', 1);
+
+---
+
+# 12. OPTIONAL TEST DATA (minimal example)
+
+-- One example row to test aggregation
+
+INSERT INTO entries_draft (
+company_id,
+period_id,
+dataset_type_id,
+product_group_id,
+subtype_id,
+packaging_type_id,
+returnable_type_id,
+size_id,
+flow_type_id,
+metric_type,
+value
+) VALUES (
+1, 1, 1,   -- company, period, dataset(volume)
+1, 1,      -- product_group, subtype
+1, 1,      -- packaging, returnable
+5,         -- size (0.50)
+1,         -- domestic
+'db',
+10000
+);
+
+---
+
+# NOTES
+
+* This is ONLY bootstrap data
+* Agent must support:
+
+  * adding new config dynamically
+  * approving pending config
+* Sizes can expand later (e.g. 1.25L)
+
+---
+
+END OF SEED

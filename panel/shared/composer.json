@@ -1,0 +1,18 @@
+{
+    "name": "flowone/storage",
+    "description": "FlowOne shared storage platform: privilege-separated NAS health, signed state, tiered storage, operator CLI.",
+    "type": "library",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "FlowOne\\Storage\\": "src/Storage/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    }
+}

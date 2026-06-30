@@ -1,0 +1,15 @@
+# OpenDMARC Configuration - Managed by DEVCON Fleet Manager
+# Template variables: {{MAIL_DOMAIN}}
+
+AuthservID              {{MAIL_DOMAIN}}
+TrustedAuthservIDs      {{MAIL_DOMAIN}}
+RejectFailures          false
+IgnoreMailFrom          {{MAIL_DOMAIN}}
+IgnoreAuthenticatedClients true
+RequiredHeaders         true
+SPFSelfValidate         true
+Socket                  inet:54321@localhost
+UMask                   0002
+UserID                  opendmarc:opendmarc
+PidFile                 /var/run/opendmarc/opendmarc.pid
+

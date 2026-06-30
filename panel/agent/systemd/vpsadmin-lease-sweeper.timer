@@ -1,0 +1,21 @@
+[Unit]
+Description=FlowOne VPS Admin dead-lease sweeper (periodic)
+Documentation=file:///var/www/vps-admin/agent/dead-lease-sweep.php
+
+[Timer]
+# Fire 30s after boot (gives MariaDB time to come up), then every
+# minute. 60s cadence is well below the worker's 60s LEASE_TTL_S so a
+# crashed worker's row is back in the queue within ~2 minutes of the
+# crash worst-case.
+OnBootSec=30s
+OnUnitActiveSec=1min
+# Add a tiny random skew so multiple nodes (future) don't all sweep
+# at exactly the same instant.
+RandomizedDelaySec=5s
+AccuracySec=1s
+
+Unit=vpsadmin-lease-sweeper.service
+Persistent=true
+
+[Install]
+WantedBy=timers.target

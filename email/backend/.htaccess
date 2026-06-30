@@ -1,0 +1,36 @@
+RewriteEngine On
+RewriteBase /
+
+# Redirect everything to public/index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ public/index.php [QSA,L]
+
+# Security headers
+# Note: X-Frame-Options and Content-Security-Policy are set per-request from
+# public/index.php so the news article proxy (/api/news/proxy) can opt out of
+# the global DENY and embed publisher pages in our same-origin reader iframe.
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Disable directory listing
+Options -Indexes
+
+# Protect sensitive files
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+<FilesMatch "\.(json|php|ini)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+<FilesMatch "^(index\.php)$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
+

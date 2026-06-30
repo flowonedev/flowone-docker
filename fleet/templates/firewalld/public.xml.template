@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Firewalld Public Zone Configuration
+  Template for Fleet Manager deployment
+  Variables: none (standard ports)
+-->
+<zone>
+  <short>Public</short>
+  <description>For use in public areas. Only selected incoming connections are accepted.</description>
+
+  <!-- SSH -->
+  <service name="ssh"/>
+
+  <!-- HTTP / HTTPS -->
+  <service name="http"/>
+  <service name="https"/>
+
+  <!-- SMTP -->
+  <port protocol="tcp" port="25"/>
+  <!-- SMTP Submission -->
+  <port protocol="tcp" port="587"/>
+  <!-- SMTPS -->
+  <port protocol="tcp" port="465"/>
+
+  <!-- IMAP -->
+  <port protocol="tcp" port="143"/>
+  <!-- IMAPS -->
+  <port protocol="tcp" port="993"/>
+
+  <!-- POP3 (optional) -->
+  <port protocol="tcp" port="110"/>
+  <!-- POP3S (optional) -->
+  <port protocol="tcp" port="995"/>
+
+  <!-- DNS (if local resolver) -->
+  <port protocol="tcp" port="53"/>
+  <port protocol="udp" port="53"/>
+
+  <!-- OpenLiteSpeed Admin Panel -->
+  <port protocol="tcp" port="7080"/>
+
+  <!-- coTURN STUN/TURN (WebRTC for the email app's calling) -->
+  <port protocol="tcp" port="3478"/>
+  <port protocol="udp" port="3478"/>
+  <!-- coTURN TLS (turns:) -->
+  <port protocol="tcp" port="5349"/>
+  <port protocol="udp" port="5349"/>
+  <!-- coTURN media relay range (coturn default min/max ports) -->
+  <port protocol="udp" port="49152-65535"/>
+
+  <!-- stunnel TLS tunnel (IMAPS proxy) -->
+  <port protocol="tcp" port="7443"/>
+
+  <!-- Collab WebSocket (frontend connects to wss://domain:1234 directly;
+       required for doc collab + office presence/cursors) -->
+  <port protocol="tcp" port="1234"/>
+
+  <!-- OnlyOffice Document Server (HTTPS, flowone-office container) -->
+  <port protocol="tcp" port="8443"/>
+
+  <!-- MailSync WebSocket (proxied by OLS) -->
+  <!-- <port protocol="tcp" port="1235"/> -->
+
+  <!-- Meilisearch (internal only, keep closed unless needed) -->
+  <!-- <port protocol="tcp" port="7700"/> -->
+</zone>
+

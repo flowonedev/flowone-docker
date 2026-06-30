@@ -1,0 +1,94 @@
+---
+description: Reusable mobile bottom sheet / action sheet pattern for Vue components with Tailwind CSS. Use whenever a sidebar, menu, or picker needs a mobile-friendly alternative.
+globs: **/*.vue
+alwaysApply: false
+---
+
+# Mobile Bottom Sheet Pattern
+
+When a view has a sidebar, action menu, or picker that doesn't fit on mobile, replace it with a **slide-up bottom sheet** triggered by a button (typically `more_vert` icon).
+
+## Structure
+
+```vue
+<!-- Toggle button (in header or toolbar) -->
+<button
+  v-if="isMobile"
+  @click="showSheet = true"
+  class="p-1.5 hover:bg-surface-100 dark:hover:bg-surface-700 rounded-lg transition-colors"
+>
+  <span class="material-symbols-rounded text-surface-500">more_vert</span>
+</button>
+
+<!-- Bottom sheet -->
+<Transition name="bottom-sheet">
+  <div
+    v-if="showSheet"
+    class="fixed inset-0 z-[60] bg-black/40"
+    @click.self="showSheet = false"
+  >
+    <div class="absolute bottom-0 left-0 right-0 bg-white dark:bg-surface-800 rounded-t-2xl max-h-[80vh] overflow-y-auto" style="-webkit-overflow-scrolling: touch;">
+      <!-- Drag handle -->
+      <div class="flex justify-center pt-3 pb-1 sticky top-0 bg-white dark:bg-surface-800 z-10">
+        <div class="w-10 h-1 bg-surface-300 dark:bg-surface-600 rounded-full"></div>
+      </div>
+      <!-- Content -->
+      <div class="px-4 pb-6 space-y-2">
+        <!-- Section label -->
+        <p class="text-xs font-semibold text-surface-500 uppercase tracking-wide mb-3">Section Title</p>
+        <!-- Action buttons: large touch targets, rounded-xl, icon + label -->
+        <button
+          @click="doSomething(); showSheet = false"
+          class="w-full px-3 py-3 bg-surface-100 dark:bg-surface-700 hover:bg-surface-200 dark:hover:bg-surface-600 rounded-xl text-sm text-surface-700 dark:text-surface-300 text-left flex items-center gap-3"
+        >
+          <span class="material-symbols-rounded text-lg">icon_name</span>
+          Action Label
+        </button>
+        <!-- Separator between groups -->
+        <hr class="border-surface-200 dark:border-surface-600 my-3">
+        <!-- Destructive action at bottom -->
+        <button
+          @click="dangerAction(); showSheet = false"
+          class="w-full px-3 py-3 hover:bg-red-500/10 rounded-xl text-sm text-red-600 dark:text-red-400 text-left flex items-center gap-3"
+        >
+          <span class="material-symbols-rounded text-lg">delete</span>
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</Transition>
+```
+
+## CSS Transition (scoped)
+
+```css
+.bottom-sheet-enter-active {
+  transition: opacity 0.2s ease;
+}
+.bottom-sheet-enter-active > div:last-child {
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.bottom-sheet-leave-active {
+  transition: opacity 0.15s ease;
+}
+.bottom-sheet-leave-active > div:last-child {
+  transition: transform 0.2s ease-in;
+}
+.bottom-sheet-enter-from { opacity: 0; }
+.bottom-sheet-enter-from > div:last-child { transform: translateY(100%); }
+.bottom-sheet-leave-to { opacity: 0; }
+.bottom-sheet-leave-to > div:last-child { transform: translateY(100%); }
+```
+
+## Key Rules
+
+- z-index: `z-[60]` for primary sheet, `z-[70]` for nested pickers on top
+- Backdrop: `bg-black/40` with `@click.self` to close
+- Max height: `max-h-[80vh]` (or `max-h-[60vh]` for smaller pickers)
+- Touch targets: minimum `py-3` on all buttons
+- Always include the drag handle bar at top
+- Group actions with `<hr>` dividers and uppercase section labels
+- Destructive actions (delete/archive) go last, styled in red
+- Close sheet when an action is tapped: `@click="action(); showSheet = false"`
+- Transition name can be prefixed per component to avoid conflicts (e.g. `card-sidebar-sheet`)

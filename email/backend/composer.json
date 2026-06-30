@@ -1,0 +1,45 @@
+{
+    "name": "vpsadmin/webmail",
+    "description": "Custom webmail application",
+    "type": "project",
+    "require": {
+        "php": ">=8.0",
+        "phpmailer/phpmailer": "^6.9",
+        "firebase/php-jwt": "^6.10",
+        "ezyang/htmlpurifier": "^4.17",
+        "phpoffice/phpword": "^1.1",
+        "phpoffice/phppresentation": "^1.1",
+        "phpoffice/phpspreadsheet": "^3.0",
+        "meilisearch/meilisearch-php": "^1.0",
+        "setasign/fpdi": "^2.6",
+        "tecnickcom/tcpdf": "^6.10"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Webmail\\": "src/",
+            "Collab\\": "../collab/backend/",
+            "FlowOne\\Storage\\": "../../shared/src/Storage/"
+        },
+        "files": [
+            "src/Helpers/debug.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Webmail\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "audit": {
+            "ignore": ["PKSA-y2cr-5h3j-g3ys"]
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "test:unit": "phpunit --testsuite Unit",
+        "test:integration": "phpunit --testsuite Integration"
+    }
+}

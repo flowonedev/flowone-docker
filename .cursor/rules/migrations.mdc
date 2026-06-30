@@ -1,0 +1,37 @@
+---
+description: Database migration commands and conventions for this project
+globs: email/backend/migrations/*.sql
+alwaysApply: true
+---
+
+# Database Migrations
+
+## How migrations run
+
+Migrations auto-run via `MigrationService.php` on every API request. But when giving the user the manual MySQL command, ALWAYS use this exact format:
+
+```
+mysql -u vpsadmin -p'7bcf619af819e4e274e5cfdfba022274' devc_vps_dash < /var/www/vps-email/backend/migrations/MIGRATION_FILE.sql
+```
+
+## Example
+
+For a migration file `120_mood_board_component_instances.sql`:
+
+```
+mysql -u vpsadmin -p'7bcf619af819e4e274e5cfdfba022274' devc_vps_dash < /var/www/vps-email/backend/migrations/120_mood_board_component_instances.sql
+```
+
+## Credentials
+
+- DB user: `vpsadmin`
+- DB pass: `7bcf619af819e4e274e5cfdfba022274`
+- DB name: `devc_vps_dash`
+- Server path: `/var/www/vps-email/backend/migrations/`
+
+## Rules
+
+- ALWAYS include the password inline with `-p'PASSWORD'` (no space between -p and the password)
+- NEVER use `source` command
+- NEVER use placeholder paths like `/path/to/`
+- ALWAYS provide the full ready-to-paste command with the actual filename

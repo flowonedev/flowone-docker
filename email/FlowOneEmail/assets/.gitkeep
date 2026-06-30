@@ -1,0 +1,8 @@
+# Assets folder
+# Place the following files here:
+# - icon.ico (Windows icon, 256x256)
+# - icon.icns (macOS icon)
+# - icon.png (Linux/general, 512x512)
+# - tray-icon.png (System tray icon, 16x16 or 32x32)
+# - installerSidebar.bmp (164x314 for NSIS installer)
+

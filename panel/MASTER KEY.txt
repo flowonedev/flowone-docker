@@ -1,0 +1,2 @@
+root@vps:~# base64 /etc/flowone/master.key
+5LEh9TyFJdHzatIoIFYyFqjVDm3H/PYwOGIQ5kx8FLs=
