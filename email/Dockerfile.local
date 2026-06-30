@@ -1,4 +1,4 @@
-FROM php:8.2-apache-bookworm
+FROM php:8.3-apache-bookworm
 
 RUN a2enmod rewrite
 
@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y \
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 COPY apache.local.conf /etc/apache2/sites-available/000-default.conf
+COPY opcache.local.ini /usr/local/etc/php/conf.d/zz-opcache-local.ini
 
 # Live server stores user settings/data at /var/www/vps-email/data — many
 # controllers hardcode this path. Create it here so PUT /api/settings, the

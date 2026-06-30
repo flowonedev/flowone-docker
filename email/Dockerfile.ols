@@ -1,0 +1,42 @@
+# Local OpenLiteSpeed + lsphp83 web tier — production parity.
+# Prod installs OLS + lsphp83 via fleet/installer/ols-install.sh; this image is
+# the same OLS + lsphp83 runtime (same /usr/local/lsws/lsphp83/bin/lsphp path)
+# so the backend runs under real LSAPI (fastcgi_finish_request, etc.).
+FROM litespeedtech/openlitespeed:1.8.5-lsphp83
+
+# Match the production lsphp83 extension set (see ols-install.sh).
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      lsphp83-mysql \
+      lsphp83-curl \
+      lsphp83-imap \
+      lsphp83-intl \
+      lsphp83-opcache \
+      lsphp83-redis \
+      lsphp83-imagick \
+ && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Composer available in-container (parity with the Apache dev image).
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+# Front-controller vhost + HTTP listener on :80.
+COPY ols/vhconf.conf /usr/local/lsws/conf/vhosts/flowone/vhconf.conf
+COPY ols/httpd_config.append.conf /tmp/httpd_config.append.conf
+COPY ols/flowone-entrypoint.sh /flowone-entrypoint.sh
+# Strip any CRLF (files authored on Windows) so bash/OLS parse them, wire config.
+RUN sed -i 's/\r$//' /usr/local/lsws/conf/vhosts/flowone/vhconf.conf /tmp/httpd_config.append.conf /flowone-entrypoint.sh \
+ && cat /tmp/httpd_config.append.conf >> /usr/local/lsws/conf/httpd_config.conf \
+ && rm -f /tmp/httpd_config.append.conf \
+ && chmod +x /flowone-entrypoint.sh \
+ && mkdir -p /usr/local/lsws/logs
+
+ENTRYPOINT ["/flowone-entrypoint.sh"]
+
+# Opcache tuning. Copy into lsphp83's additional-ini dir; the exact conf.d path
+# is verified after build (phpinfo) and corrected if lsphp ignores it.
+COPY opcache.local.ini /usr/local/lsws/lsphp83/etc/php/8.3/mods-available/zz-opcache-local.ini
+
+# App data dir several controllers hardcode (/var/www/vps-email/data). World
+# writable for local dev so the default lsphp user can write settings/uploads.
+RUN mkdir -p /var/www/vps-email/data/settings && chmod -R 777 /var/www/vps-email
+
+WORKDIR /var/www/html

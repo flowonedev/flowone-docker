@@ -1,7 +1,18 @@
 services:
 
   db:
-    image: mysql:8.0
+    # MariaDB to match production (project runs MariaDB, not MySQL). 10.11 LTS
+    # still ships the mysql/mysqladmin compatibility symlinks setup-local.ps1 uses.
+    image: mariadb:10.11
+    # Local-dev durability is disabled: several services run CREATE/ALTER TABLE
+    # probes in their constructors on EVERY request. Each DDL forces an InnoDB
+    # log+doublewrite fsync, which over the Docker volume is ~250ms/statement and
+    # added ~15s/request. Local data is disposable, so trade durability for speed.
+    command: >-
+      --innodb-flush-log-at-trx-commit=0
+      --innodb-doublewrite=0
+      --sync-binlog=0
+      --innodb-flush-method=nosync
     environment:
       MYSQL_ROOT_PASSWORD: localroot
       MYSQL_DATABASE: flowone_local
@@ -9,13 +20,20 @@ services:
       MYSQL_PASSWORD: flowone
     ports:
       - "3306:3306"
-    volumes:
-      - db_data:/var/lib/mysql
+    # Datadir on tmpfs (RAM). Several service constructors run ~25 idempotent
+    # ALTER TABLE probes per request; on a Docker disk volume each no-op ALTER
+    # touches .ibd/.frm files (~500ms) for ~15s/request. RAM makes them ~10ms.
+    # Trade-off: DB is ephemeral — re-seed schema after `docker compose down`.
+    tmpfs:
+      - /var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-plocalroot"]
       interval: 10s
       timeout: 5s
       retries: 10
+      # First-time data-dir init on Docker Desktop can take 2-3 min; don't count
+      # those early failures against the retry budget or `depends_on` gives up.
+      start_period: 180s
 
   redis:
     image: redis:7-alpine
@@ -35,9 +53,16 @@ services:
       - meili_data:/meili_data
 
   php:
+    # Production-parity web tier: OpenLiteSpeed + lsphp83 (LSAPI). The Apache
+    # variant (Dockerfile.local) is kept as a fallback for quick debugging.
+    # Service name stays "php" so the Vite proxy target (http://php:80) and the
+    # compose network alias are unchanged; the image/container are named
+    # "email-openlitespeed" so it's obvious which web server this is.
     build:
       context: .
-      dockerfile: Dockerfile.local
+      dockerfile: Dockerfile.ols
+    image: email-openlitespeed
+    container_name: email-openlitespeed
     ports:
       - "8000:80"
     volumes:
@@ -60,6 +85,10 @@ services:
       MEILI_SEARCH_KEY: localdevmasterkey
       JWT_SECRET: localdev_jwt_secret_change_this_if_you_care
       JWT_ALGORITHM: HS256
+      # Required: OAuthCryptor::canaryCheck() in public/index.php is fail-fast.
+      # config.php promotes this to OAUTH_KEYS v1 when OAUTH_KEYS is unset, so the
+      # canary can encrypt/decrypt. Do NOT change once data is encrypted under it.
+      IMAP_ENCRYPTION_KEY: localdev_imap_encryption_key_change_this_if_you_care
       PANEL_API_URL: https://panel.devcon1.hu/api
       PANEL_API_KEY: ""
       APP_DEBUG: "true"
@@ -71,8 +100,112 @@ services:
       meilisearch:
         condition: service_started
 
+  frontend:
+    image: node:20-bookworm-slim
+    working_dir: /app
+    # Source is bind-mounted for live edits/HMR, but node_modules lives in a
+    # named volume so the huge dep tree stays off the slow Windows bind mount.
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    # Install deps (one-time into the named volume) then run the Vite dev server.
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 3001"
+    ports:
+      - "3001:3001"
+    environment:
+      # Vite proxies /api to the PHP container and /mailsync_ws to mailsync.
+      VITE_API_PROXY: http://php:80
+      VITE_WS_PROXY: ws://mailsync:1235
+      # The browser connects to the WS through the Vite proxy on the host port.
+      VITE_MAILSYNC_WS_URL: ws://localhost:3001/mailsync_ws
+    depends_on:
+      php:
+        condition: service_started
+
+  # Real-time email sync WebSocket server (IMAP IDLE + Redis pub/sub).
+  # The frontend reaches it through the Vite proxy (ws://localhost:3001/mailsync_ws
+  # -> mailsync:1235), so a host port isn't required, but 1235 is published for
+  # direct debugging.
+  mailsync:
+    image: node:20-bookworm-slim
+    working_dir: /app
+    volumes:
+      - ./mailsync/server:/app
+      - mailsync_node_modules:/app/node_modules
+    command: sh -c "npm install && npm start"
+    ports:
+      - "1235:1235"
+    environment:
+      MAILSYNC_WS_HOST: 0.0.0.0
+      MAILSYNC_WS_PORT: "1235"
+      MAILSYNC_SSL_ENABLED: "false"
+      # JWT must match the PHP backend (HS256 + same secret).
+      JWT_ALGORITHM: HS256
+      JWT_SECRET: localdev_jwt_secret_change_this_if_you_care
+      # IMAP target matches the backend's config.local.php dev override.
+      IMAP_HOST: mail.devcon1.hu
+      IMAP_PORT: "993"
+      IMAP_TLS: "true"
+      IMAP_VERIFY_CERT: "false"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_DATABASE: "0"
+      # mailsync reads DB_PASSWORD (not DB_PASS) — see its config.js.
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_NAME: flowone_local
+      DB_USER: flowone
+      DB_PASSWORD: flowone
+      # Push transports off locally (no VAPID/FCM/APNs credentials).
+      FCM_ENABLED: "false"
+      APNS_VOIP_ENABLED: "false"
+      PANEL_API_URL: https://panel.devcon1.hu/api
+      PANEL_API_KEY: ""
+      LOG_LEVEL: info
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  # Hocuspocus collaborative-editing WebSocket server. The browser connects
+  # DIRECTLY to ws://localhost:1234 (see frontend useCollabProvider.js), so this
+  # port must be published. Runs from /app/server but mounts the whole collab/
+  # dir because src imports ../../shared/collabConstants.js.
+  collab:
+    image: node:20-bookworm-slim
+    working_dir: /app/server
+    volumes:
+      - ./collab:/app
+      - collab_node_modules:/app/server/node_modules
+    command: sh -c "npm install && npm start"
+    ports:
+      - "1234:1234"
+    environment:
+      COLLAB_WS_HOST: 0.0.0.0
+      COLLAB_WS_PORT: "1234"
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_NAME: flowone_local
+      DB_USER: flowone
+      DB_PASS: flowone
+      JWT_ALGORITHM: HS256
+      JWT_SECRET: localdev_jwt_secret_change_this_if_you_care
+      PHP_BACKEND_URL: http://php:80/api
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      LOG_LEVEL: info
+    depends_on:
+      db:
+        condition: service_healthy
+      php:
+        condition: service_started
+
 volumes:
   db_data:
   redis_data:
   meili_data:
   vps_email_data:
+  frontend_node_modules:
+  mailsync_node_modules:
+  collab_node_modules:
