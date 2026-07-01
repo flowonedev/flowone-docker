@@ -22,8 +22,10 @@ if (!file_exists($configFile)) {
 $config = require $configFile;
 
 require_once __DIR__ . '/Lib/UpdateScanner.php';
+require_once __DIR__ . '/Lib/DockerHealth.php';
 
 use FleetManager\Agent\Lib\UpdateScanner;
+use FleetManager\Agent\Lib\DockerHealth;
 
 // Panel API configuration
 $panelUrl = $config['panel']['url'] ?? null;
@@ -122,6 +124,14 @@ function collectHealth(): array
         // systemd unit. Report 'disabled' when Docker/the container is
         // absent so servers without the office stack stay green.
         $health['services']['office'] = checkOfficeContainer();
+
+        // Docker-managed box: report the FlowOne compose stack's container state
+        // for the app-tier services instead of the (non-existent) systemd units.
+        // Returns null on native boxes, so their systemd results above stand.
+        $dockerServices = DockerHealth::collect();
+        if (is_array($dockerServices)) {
+            $health['services'] = array_merge($health['services'], $dockerServices);
+        }
     } catch (\Throwable $e) {
         error_log("Fleet Heartbeat: Service check failed: " . $e->getMessage());
     }

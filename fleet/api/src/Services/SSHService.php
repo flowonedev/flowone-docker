@@ -529,11 +529,64 @@ SH;
             }
         }
 
+        // Docker-managed box: prefer FlowOne compose container states for the
+        // app tier over the (non-existent) systemd units, so Test Connection
+        // doesn't show every service as 'disabled'. Additive + gated: on a
+        // native box the query returns nothing and $services stands.
+        $dockerRaw = (string) $ssh->exec(
+            'command -v docker >/dev/null 2>&1 && docker ps -a '
+            . '--filter label=com.docker.compose.project=flowone '
+            . '--format \'{{.Label "com.docker.compose.service"}}={{.State}}\' 2>/dev/null'
+        );
+        $dockerServices = self::mapDockerAppServices($dockerRaw);
+        if ($dockerServices) {
+            $services = array_merge($services, $dockerServices);
+        }
+
         if (!empty($services)) {
             $info['services'] = $services;
         }
 
         return $info;
+    }
+
+    /**
+     * compose service => dashboard health key (mirror of agent Lib\DockerHealth).
+     * Mail/security services stay host-managed, so they are not listed here.
+     */
+    private const DOCKER_SERVICE_TO_HEALTHKEY = [
+        'web'         => 'openlitespeed',
+        'mariadb'     => 'mariadb',
+        'redis'       => 'redis',
+        'meilisearch' => 'meilisearch',
+        'collab'      => 'collab',
+        'mailsync'    => 'mailsync',
+    ];
+
+    /**
+     * PURE: parse `service=state` lines from a docker ps label query and remap to
+     * dashboard health keys. docker 'running' => 'running', else 'stopped'.
+     */
+    public static function mapDockerAppServices(string $raw): array
+    {
+        $raw = trim($raw);
+        if ($raw === '') {
+            return [];
+        }
+        $out = [];
+        foreach (preg_split('/\r\n|\r|\n/', $raw) as $line) {
+            $line = trim($line);
+            if ($line === '' || strpos($line, '=') === false) {
+                continue;
+            }
+            [$svc, $state] = explode('=', $line, 2);
+            $svc = trim($svc);
+            if (!isset(self::DOCKER_SERVICE_TO_HEALTHKEY[$svc])) {
+                continue;
+            }
+            $out[self::DOCKER_SERVICE_TO_HEALTHKEY[$svc]] = strtolower(trim($state)) === 'running' ? 'running' : 'stopped';
+        }
+        return $out;
     }
 
     /**
