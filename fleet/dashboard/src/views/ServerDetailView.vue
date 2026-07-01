@@ -1127,49 +1127,53 @@ onUnmounted(() => {
                 </div>
               </button>
 
-              <!-- Native (legacy, non-Docker installs) -->
-              <div class="border-t border-surface-200 dark:border-surface-600 mt-1"></div>
-              <p class="px-4 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500">Native (legacy)</p>
-              <button 
-                @click="openDeployModal('full_provision')"
-                class="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-100 dark:hover:bg-surface-600 transition-colors text-left"
-              >
-                <span class="material-symbols-rounded text-primary-600 dark:text-primary-400">build</span>
-                <div>
-                  <p class="font-medium text-surface-900 dark:text-surface-100">Full Provision</p>
-                  <p class="text-xs text-surface-500 dark:text-surface-400">Native install (packages + configs + apps)</p>
-                </div>
-              </button>
-              <button 
-                @click="openDeployModal('config_only')"
-                class="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-100 dark:hover:bg-surface-600 transition-colors text-left"
-              >
-                <span class="material-symbols-rounded text-green-600 dark:text-green-400">settings</span>
-                <div>
-                  <p class="font-medium text-surface-900 dark:text-surface-100">Config Only</p>
-                  <p class="text-xs text-surface-500 dark:text-surface-400">Apply configs, restart services</p>
-                </div>
-              </button>
-              <button 
-                @click="openDeployModal('packages_config')"
-                class="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-100 dark:hover:bg-surface-600 transition-colors text-left"
-              >
-                <span class="material-symbols-rounded text-amber-600 dark:text-amber-400">deployed_code</span>
-                <div>
-                  <p class="font-medium text-surface-900 dark:text-surface-100">Packages + Config</p>
-                  <p class="text-xs text-surface-500 dark:text-surface-400">Install packages and configs</p>
-                </div>
-              </button>
-              <button 
-                @click="openDeployModal('app_update')"
-                class="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-100 dark:hover:bg-surface-600 transition-colors text-left"
-              >
-                <span class="material-symbols-rounded text-blue-600 dark:text-blue-400">system_update</span>
-                <div>
-                  <p class="font-medium text-surface-900 dark:text-surface-100">App Update</p>
-                  <p class="text-xs text-surface-500 dark:text-surface-400">Update code only, preserve configs</p>
-                </div>
-              </button>
+              <!-- Native (legacy) — hidden on Docker boxes: a container stack is
+                   never provisioned/updated natively. "Docker Update" is the Docker
+                   equivalent of the old "App Update" (roll app code to a new image). -->
+              <template v-if="!isDocker">
+                <div class="border-t border-surface-200 dark:border-surface-600 mt-1"></div>
+                <p class="px-4 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500">Native (legacy)</p>
+                <button 
+                  @click="openDeployModal('full_provision')"
+                  class="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-100 dark:hover:bg-surface-600 transition-colors text-left"
+                >
+                  <span class="material-symbols-rounded text-primary-600 dark:text-primary-400">build</span>
+                  <div>
+                    <p class="font-medium text-surface-900 dark:text-surface-100">Full Provision</p>
+                    <p class="text-xs text-surface-500 dark:text-surface-400">Native install (packages + configs + apps)</p>
+                  </div>
+                </button>
+                <button 
+                  @click="openDeployModal('config_only')"
+                  class="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-100 dark:hover:bg-surface-600 transition-colors text-left"
+                >
+                  <span class="material-symbols-rounded text-green-600 dark:text-green-400">settings</span>
+                  <div>
+                    <p class="font-medium text-surface-900 dark:text-surface-100">Config Only</p>
+                    <p class="text-xs text-surface-500 dark:text-surface-400">Apply configs, restart services</p>
+                  </div>
+                </button>
+                <button 
+                  @click="openDeployModal('packages_config')"
+                  class="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-100 dark:hover:bg-surface-600 transition-colors text-left"
+                >
+                  <span class="material-symbols-rounded text-amber-600 dark:text-amber-400">deployed_code</span>
+                  <div>
+                    <p class="font-medium text-surface-900 dark:text-surface-100">Packages + Config</p>
+                    <p class="text-xs text-surface-500 dark:text-surface-400">Install packages and configs</p>
+                  </div>
+                </button>
+                <button 
+                  @click="openDeployModal('app_update')"
+                  class="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-100 dark:hover:bg-surface-600 transition-colors text-left"
+                >
+                  <span class="material-symbols-rounded text-blue-600 dark:text-blue-400">system_update</span>
+                  <div>
+                    <p class="font-medium text-surface-900 dark:text-surface-100">App Update</p>
+                    <p class="text-xs text-surface-500 dark:text-surface-400">Update code only, preserve configs</p>
+                  </div>
+                </button>
+              </template>
             </div>
           </div>
           

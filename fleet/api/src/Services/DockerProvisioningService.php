@@ -400,6 +400,11 @@ class DockerProvisioningService
             }
             $this->templates->persistDockerSecrets($serverId, $variables);
 
+            // Auto-size the heavy mail AV/spam services to the box's RAM (ClamAV
+            // alone resident-loads ~1GB — on a <3GB box it OOM/swaps the stack).
+            // Mirrors vps-bootstrap.sh; Rspamd/DKIM stay on regardless.
+            $variables = $this->autoSizeMailServices($variables, $options);
+
             // Populate the "Server Credentials" panel (logins/keys/DNS) now that
             // all secrets are resolved — even if the stack later fails to become
             // healthy, the operator still has the generated credentials on record.
@@ -465,6 +470,15 @@ class DockerProvisioningService
                 // 8. Seed the default login mailbox (parity with native robert@domain).
                 $this->markDeployment(null, 96, 'Creating default mailbox...');
                 $this->seedDefaultMailbox($variables);
+
+                // 9. Host hardening (native parity) — the Docker path used to skip
+                // this, leaving boxes on root@22/password with no firewall/fail2ban.
+                // Runs fail2ban + firewalld + pxr@1985 key-only SSH (deny root),
+                // then restarts Docker so its published-port rules survive firewalld.
+                if (empty($options['skip_harden'])) {
+                    $this->markDeployment(null, 98, 'Hardening host (SSH/firewall/fail2ban)...');
+                    $this->hardenAfterProvision($serverId);
+                }
             }
 
             $this->markDeployment($healthy ? 'success' : 'failed', 100,
@@ -604,6 +618,10 @@ class DockerProvisioningService
             $variables = $secrets['vars'];
             $variables = self::normalizeLiveKit($variables)['vars'];
             $this->templates->persistDockerSecrets($serverId, $variables);
+
+            // Keep the AV/spam profile RAM-appropriate on updates too, so a re-render
+            // never silently re-enables ClamAV on a small box.
+            $variables = $this->autoSizeMailServices($variables, $options);
 
             // Backfill/refresh the Server Credentials panel (covers boxes first
             // provisioned before the inventory was recorded on the Docker path).
@@ -1096,6 +1114,96 @@ class DockerProvisioningService
             throw new \RuntimeException('Server not found');
         }
         return $server;
+    }
+
+    /**
+     * Run the native-parity HOST HARDENING (fail2ban + firewall + pxr@1985
+     * key-only SSH, deny root) after a successful Docker provision.
+     *
+     * Delegates to ProvisioningService::hardenExistingServer() — the SAME proven,
+     * safe 3-phase logic the native full-provision uses — via an ISOLATED
+     * Container so it gets its OWN SSH + DB handles (this service's SSHService is a
+     * shared container singleton; the harden run reconnects and re-homes the box
+     * to pxr@1985, so it must not fight our session). Non-fatal: a hardening
+     * hiccup never fails the provision — the stack is already up and the box stays
+     * reachable on whatever SSH profile it currently has.
+     */
+    private function hardenAfterProvision(int $serverId): void
+    {
+        try {
+            if ($this->ssh->isConnected()) {
+                $this->ssh->disconnect();
+            }
+            $isolated = new Container($this->container->getConfig());
+            /** @var ProvisioningService $prov */
+            $prov = $isolated->get(ProvisioningService::class);
+            $res = $prov->hardenExistingServer($serverId, ['docker' => true]);
+            foreach (($res['log'] ?? []) as $entry) {
+                $msg = is_array($entry) ? ($entry['message'] ?? '') : (string) $entry;
+                if ($msg !== '') {
+                    $this->logLine('[harden] ' . $msg);
+                }
+            }
+            if (empty($res['success'])) {
+                $this->logLine('Hardening did not complete: ' . ($res['error'] ?? 'unknown')
+                    . ' — box stays reachable on its current SSH profile; re-run `harden-server.php ' . $serverId . ' --docker`.');
+            }
+        } catch (\Throwable $e) {
+            $this->logLine('Hardening error (non-fatal): ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Auto-size the heavy mail AV/spam services to the target box's RAM.
+     *
+     * ClamAV alone resident-loads ~1GB and SpamAssassin adds a few hundred MB; on
+     * a box with <3GB total RAM they cause memory pressure / swap / OOM (this is
+     * exactly why devcon3 sat at ~73% memory). Rspamd is light and always stays on
+     * (DKIM/DMARC/spam scoring keep working). Mirrors vps-bootstrap.sh's sizing.
+     *
+     * Precedence: an explicit choice always wins — a `mail_enable_clamav` deploy
+     * option, or a value already carried in $variables (e.g. from a migrated
+     * snapshot .env). Only when nothing was specified do we size by RAM.
+     */
+    private function autoSizeMailServices(array $variables, array $options): array
+    {
+        if (array_key_exists('mail_enable_clamav', $options)) {
+            $clam = !empty($options['mail_enable_clamav']) ? '1' : '0';
+            $spam = array_key_exists('mail_enable_spamassassin', $options)
+                ? (!empty($options['mail_enable_spamassassin']) ? '1' : '0')
+                : $clam;
+            $variables['MAIL_ENABLE_CLAMAV'] = $clam;
+            $variables['MAIL_ENABLE_SPAMASSASSIN'] = $spam;
+            $this->logLine("Mail AV/spam set by option: ClamAV={$clam}, SpamAssassin={$spam}.");
+            return $variables;
+        }
+        // Honor an explicit value already resolved into the vars (migrated .env).
+        if (isset($variables['MAIL_ENABLE_CLAMAV']) && $variables['MAIL_ENABLE_CLAMAV'] !== '') {
+            return $variables;
+        }
+
+        $memMb = $this->detectMemMb();
+        if ($memMb > 0 && $memMb < 3000) {
+            $variables['MAIL_ENABLE_CLAMAV'] = '0';
+            $variables['MAIL_ENABLE_SPAMASSASSIN'] = '0';
+            $this->logLine("Detected {$memMb}MB RAM (<3GB): ClamAV + SpamAssassin OFF to avoid OOM (Rspamd/DKIM stay on). Add RAM to re-enable.");
+        } else {
+            $variables['MAIL_ENABLE_CLAMAV'] = '1';
+            $variables['MAIL_ENABLE_SPAMASSASSIN'] = '1';
+            $this->logLine(($memMb > 0 ? "Detected {$memMb}MB RAM (>=3GB)" : 'RAM unknown') . ': ClamAV + SpamAssassin ON.');
+        }
+        return $variables;
+    }
+
+    /** Total RAM of the connected target in MB (0 if it can't be read). */
+    private function detectMemMb(): int
+    {
+        try {
+            $res = $this->ssh->execWithTimeout("awk '/MemTotal/{print int(\$2/1024)}' /proc/meminfo", 15);
+            return (int) trim((string) ($res['output'] ?? '0'));
+        } catch (\Throwable $e) {
+            return 0;
+        }
     }
 
     /** Run a remote command with a timeout; throw with context on failure. */

@@ -3905,6 +3905,142 @@ BASH;
     }
 
     /**
+     * Firewall for a DOCKER host: open ONLY what the container stack + a hardened
+     * SSH actually need. A Docker box has no host PowerDNS / TURN / LiveKit / OLS
+     * admin, so — unlike configureFirewall() — we keep the surface tight: SSH
+     * (22 during the port-move + the hardened $targetPort), web (80/443) and the
+     * host-networked mail pod's ports.
+     *
+     * NOTE: on a Docker host firewalld OWNS iptables once it (re)loads, which
+     * flushes Docker's published-port rules. The caller (hardenExistingServer with
+     * ['docker'=>true]) restarts Docker afterwards so it re-inserts them.
+     */
+    private function configureFirewallForDocker(int $targetPort = 1985): void
+    {
+        $this->log("Configuring firewall (Docker profile)...");
+        $ports = array_values(array_unique([22, $targetPort, 80, 443, 25, 465, 587, 110, 143, 993, 995, 4190]));
+        $commands = ['systemctl enable firewalld', 'systemctl start firewalld'];
+        foreach ($ports as $p) {
+            $commands[] = "firewall-cmd --permanent --add-port={$p}/tcp";
+        }
+        $commands[] = 'firewall-cmd --reload';
+        foreach ($commands as $cmd) {
+            $this->executeCommand("{$cmd} 2>/dev/null || true");
+        }
+        $this->log('Firewall configured (Docker profile): ' . implode(',', $ports));
+    }
+
+    /**
+     * Wait for the Docker web container to report healthy again (used after a
+     * `systemctl restart docker`, which cycles every container). Best-effort.
+     */
+    private function waitDockerWebHealthy(int $timeoutSeconds = 180): bool
+    {
+        $deadline = time() + max(30, $timeoutSeconds);
+        while (time() < $deadline) {
+            $res = $this->executeCommand(
+                "docker inspect -f '{{.State.Health.Status}}' flowone-web-1 2>/dev/null || echo missing",
+                20
+            );
+            if (trim((string)($res['output'] ?? '')) === 'healthy') {
+                return true;
+            }
+            sleep(6);
+        }
+        return false;
+    }
+
+    /**
+     * Day-2 / Docker-path HOST HARDENING. Runs the SAME security lockdown the
+     * native full-provision does — security packages (fail2ban + firewalld),
+     * firewall, fail2ban jails, and pxr@<port> key-only SSH (deny root + password)
+     * — against an ALREADY provisioned box, WITHOUT reinstalling the app stack.
+     * This is the piece the Docker provisioning path was missing.
+     *
+     * SAFE BY DESIGN: reuses hardenSshAccess()'s 3-phase verify-before-commit
+     * (root@22 stays open until pxr@<port> + key + sudo is proven from the Fleet
+     * Manager), and re-homes Fleet's stored connection to the hardened profile on
+     * success. Idempotent — safe to re-run.
+     *
+     * @param array $opts ['docker'=>bool] when true, restart Docker at the end so
+     *                    it re-inserts the published-port iptables rules firewalld
+     *                    flushed, then verify the web tier recovered.
+     * @return array{success:bool,hardened:?array,docker_ok:?bool,error?:string,log:array}
+     */
+    public function hardenExistingServer(int $serverId, array $opts = []): array
+    {
+        $this->deploymentLog = [];
+        $this->stepCommandLog = '';
+        $this->fleetIgnoreIps = null;
+        $this->hardenedProfile = null;
+        $dockerHost = !empty($opts['docker']);
+
+        $result = static function (bool $ok, $extra = []) {
+            return array_merge(['success' => $ok, 'hardened' => null, 'docker_ok' => null], $extra);
+        };
+
+        try {
+            $stmt = $this->db->prepare("SELECT * FROM servers WHERE id = ?");
+            $stmt->execute([$serverId]);
+            $server = $stmt->fetch();
+            if (!$server) {
+                return $result(false, ['error' => "server {$serverId} not found", 'log' => $this->deploymentLog]);
+            }
+
+            $this->isLocalServer = $this->isLocal($server);
+            if ($this->isLocalServer) {
+                return $result(false, ['error' => 'refusing to harden the local Fleet Manager host', 'log' => $this->deploymentLog]);
+            }
+
+            $this->log("Hardening {$server['name']} ({$server['ip_address']}) — current profile {$server['ssh_user']}@{$server['ssh_port']}/{$server['ssh_auth_method']}");
+            if (!$this->ssh->connectToServer($server)) {
+                return $result(false, ['error' => 'SSH connection failed', 'log' => $this->deploymentLog]);
+            }
+
+            $variables  = $this->templates->generateServerVariables($server);
+            $targetPort = (int)($this->container->getConfig('ssh.harden_port') ?: 1985);
+
+            $this->log('=== [1/5] Installing security packages (fail2ban + firewalld) ===');
+            $this->installSecurityTools($serverId);
+
+            $this->log('=== [2/5] Configuring firewall ===');
+            $dockerHost ? $this->configureFirewallForDocker($targetPort) : $this->configureFirewall();
+
+            $this->log('=== [3/5] Deploying fail2ban jails ===');
+            $this->deployFail2banConfig($variables);
+
+            $this->log('=== [4/5] Establishing pxr access (key + passwordless sudo) ===');
+            $this->establishSshAccess($serverId, $variables);
+
+            $this->log("=== [5/5] Hardening SSH (pxr@{$targetPort}, key-only, deny root + password) ===");
+            $this->hardenSshAccess($serverId, $variables);
+
+            $dockerOk = null;
+            if ($dockerHost) {
+                $this->log('Restarting Docker so it re-inserts its firewall rules (firewalld took over iptables)...');
+                $this->executeCommand('systemctl restart docker 2>&1 || true', 180);
+                $dockerOk = $this->waitDockerWebHealthy(180);
+                $this->log($dockerOk
+                    ? 'Docker stack recovered — web container healthy.'
+                    : 'WARNING: web not healthy after Docker restart — check `docker compose ps` on the box.');
+            }
+
+            return $result(true, [
+                'hardened'  => $this->hardenedProfile,
+                'docker_ok' => $dockerOk,
+                'log'       => $this->deploymentLog,
+            ]);
+        } catch (\Throwable $e) {
+            $this->log('ERROR: ' . $e->getMessage());
+            return $result(false, ['error' => $e->getMessage(), 'log' => $this->deploymentLog]);
+        } finally {
+            if ($this->ssh->isConnected()) {
+                $this->ssh->disconnect();
+            }
+        }
+    }
+
+    /**
      * Setup databases (idempotent with IF NOT EXISTS)
      */
     private function setupDatabases(array $variables): void
