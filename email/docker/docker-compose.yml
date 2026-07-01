@@ -5,6 +5,8 @@
 # All config comes from .env (copy .env.example -> .env, fill per host).
 #
 #   docker compose build           # build the three app images locally
+#   ./gen-jwt-keys.sh              # LOCAL ONLY: seed the jwt_keys volume (prod
+#                                  # is seeded by Fleet / the migration snapshot)
 #   docker compose up -d           # bring the stack up
 #
 # Bridge-network services only (web, mariadb, redis, meilisearch, collab,
@@ -62,6 +64,15 @@ services:
       MEILI_ENV: production
     volumes:
       - meili_data:/meili_data
+    healthcheck:
+      # The meilisearch image ships curl; /health returns {"status":"available"}.
+      # Without this, compose reports no health and the Fleet health-wait would
+      # pass meilisearch on "running" alone.
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:7700/health | grep -q available"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
 
   web:
     image: ${REGISTRY:-flowone}/flowone-web:${TAG:-latest}
@@ -80,6 +91,10 @@ services:
     volumes:
       - vps_email_storage:/var/www/vps-email/backend/storage
       - vps_email_data:/var/www/vps-email/data
+      # User files: drive, mood-board uploads, portal docs (config.php storage_path
+      # + drive.storage_path default here). MUST be persistent or uploads are lost
+      # on container recreate. Distinct tree from backend/storage (logs/temp).
+      - vps_email_files:/var/www/vps-email/storage
       - jwt_keys:/etc/flowone/jwt:ro
       # Only consulted when ENABLE_SSL=1; harmless to mount otherwise.
       - /etc/letsencrypt:/etc/letsencrypt:ro
@@ -142,4 +157,5 @@ volumes:
   meili_data:
   vps_email_storage:
   vps_email_data:
+  vps_email_files:
   jwt_keys:

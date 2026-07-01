@@ -40,6 +40,27 @@
   green locally (313 tables, exact row-count match; scratch DB auto-dropped). Root `.gitattributes`
   added so the `.sh` stay LF (authored on Windows, run on Linux).
 
+- **Pre-VPS deep audit:** DONE (3 parallel audits + direct verification). Architecture sound; found
+  and FIXED in one pass: **B1** web image was missing `lsphp83-gd` + `lsphp83-zip` (image/PDF/Office/
+  zip fatals); **B2** user-file trees (`/var/www/vps-email/storage` drive/mood/docs) had no persistent
+  volume -> added `vps_email_files` mount + image dir/perms (were ephemeral, lost on recreate); **I1**
+  `useOfficePresence.js` still hardcoded `wss://host:1234` -> now mirrors the `/collab-ws` proxy
+  resolution; **I2** `DriveView.vue` desktop-app download hardcoded `flowone.pro` -> `VITE_DESKTOP_APP_URL`
+  override (central vendor artifact, default kept); **I4** added a meilisearch healthcheck (web/collab/
+  mailsync already had image HEALTHCHECKs — the audit's "no healthcheck" claim was compose-only); **I5**
+  `provisionDocker()` now runs `ensure-schema.php` in the web container after health (deterministic
+  schema warm-up; the web healthcheck already triggers base migrations). **I3** added
+  `email/docker/gen-jwt-keys.sh` (DEV-ONLY, idempotent) so a plain local `docker compose up` can seed
+  the `jwt_keys` volume — prod is seeded by Fleet/snapshot. docker-provisioning test 16/16; compose
+  validates.
+- **Still open before a fresh-VPS dry-run (the "registry round-trip"):** **B3** no images published
+  anywhere (default `flowone/flowone-web:latest` doesn't exist) + no build/push tooling; **B4** the
+  provisioner has no default compose-file source (`docker.compose_path` config unset, no
+  `packages/docker-compose.yml`). Decision made: publish to **GHCR** (ghcr.io) — free for private
+  images at our scale today, 1-month notice before any metering; fall back to a self-hosted registry
+  if that changes. Next concrete step: add a `docker` config block (registry/tag/compose_path) + a
+  build+push script, then a local clean-room pull+up to re-run Layer 1/2 against the published images.
+
 ### Next action
 
 Remaining tracks are gated on resources we don't have on Windows:

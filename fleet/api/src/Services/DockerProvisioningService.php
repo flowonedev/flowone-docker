@@ -93,6 +93,21 @@ class DockerProvisioningService
     }
 
     /**
+     * Warm + verify the DB schema inside the running web container. The web
+     * healthcheck curls /api/auth/me, which runs index.php's auto-migration, so
+     * by the time the stack is healthy the base migrations have applied; this
+     * then constructs the lazy-ensure services so tables like the Kanban/
+     * ProjectHub/Drive columns exist before the first real user request (avoids
+     * "Unknown column" on a fresh box). Best-effort: -T disables the TTY.
+     */
+    public static function ensureSchemaCmd(): string
+    {
+        return self::composeBase()
+            . ' exec -T web /usr/local/lsws/lsphp83/bin/php '
+            . '/var/www/vps-email/backend/scripts/ensure-schema.php';
+    }
+
+    /**
      * Install Docker Engine + the compose plugin if absent (idempotent). Uses the
      * official convenience script (Debian/Ubuntu targets) and enables the daemon.
      */
@@ -236,6 +251,12 @@ class DockerProvisioningService
             // 5. Wait for health
             $healthy = $this->waitHealthy((int) ($options['wait_timeout'] ?? 180));
 
+            // 6. Warm the DB schema (best-effort) once web is serving, so the
+            // first real user request doesn't race lazy DDL / hit missing columns.
+            if ($healthy) {
+                $this->warmSchema();
+            }
+
             return [
                 'success' => $healthy,
                 'healthy' => $healthy,
@@ -276,6 +297,23 @@ class DockerProvisioningService
                 $this->ssh->disconnect();
             }
         }
+    }
+
+    /**
+     * Best-effort schema warm-up inside the web container. Never fails the
+     * provision — a warning is logged if it errors (the app also self-heals on
+     * first request), but a clean run makes the fresh box deterministic.
+     */
+    private function warmSchema(): void
+    {
+        $this->logLine('Warming DB schema...');
+        $res = $this->ssh->execWithTimeout(self::ensureSchemaCmd(), 120);
+        if (empty($res['success'])) {
+            $this->logLine('WARN: schema warm-up non-zero exit (app self-heals on first request): '
+                . substr(trim((string) ($res['output'] ?? $res['error'] ?? '')), -300));
+            return;
+        }
+        $this->logLine('Schema warm-up ok');
     }
 
     /** Poll `docker compose ps` until healthy or timeout. */

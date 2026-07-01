@@ -14,11 +14,20 @@ import { officeApi, fetchGuestPresenceToken } from '@/services/officeApiService'
 import { getCollabUserColor } from '@/utils/collabColors'
 
 function getCollabWsUrl() {
+  // Mirror useCollabProvider.getCollabWsUrl so office presence connects to the
+  // SAME collab server as documents (multi-domain / white-label / Docker safe).
+  // Production routes through the OLS reverse-proxy path /collab-ws on 443 — the
+  // old `wss://${hostname}:1234` broke behind Docker (1234 is container-internal,
+  // no per-domain cert/firewall hole).
   if (import.meta.env.VITE_COLLAB_WS_URL) {
     return import.meta.env.VITE_COLLAB_WS_URL
   }
-  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
-    return `wss://${window.location.hostname}:1234`
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return 'ws://localhost:1234'
+  }
+  if (typeof window !== 'undefined' && window.location?.host) {
+    const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
+    return `${proto}://${window.location.host}/collab-ws`
   }
   return 'ws://localhost:1234'
 }

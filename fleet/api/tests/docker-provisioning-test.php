@@ -93,6 +93,12 @@ test('commands', 'upCmd whole-stack uses --remove-orphans; single uses --no-deps
 test('commands', 'psJsonCmd requests JSON format', function () {
     assertContains(D::psJsonCmd(), 'ps --format json', 'ps json');
 });
+test('commands', 'ensureSchemaCmd execs ensure-schema.php in web via lsphp83', function () {
+    $c = D::ensureSchemaCmd();
+    assertContains($c, 'exec -T web', 'exec into web');
+    assertContains($c, '/usr/local/lsws/lsphp83/bin/php', 'lsphp83 binary');
+    assertContains($c, 'scripts/ensure-schema.php', 'ensure-schema script');
+});
 test('commands', 'dockerInstallCmd is idempotent + uses convenience script', function () {
     $c = D::dockerInstallCmd();
     assertContains($c, 'command -v docker', 'guard');

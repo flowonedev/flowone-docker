@@ -28,6 +28,10 @@ FROM litespeedtech/openlitespeed:1.8.5-lsphp83
 
 # Match the production lsphp83 extension set (see fleet/installer/ols-install.sh).
 # curl is the CLI tool used by the container HEALTHCHECK.
+# gd + zip are REQUIRED (not optional): backend calls gd image functions
+# (thumbnails, PDF/PPTX render) and ZipArchive (drive zip download, and the
+# phpoffice .docx/.xlsx/.pptx read-write which are ZIP containers). imagick does
+# NOT satisfy gd. Omitting either fatals every image/office/zip request path.
 RUN apt-get update && apt-get install -y --no-install-recommends \
       lsphp83-mysql \
       lsphp83-curl \
@@ -36,6 +40,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       lsphp83-opcache \
       lsphp83-redis \
       lsphp83-imagick \
+      lsphp83-gd \
+      lsphp83-zip \
       curl \
  && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -93,8 +99,14 @@ RUN sed -i 's/\r$//' \
  && mkdir -p /usr/local/lsws/logs \
  && mkdir -p /var/www/vps-email/data/settings \
  && mkdir -p /var/www/vps-email/backend/storage/logs \
+ # User-file trees (drive, mood-board uploads, portal docs). config.php defaults
+ # storage_path -> /var/www/vps-email/storage and drive -> .../storage/drive.
+ # Create them here so the persistent volume mounted at /var/www/vps-email/storage
+ # inherits 777 on first (empty) mount; otherwise uploads land on the ephemeral
+ # overlay FS and vanish on container recreate.
+ && mkdir -p /var/www/vps-email/storage/drive /var/www/vps-email/storage/mood-uploads \
  && rm -f /var/www/vps-email/backend/src/config.local.php \
- && chmod -R 777 /var/www/vps-email/data /var/www/vps-email/backend/storage
+ && chmod -R 777 /var/www/vps-email/data /var/www/vps-email/backend/storage /var/www/vps-email/storage
 
 WORKDIR /var/www/vps-email
 

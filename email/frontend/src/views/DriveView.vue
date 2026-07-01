@@ -1543,9 +1543,14 @@ async function downloadCurrentFolderAsZip() {
 }
 
 function openDesktopAppDownload() {
-  // FlowOneDrive desktop sync app. Served via the public share endpoint.
-  // Opening in a new tab is friendlier than navigating away from the Drive view.
-  window.open('https://flowone.pro/api/drive/share/3da3c12b6627241d10b207e04153fb7e389b66a3db9fc4818a85bfd844f1e4eb?fn=FlowOneDrive.rar', '_blank', 'noopener')
+  // FlowOneDrive desktop sync app — a central vendor artifact (a share on the
+  // FlowOne server), NOT per-tenant, so it can't derive from this deployment's
+  // origin (the share token doesn't exist on a white-label/Docker box). Default
+  // to the central flowone.pro URL; white-label builds override via
+  // VITE_DESKTOP_APP_URL at build time. Opening in a new tab is friendlier.
+  const url = import.meta.env.VITE_DESKTOP_APP_URL
+    || 'https://flowone.pro/api/drive/share/3da3c12b6627241d10b207e04153fb7e389b66a3db9fc4818a85bfd844f1e4eb?fn=FlowOneDrive.rar'
+  window.open(url, '_blank', 'noopener')
 }
 
 // Block files that won't fit in the user's remaining storage up-front and
