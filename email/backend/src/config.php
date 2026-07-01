@@ -39,28 +39,38 @@ if (empty($oauthKeys) && $legacyImapKey !== '') {
 $frontendUrl = rtrim(getenv('FRONTEND_URL') ?: 'https://flowone.pro', '/');
 $apiUrl = rtrim(getenv('API_URL') ?: ($frontendUrl . '/api'), '/');
 
+// Mail transport hosts. Native deploys run Dovecot/Postfix on the same box, so
+// 'localhost' is correct there. In Docker the web tier is a separate container,
+// so the mail pod's address MUST come from env (IMAP_HOST/SMTP_HOST/SIEVE_HOST);
+// without this, login (which is a live imap_open) always fails in a container.
+$imapHost = getenv('IMAP_HOST') ?: 'localhost';
+$smtpHost = getenv('SMTP_HOST') ?: 'localhost';
+$sieveHost = getenv('SIEVE_HOST') ?: $imapHost;
+
 $config = [
     // IMAP Settings - Using SSL on port 993
     'imap' => [
-        'host' => 'localhost',
-        'port' => 993,
+        'host' => $imapHost,
+        'port' => (int)(getenv('IMAP_PORT') ?: 993),
         'encryption' => 'ssl',
         // Only skip cert validation for localhost; external hosts must validate
-        'validate_cert' => (getenv('IMAP_HOST') ?: 'localhost') !== 'localhost',
+        // (an explicit IMAP_VERIFY_CERT=false can still opt out, e.g. self-signed).
+        'validate_cert' => $imapHost !== 'localhost'
+            && strtolower((string)(getenv('IMAP_VERIFY_CERT') ?: 'true')) !== 'false',
         // Sieve/ManageSieve settings
-        'sieve_host' => 'localhost',
-        'sieve_port' => 4190,
+        'sieve_host' => $sieveHost,
+        'sieve_port' => (int)(getenv('SIEVE_PORT') ?: 4190),
         'sieve_tls' => false, // Dovecot ManageSieve typically doesn't require TLS on localhost
     ],
 
     // SMTP Settings - Using STARTTLS on port 587
     'smtp' => [
-        'host' => 'localhost',
-        'port' => 587,
+        'host' => $smtpHost,
+        'port' => (int)(getenv('SMTP_PORT') ?: 587),
         'encryption' => 'tls',
         'auth' => true,
         // Only skip peer verification for localhost; external hosts must verify
-        'verify_peer' => (getenv('SMTP_HOST') ?: 'localhost') !== 'localhost',
+        'verify_peer' => $smtpHost !== 'localhost',
         // System notification email (for sending share notifications, etc.)
         'username' => 'noreply@devcon1.hu',
         'password' => getenv('SMTP_NOTIFICATION_PASSWORD') ?: '',
