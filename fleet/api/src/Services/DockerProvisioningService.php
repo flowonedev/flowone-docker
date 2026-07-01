@@ -716,7 +716,8 @@ class DockerProvisioningService
         }
 
         $this->logLine("Seeding default login mailbox {$login['email']} (parity with native robert@domain)...");
-        $res = $this->ssh->execWithTimeout(self::createMailboxCmd($login['email'], $login['pass']), 120);
+        // sensitive=true: the command carries --password=<secret> on its arg list.
+        $res = $this->ssh->execWithTimeout(self::createMailboxCmd($login['email'], $login['pass']), 120, true);
         if (empty($res['success'])) {
             $this->logLine('WARN: default mailbox creation failed (mail DB seeded yet?): '
                 . substr(trim((string) ($res['output'] ?? $res['error'] ?? '')), -300));

@@ -310,21 +310,45 @@ class TemplateService
     public function persistDockerSecrets(int $serverId, array $variables): void
     {
         $db = $this->container->getDatabase();
+        // COALESCE(existing, new): persist a value only on the FIRST provision, then
+        // reuse it forever. This covers BOTH the non-regenerable docker crypto
+        // (IMAP/AI/SSO/JWT) AND the "regenerable but must stay stable" credentials
+        // (DB/Redis/Meili/admin passwords). The latter are baked into persistent
+        // volumes on first `up` — mariadb-init only runs on an empty data volume —
+        // so if generateServerVariables() minted fresh ones on a re-provision or
+        // Docker Update, the new .env would no longer match the on-disk databases
+        // and every DB/auth would break. Parity with the native path's
+        // storeGeneratedPasswords().
         $stmt = $db->prepare(
             "UPDATE servers SET
                 imap_encryption_key_encrypted = COALESCE(imap_encryption_key_encrypted, ?),
                 ai_encryption_key_encrypted   = COALESCE(ai_encryption_key_encrypted, ?),
                 sso_server_key_encrypted      = COALESCE(sso_server_key_encrypted, ?),
                 jwt_private_key_encrypted     = COALESCE(jwt_private_key_encrypted, ?),
-                jwt_public_key                = COALESCE(jwt_public_key, ?)
+                jwt_public_key                = COALESCE(jwt_public_key, ?),
+                db_root_password_encrypted    = COALESCE(db_root_password_encrypted, ?),
+                panel_db_password_encrypted   = COALESCE(panel_db_password_encrypted, ?),
+                email_db_password_encrypted   = COALESCE(email_db_password_encrypted, ?),
+                mail_db_password_encrypted    = COALESCE(mail_db_password_encrypted, ?),
+                redis_password_encrypted      = COALESCE(redis_password_encrypted, ?),
+                meili_master_key_encrypted    = COALESCE(meili_master_key_encrypted, ?),
+                panel_admin_password_encrypted = COALESCE(panel_admin_password_encrypted, ?)
              WHERE id = ?"
         );
+        $enc = fn($v) => !empty($v) ? $this->encryption->encrypt($v) : null;
         $stmt->execute([
-            !empty($variables['IMAP_ENCRYPTION_KEY']) ? $this->encryption->encrypt($variables['IMAP_ENCRYPTION_KEY']) : null,
-            !empty($variables['AI_ENCRYPTION_KEY']) ? $this->encryption->encrypt($variables['AI_ENCRYPTION_KEY']) : null,
-            !empty($variables['SSO_SERVER_KEY']) ? $this->encryption->encrypt($variables['SSO_SERVER_KEY']) : null,
-            !empty($variables['JWT_PRIVATE_KEY_PEM']) ? $this->encryption->encrypt($variables['JWT_PRIVATE_KEY_PEM']) : null,
+            $enc($variables['IMAP_ENCRYPTION_KEY'] ?? null),
+            $enc($variables['AI_ENCRYPTION_KEY'] ?? null),
+            $enc($variables['SSO_SERVER_KEY'] ?? null),
+            $enc($variables['JWT_PRIVATE_KEY_PEM'] ?? null),
             !empty($variables['JWT_PUBLIC_KEY_PEM']) ? $variables['JWT_PUBLIC_KEY_PEM'] : null,
+            $enc($variables['DB_ROOT_PASS'] ?? null),
+            $enc($variables['PANEL_DB_PASS'] ?? null),
+            $enc($variables['EMAIL_DB_PASS'] ?? null),
+            $enc($variables['MAIL_DB_PASS'] ?? null),
+            $enc($variables['REDIS_PASS'] ?? null),
+            $enc($variables['MEILI_MASTER_KEY'] ?? null),
+            $enc($variables['ADMIN_PASS'] ?? null),
             $serverId,
         ]);
     }
