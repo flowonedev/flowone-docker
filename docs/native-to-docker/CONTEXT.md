@@ -82,6 +82,14 @@
   TODO), so the first dry-run validates real-Linux runtime + GHCR pull + TLS + domain routing for the
   webmail app, not mail/calls. The target-side `docker login` step in `vps-bootstrap.sh` is also the spec
   for the same gap in `DockerProvisioningService::provisionDocker()`.
+- **First real-VPS dry-run PASSED (Ubuntu 22.04, 85.155.242.131, HTTP):** `vps-bootstrap.sh` on a fresh box
+  installed Docker (v29.6.1), logged in to GHCR, minted `.env` + JWT, pulled the private images, brought
+  the stack up — all six services healthy; from the public internet `GET / -> 200` and `GET /api/auth/me
+  -> 401`. Two bugs the real box exposed (Windows clean-room missed them because its jwt volume was
+  pre-seeded): JWT seeding used `node:20-bookworm-slim`, which does NOT ship the openssl CLI (`exit 127`).
+  Fixed both `vps-bootstrap.sh` and `gen-jwt-keys.sh` to mint the pair via `alpine:3` + `apk add openssl`.
+  Still TODO on this box: TLS pass (staging subdomain + certbot + `--ssl`), and there is no seeded user
+  account yet so browser login needs a registration/seed step.
 
 ### Next action
 

@@ -9,8 +9,9 @@
 #   real box: minting a NEW pair rotates the signing key and logs everyone out.
 #
 # Idempotent: if the volume already holds a key pair, it is left untouched.
-# Uses the node:20 image (Debian, ships openssl) so no host openssl is needed —
-# and that image is already pulled for the app builds.
+# Uses alpine + `apk add openssl` (tiny, reliably has the openssl CLI) so no host
+# openssl is needed. NOTE: node:20-bookworm-slim does NOT ship openssl, so don't
+# use it here.
 #
 # Usage:
 #   ./gen-jwt-keys.sh                 # volume: flowone_jwt_keys (compose project 'flowone')
@@ -28,12 +29,13 @@ VOLUME="${1:-flowone_jwt_keys}"
 echo "Ensuring JWT key pair in Docker volume: ${VOLUME}"
 docker volume create "${VOLUME}" >/dev/null
 
-docker run --rm -v "${VOLUME}":/jwt node:20-bookworm-slim bash -c '
+docker run --rm -v "${VOLUME}":/jwt alpine:3 sh -c '
     set -e
     if [ -s /jwt/jwt-private.pem ] && [ -s /jwt/jwt-public.pem ]; then
         echo "  keys already present — leaving as-is (safe/idempotent)."
         exit 0
     fi
+    apk add --no-cache openssl >/dev/null
     openssl genrsa -out /jwt/jwt-private.pem 2048
     openssl rsa -in /jwt/jwt-private.pem -pubout -out /jwt/jwt-public.pem
     chmod 600 /jwt/jwt-private.pem

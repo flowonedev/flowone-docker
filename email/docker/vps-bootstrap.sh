@@ -216,11 +216,14 @@ fi
 JWT_VOLUME="flowone_jwt_keys"
 log "Seeding JWT key volume '${JWT_VOLUME}' (idempotent)..."
 docker volume create "$JWT_VOLUME" >/dev/null
-docker run --rm -v "${JWT_VOLUME}":/jwt node:20-bookworm-slim bash -c '
+# alpine + `apk add openssl`: tiny and reliably has the openssl CLI. (node:20
+# -slim strips openssl, so it cannot mint the pair on a fresh box.)
+docker run --rm -v "${JWT_VOLUME}":/jwt alpine:3 sh -c '
     set -e
     if [ -s /jwt/jwt-private.pem ] && [ -s /jwt/jwt-public.pem ]; then
         echo "  keys already present — leaving as-is."; exit 0
     fi
+    apk add --no-cache openssl >/dev/null
     openssl genrsa -out /jwt/jwt-private.pem 2048
     openssl rsa -in /jwt/jwt-private.pem -pubout -out /jwt/jwt-public.pem
     chmod 600 /jwt/jwt-private.pem; chmod 644 /jwt/jwt-public.pem
