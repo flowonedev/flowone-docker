@@ -36,6 +36,14 @@ class DeploymentType
     /** App Update - update application code only, preserve configs */
     public const APP_UPDATE = 'app_update';
 
+    /**
+     * Docker Provision - deploy the whole per-server stack via Docker Compose
+     * (Phase D). Renders the per-host .env, ships docker-compose.yml, pulls the
+     * pre-built images and brings the stack up, obtains SSL + seeds a default
+     * login mailbox. Runs IN PARALLEL with native FULL_PROVISION during cutover.
+     */
+    public const DOCKER_PROVISION = 'docker_provision';
+
     /** Wipe server - remove installed software */
     public const WIPE = 'wipe';
 
@@ -52,6 +60,7 @@ class DeploymentType
             self::CONFIG_UPDATE,
             self::SSL_RENEW,
             self::APP_UPDATE,
+            self::DOCKER_PROVISION,
             self::WIPE,
         ];
     }
@@ -69,6 +78,7 @@ class DeploymentType
             self::CONFIG_UPDATE => 'Config Update',
             self::SSL_RENEW => 'SSL Renewal',
             self::APP_UPDATE => 'App Update (Code Only)',
+            self::DOCKER_PROVISION => 'Docker Provision',
             self::WIPE => 'Wipe Server',
             default => $type,
         };
@@ -87,6 +97,7 @@ class DeploymentType
             self::CONFIG_UPDATE => 'Push configuration changes to the server',
             self::SSL_RENEW => 'Renew SSL certificates for all domains',
             self::APP_UPDATE => 'Update application code without touching server configs (preserves config.local.php, .env)',
+            self::DOCKER_PROVISION => 'Deploy the full stack via Docker Compose: render per-host .env, pull images, bring the stack up, obtain SSL and seed a default login mailbox',
             self::WIPE => 'Remove all installed software and configs from the server',
             default => '',
         };

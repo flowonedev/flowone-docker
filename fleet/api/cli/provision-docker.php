@@ -21,6 +21,7 @@
  *   --compose=<path>         explicit docker-compose.yml source on the Fleet host
  *   --skip-docker-install    assume Docker Engine + compose plugin already present
  *   --wait=<seconds>         health-wait timeout (default 180)
+ *   --deployment=<id>        deployments row to stream progress/log into (dashboard)
  *   --update-service=<svc>   pull+up a single service instead of a full deploy
  */
 
@@ -43,13 +44,14 @@ foreach (array_slice($argv, 2) as $arg) {
     elseif (str_starts_with($arg, '--tag=')) $options['tag'] = substr($arg, 6);
     elseif (str_starts_with($arg, '--compose=')) $options['compose_source'] = substr($arg, 10);
     elseif (str_starts_with($arg, '--wait=')) $options['wait_timeout'] = (int) substr($arg, 7);
+    elseif (str_starts_with($arg, '--deployment=')) $options['deployment_id'] = (int) substr($arg, 13);
     elseif (str_starts_with($arg, '--update-service=')) $updateService = substr($arg, 17);
     else { fwrite(STDERR, "Unknown argument: {$arg}\n"); exit(1); }
 }
 
 if (!$serverId) {
     die("Usage: php provision-docker.php <server_id> [--no-ssl] [--registry=..] [--tag=..] "
-        . "[--compose=..] [--skip-docker-install] [--wait=secs] [--update-service=svc]\n");
+        . "[--compose=..] [--skip-docker-install] [--wait=secs] [--deployment=id] [--update-service=svc]\n");
 }
 
 require_once __DIR__ . '/../vendor/autoload.php';

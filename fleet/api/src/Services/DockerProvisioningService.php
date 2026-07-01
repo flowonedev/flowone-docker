@@ -37,6 +37,9 @@ class DockerProvisioningService
     /** Bridge-net services this deploy manages (health-tracked). */
     public const SERVICES = ['mariadb', 'redis', 'meilisearch', 'web', 'collab', 'mailsync'];
 
+    /** Day-2 helper scripts shipped next to the stack (SSL + mailbox + DNS ops). */
+    public const HELPER_SCRIPTS = ['obtain-certs.sh', 'create-mail-account.sh', 'dns-records.sh'];
+
     private Container $container;
     private SSHService $ssh;
     private ComposeEnvRenderer $envRenderer;
@@ -44,6 +47,8 @@ class DockerProvisioningService
     private EncryptionService $encryption;
     private \PDO $db;
     private array $log = [];
+    /** When set (deploy launched from the dashboard), progress + log stream to this row. */
+    private ?int $deploymentId = null;
 
     public function __construct(Container $container)
     {
@@ -131,6 +136,85 @@ class DockerProvisioningService
         );
     }
 
+    /** `docker compose restart <service>` (used to reload the mail pod after a cert flip). */
+    public static function restartCmd(string $service): string
+    {
+        return self::composeBase() . ' restart ' . escapeshellarg($service);
+    }
+
+    /** Remote test for an existing Let's Encrypt cert lineage (exit 0 = present + non-empty). */
+    public static function certPresentCmd(string $certName): string
+    {
+        return 'test -s ' . escapeshellarg("/etc/letsencrypt/live/{$certName}/fullchain.pem");
+    }
+
+    /**
+     * obtain-certs.sh invocation — one SAN cert (--cert-name lineage) covering every
+     * public host the box serves. All domains must already resolve here (HTTP-01).
+     */
+    public static function obtainCertsCmd(string $email, string $certName, array $domains): string
+    {
+        $args = '';
+        foreach ($domains as $d) {
+            $args .= ' ' . escapeshellarg($d);
+        }
+        return sprintf(
+            'bash %s --email=%s --cert-name=%s%s',
+            escapeshellarg(self::STACK_DIR . '/obtain-certs.sh'),
+            escapeshellarg($email),
+            escapeshellarg($certName),
+            $args
+        );
+    }
+
+    /** create-mail-account.sh invocation — idempotent mailbox upsert in the mail DB. */
+    public static function createMailboxCmd(string $email, string $password, int $quotaMb = 2048): string
+    {
+        return sprintf(
+            'bash %s --email=%s --password=%s --quota-mb=%d --stack-dir=%s',
+            escapeshellarg(self::STACK_DIR . '/create-mail-account.sh'),
+            escapeshellarg($email),
+            escapeshellarg($password),
+            $quotaMb,
+            escapeshellarg(self::STACK_DIR)
+        );
+    }
+
+    /**
+     * Resolve the default login mailbox for a server — parity with the native
+     * ProvisioningService::resolveMailLogin(): local part 'robert' (or
+     * MAIL_LOGIN_USER, sanitised), mailbox @<base mail domain>, password from
+     * MAIL_LOGIN_PASS -> ADMIN_PASS -> generated. Every provisioned box gets one
+     * real IMAP mailbox so the Email app has a working login out of the box.
+     *
+     * @return array{user:string,email:string,pass:string,generated:bool}
+     */
+    public static function resolveDefaultLogin(array $vars): array
+    {
+        $mailDomain = (string) ($vars['MAIL_DOMAIN'] ?? $vars['EMAIL_DOMAIN'] ?? '');
+        $base = (string) preg_replace('/^mail\./', '', $mailDomain);
+
+        $user = strtolower(trim((string) ($vars['MAIL_LOGIN_USER'] ?? 'robert')));
+        $user = (string) preg_replace('/[^a-z0-9._-]/', '', $user);
+        if ($user === '') {
+            $user = 'robert';
+        }
+
+        $pass = (string) ($vars['MAIL_LOGIN_PASS'] ?? $vars['ADMIN_PASS'] ?? '');
+        $generated = false;
+        if ($pass === '') {
+            $pass = bin2hex(random_bytes(9)); // 18 hex chars
+            $generated = true;
+        }
+
+        return [
+            'user' => $user,
+            'email' => $base !== '' ? "{$user}@{$base}" : $user,
+            'pass' => $pass,
+            'generated' => $generated,
+        ];
+    }
+
     /**
      * Parse `docker compose ps --format json` output into service => state.
      * Compose emits either a JSON array or one JSON object per line depending on
@@ -197,7 +281,9 @@ class DockerProvisioningService
     public function provisionDocker(int $serverId, array $options = []): array
     {
         $this->log = [];
+        $this->deploymentId = isset($options['deployment_id']) ? (int) $options['deployment_id'] : null;
         try {
+            $this->markDeployment('running', 5, 'Connecting...');
             $server = $this->getServer($serverId);
             $this->logLine("Connecting to {$server['name']}...");
             if (!$this->ssh->connectToServer($server)) {
@@ -218,44 +304,68 @@ class DockerProvisioningService
 
             // 1. Docker engine + compose plugin
             if (empty($options['skip_docker_install'])) {
+                $this->markDeployment(null, 15, 'Installing Docker...');
                 $this->logLine('Ensuring Docker Engine + compose plugin...');
                 $this->run(self::dockerInstallCmd(), 600, 'docker install');
             }
 
-            // 2. Stack directory + compose file
+            // 2. Stack directory + compose file + sidecar files (mariadb-init, helpers)
+            $this->markDeployment(null, 25, 'Shipping stack files...');
             $this->run('mkdir -p ' . escapeshellarg(self::STACK_DIR), 30, 'mkdir stack');
             $this->uploadComposeFile($options);
+            $this->shipStackFiles($options);
 
-            // 3. Render + upload the per-host .env (fails loudly on missing secrets)
-            $this->logLine('Rendering per-host .env...');
-            $envBody = $this->envRenderer->render($variables, [
-                'enable_ssl' => $options['enable_ssl'] ?? true,
-                'registry'   => $options['registry'] ?? ($this->container->getConfig('docker.registry') ?? 'flowone'),
-                'tag'        => $options['tag'] ?? ($this->container->getConfig('docker.tag') ?? 'latest'),
-            ]);
-            if (!$this->ssh->uploadContent($envBody, self::ENV_FILE)) {
-                throw new \RuntimeException('Failed to upload .env');
-            }
-            $this->run('chmod 600 ' . escapeshellarg(self::ENV_FILE), 30, 'chmod .env');
+            // 3. SSL ordering (chicken/egg): OLS refuses to start with ENABLE_SSL=1
+            // when the cert file is missing, but certbot HTTP-01 needs the box up on
+            // :80 first. So boot HTTP-first when SSL is wanted but the cert isn't
+            // present yet; obtain it after `up`, then flip to HTTPS. A bare-IP host
+            // (no LE) or an already-present cert skips straight to the final scheme.
+            $wantSsl  = $options['enable_ssl'] ?? true;
+            $certName = (string) ($variables['SERVER_FQDN'] ?? $variables['EMAIL_DOMAIN'] ?? '');
+            $isIp     = (bool) preg_match('/^\d+(\.\d+){3}$/', $certName);
+            $certPresent = $certName !== '' && $this->remoteTest(self::certPresentCmd($certName));
+            $deferSsl = $wantSsl && !$isIp && !$certPresent;
+            $initialSsl = $wantSsl && !$deferSsl;
+
+            $this->markDeployment(null, 35, 'Rendering .env...');
+            $this->logLine('Rendering per-host .env (SSL=' . ($initialSsl ? 'on' : 'off') . ')...');
+            $this->renderAndUploadEnv($variables, $options, $initialSsl);
 
             // 3b. Seed the JWT PEM pair into the shared jwt_keys volume BEFORE the
             // stack comes up, so web/collab/mailsync mount a populated volume.
             $this->seedJwtVolume($variables);
 
             // 4. Pull images + bring the stack up
+            $this->markDeployment(null, 50, 'Pulling images...');
             $this->logLine('Pulling images...');
             $this->run(self::pullCmd(), 900, 'compose pull');
+            $this->markDeployment(null, 65, 'Starting stack...');
             $this->logLine('Starting stack...');
             $this->run(self::upCmd(), 300, 'compose up');
 
             // 5. Wait for health
+            $this->markDeployment(null, 75, 'Waiting for health...');
             $healthy = $this->waitHealthy((int) ($options['wait_timeout'] ?? 180));
 
-            // 6. Warm the DB schema (best-effort) once web is serving, so the
-            // first real user request doesn't race lazy DDL / hit missing columns.
-            if ($healthy) {
-                $this->warmSchema();
+            // 6. Obtain the SAN cert then flip SSL on (only if we deferred it above).
+            if ($deferSsl) {
+                $this->markDeployment(null, 85, 'Obtaining SSL certificate...');
+                $this->obtainCertsAndEnableSsl($variables, $options, $certName);
             }
+
+            // 7. Warm the DB schema (best-effort) once web is serving, so the first
+            // real user request doesn't race lazy DDL / hit missing columns.
+            if ($healthy) {
+                $this->markDeployment(null, 92, 'Warming schema...');
+                $this->warmSchema();
+                // 8. Seed the default login mailbox (parity with native robert@domain).
+                $this->markDeployment(null, 96, 'Creating default mailbox...');
+                $this->seedDefaultMailbox($variables);
+            }
+
+            $this->markDeployment($healthy ? 'success' : 'failed', 100,
+                $healthy ? 'Completed' : 'Stack did not become healthy');
+            $this->setServerStatus($serverId, $healthy ? 'active' : 'error');
 
             return [
                 'success' => $healthy,
@@ -264,6 +374,8 @@ class DockerProvisioningService
             ];
         } catch (\Throwable $e) {
             $this->logLine('ERROR: ' . $e->getMessage());
+            $this->markDeployment('failed', null, 'Error: ' . substr($e->getMessage(), 0, 120));
+            $this->setServerStatus($serverId, 'error');
             return ['success' => false, 'error' => $e->getMessage(), 'log' => $this->log];
         } finally {
             if ($this->ssh->isConnected()) {
@@ -335,15 +447,20 @@ class DockerProvisioningService
     }
 
     /**
-     * Upload the version-controlled docker-compose.yml. Source order:
+     * Resolve the docker-compose.yml source path on the Fleet host. Source order:
      * explicit option, Fleet config (docker.compose_path), else the packaged copy.
      */
-    private function uploadComposeFile(array $options): void
+    private function resolveComposeSource(array $options): string
     {
-        $source = $options['compose_source']
+        return $options['compose_source']
             ?? $this->container->getConfig('docker.compose_path')
             ?? ($this->container->getConfig('packages.path') . 'docker-compose.yml');
+    }
 
+    /** Upload the version-controlled docker-compose.yml to the box. */
+    private function uploadComposeFile(array $options): void
+    {
+        $source = $this->resolveComposeSource($options);
         if (!is_file($source)) {
             throw new \RuntimeException("compose file not found at: {$source}");
         }
@@ -351,6 +468,156 @@ class DockerProvisioningService
             throw new \RuntimeException('Failed to upload docker-compose.yml');
         }
         $this->logLine("Uploaded compose file from {$source}");
+    }
+
+    /**
+     * Ship the files that live next to docker-compose.yml and are needed at boot
+     * or for day-2 ops: the mariadb-init/ script (creates the mailserver DB +
+     * least-privilege mailuser on a FRESH volume — the mail pod is dead without
+     * it) and the obtain-certs / create-mail-account / dns-records helpers (used
+     * by the SSL flip + default-mailbox steps here, and by operators afterwards).
+     */
+    private function shipStackFiles(array $options): void
+    {
+        $srcDir = dirname($this->resolveComposeSource($options));
+
+        $init = $srcDir . '/mariadb-init/10-mailserver.sh';
+        if (is_file($init)) {
+            $this->run('mkdir -p ' . escapeshellarg(self::STACK_DIR . '/mariadb-init'), 30, 'mkdir mariadb-init');
+            if (!$this->ssh->uploadFile($init, self::STACK_DIR . '/mariadb-init/10-mailserver.sh')) {
+                throw new \RuntimeException('Failed to upload mariadb-init/10-mailserver.sh');
+            }
+        } else {
+            $this->logLine('WARN: mariadb-init/10-mailserver.sh not found beside compose — mail DB will not auto-provision.');
+        }
+
+        foreach (self::HELPER_SCRIPTS as $h) {
+            $p = $srcDir . '/' . $h;
+            if (is_file($p) && $this->ssh->uploadFile($p, self::STACK_DIR . '/' . $h)) {
+                $this->run('chmod +x ' . escapeshellarg(self::STACK_DIR . '/' . $h), 30, "chmod {$h}");
+            }
+        }
+        $this->logLine('Shipped mariadb-init + day-2 helpers');
+    }
+
+    /** Render the per-host .env (fails loudly on missing secrets) and upload it (chmod 600). */
+    private function renderAndUploadEnv(array $variables, array $options, bool $enableSsl): void
+    {
+        $envBody = $this->envRenderer->render($variables, [
+            'enable_ssl' => $enableSsl,
+            'registry'   => $options['registry'] ?? ($this->container->getConfig('docker.registry') ?? 'flowone'),
+            'tag'        => $options['tag'] ?? ($this->container->getConfig('docker.tag') ?? 'latest'),
+        ]);
+        if (!$this->ssh->uploadContent($envBody, self::ENV_FILE)) {
+            throw new \RuntimeException('Failed to upload .env');
+        }
+        $this->run('chmod 600 ' . escapeshellarg(self::ENV_FILE), 30, 'chmod .env');
+    }
+
+    /** Best-effort remote boolean test (exit 0 = true). Never throws. */
+    private function remoteTest(string $command): bool
+    {
+        $res = $this->ssh->execWithTimeout($command, 30);
+        return !empty($res['success']);
+    }
+
+    /**
+     * Obtain a Let's Encrypt SAN cert covering every public host the box serves
+     * (mail FQDN + webmail + panel), then re-render the .env with ENABLE_SSL=1 and
+     * recreate web + reload mail so both pick up the real cert. Non-fatal: if
+     * issuance fails the stack simply stays on HTTP and the operator can retry.
+     */
+    private function obtainCertsAndEnableSsl(array $variables, array $options, string $certName): void
+    {
+        $email = (string) ($variables['ADMIN_EMAIL']
+            ?? ('postmaster@' . ($variables['MAIL_DOMAIN'] ?? $variables['EMAIL_DOMAIN'] ?? '')));
+        $domains = array_values(array_unique(array_filter([
+            $certName,
+            (string) ($variables['EMAIL_DOMAIN'] ?? ''),
+            (string) ($variables['PANEL_DOMAIN'] ?? ''),
+        ])));
+
+        $this->logLine('Obtaining LE SAN cert for: ' . implode(', ', $domains));
+        $res = $this->ssh->execWithTimeout(self::obtainCertsCmd($email, $certName, $domains), 300);
+        if (empty($res['success']) || !$this->remoteTest(self::certPresentCmd($certName))) {
+            $this->logLine('WARN: cert issuance failed; leaving stack on HTTP: '
+                . substr(trim((string) ($res['output'] ?? $res['error'] ?? '')), -300));
+            return;
+        }
+
+        $this->logLine('Cert ready — enabling HTTPS and recreating web + mail...');
+        $this->renderAndUploadEnv($variables, $options, true);
+        $this->run(self::upCmd('web'), 180, 'up web (ssl)');
+        $this->run(self::restartCmd('mail'), 120, 'restart mail (ssl)');
+    }
+
+    /**
+     * Seed the default login mailbox so the Email app has a working login out of
+     * the box — parity with the native ProvisioningService::seedMailAccount(). The
+     * credential is logged into the deployment record so the operator can retrieve
+     * it (native relied on the known ADMIN_PASS). Non-fatal.
+     */
+    private function seedDefaultMailbox(array $variables): void
+    {
+        $login = self::resolveDefaultLogin($variables);
+        if ($login['email'] === '' || strpos($login['email'], '@') === false) {
+            $this->logLine('WARN: no mail domain resolved — skipping default mailbox.');
+            return;
+        }
+
+        $this->logLine("Seeding default login mailbox {$login['email']} (parity with native robert@domain)...");
+        $res = $this->ssh->execWithTimeout(self::createMailboxCmd($login['email'], $login['pass']), 120);
+        if (empty($res['success'])) {
+            $this->logLine('WARN: default mailbox creation failed (mail DB seeded yet?): '
+                . substr(trim((string) ($res['output'] ?? $res['error'] ?? '')), -300));
+            return;
+        }
+
+        $note = $login['generated']
+            ? " password={$login['pass']} (auto-generated — save it)"
+            : ' password=<the panel admin password for this server>';
+        $this->logLine("Default login ready: {$login['email']}{$note}");
+    }
+
+    /**
+     * Best-effort update of the dashboard deployment row (progress bar + streamed
+     * log come from here). No-op when the deploy wasn't launched with a
+     * deployment_id (e.g. a direct CLI run).
+     */
+    private function markDeployment(?string $status, ?int $progress = null, ?string $step = null): void
+    {
+        if (!$this->deploymentId) {
+            return;
+        }
+        $sets = ['last_heartbeat = NOW()'];
+        $params = [];
+        if ($status !== null)   { $sets[] = 'status = ?';       $params[] = $status; }
+        if ($progress !== null) { $sets[] = 'progress = ?';     $params[] = $progress; }
+        if ($step !== null)     { $sets[] = 'current_step = ?';  $params[] = $step; }
+        if ($status === 'running') {
+            $sets[] = 'started_at = COALESCE(started_at, NOW())';
+            $sets[] = 'pid = ?';
+            $params[] = getmypid();
+        }
+        if ($status === 'success' || $status === 'failed') {
+            $sets[] = 'completed_at = NOW()';
+        }
+        $params[] = $this->deploymentId;
+        try {
+            $this->db->prepare('UPDATE deployments SET ' . implode(', ', $sets) . ' WHERE id = ?')->execute($params);
+        } catch (\Throwable $e) {
+            // best-effort: never let dashboard bookkeeping fail the deploy
+        }
+    }
+
+    /** Set the server row status (active on success, error on failure). Best-effort. */
+    private function setServerStatus(int $serverId, string $status): void
+    {
+        try {
+            $this->db->prepare('UPDATE servers SET status = ? WHERE id = ?')->execute([$status, $serverId]);
+        } catch (\Throwable $e) {
+            // best-effort
+        }
     }
 
     /**
@@ -407,6 +674,18 @@ class DockerProvisioningService
         $this->log[] = $msg;
         if (php_sapi_name() === 'cli') {
             fwrite(STDERR, "  [docker-provision] {$msg}\n");
+        }
+        // Stream to the dashboard deployment row (append) so operators see live
+        // progress. Best-effort — a logging failure must never abort the deploy.
+        if ($this->deploymentId) {
+            try {
+                $stmt = $this->db->prepare(
+                    'UPDATE deployments SET log = CONCAT(COALESCE(log, ""), ?), last_heartbeat = NOW() WHERE id = ?'
+                );
+                $stmt->execute([$msg . "\n", $this->deploymentId]);
+            } catch (\Throwable $e) {
+                // best-effort
+            }
         }
     }
 }

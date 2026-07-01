@@ -153,6 +153,25 @@
   three helper scripts next to the stack. DKIM/SPF/DMARC/PTR still need to be published in DNS by the operator
   (records emitted by `dns-records.sh`); until then outbound may land in spam and inbound MX won't route.
 
+- **Default login mailbox (native parity) + `DOCKER_PROVISION` dashboard wiring:** DONE (off-box, unit-tested).
+  The native provisioner minted a default `robert@<domain>` mailbox + saved password on every deploy
+  (`ProvisioningService::resolveMailLogin` + `seedMailAccount`); the Docker path now does the same in TWO places:
+  (1) `vps-bootstrap.sh` auto-creates it after boot (`--login-user`/`--login-pass`/`--no-login-account`,
+  env `MAIL_LOGIN_USER`/`MAIL_LOGIN_PASS`/`ADMIN_PASS`) and writes `DEFAULT-LOGIN.txt` (chmod 600) + prints
+  the credential banner; (2) the automated Fleet path via `DockerProvisioningService::resolveDefaultLogin()`
+  + `seedDefaultMailbox()` (runs `create-mail-account.sh` over SSH after health, logs the credential into the
+  deployment row). **Renderer now mail-pod aware:** `ComposeEnvRenderer` emits `MAIL_DOMAIN`/`SERVER_FQDN`/
+  `SERVER_IP`/`ADMIN_EMAIL`/`MAIL_ENABLE_*` and `SSL_CERT_FILE`/`SSL_KEY_FILE`, and points `IMAP_HOST` at the
+  cert-covered FQDN (was missing → the automated deploy would not have configured the mail pod or web TLS).
+  `DockerProvisioningService` now also ships `mariadb-init/` + the day-2 helpers to the box and does the same
+  HTTP-first→certbot→flip-to-HTTPS ordering as `vps-bootstrap.sh` (via `obtain-certs.sh`). Live-dashboard wiring
+  landed: **`DeploymentType::DOCKER_PROVISION`** + `DeploymentController::handleDockerProvision()` (background
+  `cli/provision-docker.php --deployment=<id>`, streams progress/log into the `deployments` row, flips server
+  status active/error), migration **027** extends the `deployments.type` enum. Tests: renderer **22/22**,
+  docker-provisioning **23/23** (new: restart/cert/obtain/mailbox command builders + `resolveDefaultLogin`).
+  Runs IN PARALLEL with native `full_provision` (native `ProvisioningService` still untouched). NOT yet
+  live-tested end-to-end (needs the real Fleet Manager instance + a fresh Linux target — Phase E).
+
 ### Next action
 
 Remaining tracks are gated on resources we don't have on Windows:
@@ -170,12 +189,13 @@ Remaining tracks are gated on resources we don't have on Windows:
    `cli/provision-docker.php` (compose pull/up/health, 15/15), dead `panel_update`/`email_update`
    retired, docker-aware health for heartbeat + SSH probe (9/9, additive/gated so native boxes are
    untouched). All built as NEW modules — the native `ProvisioningService` is untouched, so the two
-   provisioners run in parallel during cutover. STILL TODO: (a) generate+persist the non-regenerable
-   crypto on a fresh box (`IMAP_ENCRYPTION_KEY`, `OAUTH_KEYS`, VAPID, `SSO_SERVER_KEY`, JWT PEMs —
-   needs a servers-table migration) so the renderer's guards pass without a migrated snapshot, and
-   seed the JWT pair into the `jwt_keys` volume; (b) wire a `DOCKER_PROVISION` type into the live
-   dashboard (gated on Phase E validation). The SSH orchestration itself is only runnable against a
-   real Linux target (Phase E).
+   provisioners run in parallel during cutover. Fresh-box crypto (a) is DONE (migration 026 +
+   `ServerSecretGenerator`, 8/8). **`DOCKER_PROVISION` dashboard wiring is now DONE** (migration 027 +
+   `DeploymentController::handleDockerProvision`), and the Docker path reached native parity for the mail
+   pod (renderer emits mail + SSL vars), SSL (HTTP-first→certbot→flip via `obtain-certs.sh`), and the default
+   `robert@<domain>` login mailbox (`seedDefaultMailbox`). The SSH orchestration + a click-deploy from the
+   REAL Fleet Manager are only runnable against a live Fleet instance + a fresh Linux target (Phase E) — the
+   pure builders/renderer are unit-tested here (renderer 22/22, docker-provisioning 23/23).
 3. **Migration delta-sync mode** (deferred): `snapshot.sh` is a full capture today; add an
    incremental/rsync-delta mode for the short cutover window.
 

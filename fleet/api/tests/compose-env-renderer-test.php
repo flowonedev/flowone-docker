@@ -17,7 +17,7 @@
  *   php fleet/api/tests/compose-env-renderer-test.php --verbose
  *
  * Flags: --help --verbose --json --only=group1,group2
- * Groups: preflight, render, hosts, urls, secrets, ssl, guards, format
+ * Groups: preflight, render, hosts, urls, secrets, ssl, mail, guards, format
  * Exit 0 = all pass, 1 = any failure.
  */
 
@@ -41,7 +41,7 @@ foreach (array_slice($argv, 1) as $arg) {
 }
 if ($opts['help']) {
     echo "Usage: php compose-env-renderer-test.php [--verbose] [--json] [--only=render,guards,...]\n";
-    echo "Groups: preflight, render, hosts, urls, secrets, ssl, guards, format\n";
+    echo "Groups: preflight, render, hosts, urls, secrets, ssl, mail, guards, format\n";
     exit(0);
 }
 
@@ -164,8 +164,9 @@ test('render', 'renders and parses into KEY=VALUE with no dupes', function () us
 });
 test('render', 'all canonical keys are present', function () use ($renderer) {
     $env = parseEnv($renderer->render(sampleVars()));
-    $expected = ['EMAIL_DOMAIN','FRONTEND_URL','API_URL','APP_ENV','APP_DEBUG','ENABLE_SSL',
+    $expected = ['EMAIL_DOMAIN','FRONTEND_URL','API_URL','APP_ENV','APP_DEBUG','ENABLE_SSL','SSL_CERT_FILE','SSL_KEY_FILE',
         'DB_HOST','DB_PORT','DB_NAME','DB_USER','DB_PASS','MAIL_DB_HOST','MAIL_DB_NAME','MAIL_DB_USER','MAIL_DB_PASS',
+        'MAIL_DOMAIN','SERVER_FQDN','SERVER_IP','ADMIN_EMAIL','MAIL_ENABLE_CLAMAV','MAIL_ENABLE_SPAMASSASSIN','MAIL_ENABLE_RSPAMD',
         'REDIS_HOST','REDIS_PORT','REDIS_PASSWORD','REDIS_DATABASE','MEILI_HOST','MEILI_MASTER_KEY','MEILI_SEARCH_KEY',
         'JWT_ALGORITHM','JWT_PRIVATE_KEY_PATH','JWT_PUBLIC_KEY_PATH','IMAP_ENCRYPTION_KEY','AI_ENCRYPTION_KEY',
         'OAUTH_KEYS','OAUTH_CURRENT_VERSION','SSO_SERVER_KEY','COLLAB_ADDR','MAILSYNC_ADDR','COLLAB_WS_URL',
@@ -251,6 +252,40 @@ test('ssl', 'registry/tag overridable', function () use ($renderer) {
     $env = parseEnv($renderer->render(sampleVars(), ['registry' => 'reg.acme.com/flowone', 'tag' => 'v2']));
     assertEq('reg.acme.com/flowone', $env['REGISTRY'], 'REGISTRY');
     assertEq('v2', $env['TAG'], 'TAG');
+    return true;
+});
+
+// --- mail pod identity + SSL cert file paths ---
+section('mail');
+test('mail', 'mail-pod identity keys emitted from vars', function () use ($renderer) {
+    $env = parseEnv($renderer->render(sampleVars(['SERVER_IP' => '203.0.113.9'])));
+    assertEq('acme.com', $env['MAIL_DOMAIN'], 'MAIL_DOMAIN');
+    assertEq('acme.com', $env['SERVER_FQDN'], 'SERVER_FQDN falls back to mail domain');
+    assertEq('203.0.113.9', $env['SERVER_IP'], 'SERVER_IP');
+    assertEq('admin@acme.com', $env['ADMIN_EMAIL'], 'ADMIN_EMAIL');
+    assertEq('1', $env['MAIL_ENABLE_CLAMAV'], 'clamav default on');
+    assertEq('1', $env['MAIL_ENABLE_RSPAMD'], 'rspamd default on');
+    return true;
+});
+test('mail', 'heavy mail services can be toggled off via vars', function () use ($renderer) {
+    $env = parseEnv($renderer->render(sampleVars(['MAIL_ENABLE_CLAMAV' => '0', 'MAIL_ENABLE_SPAMASSASSIN' => '0'])));
+    assertEq('0', $env['MAIL_ENABLE_CLAMAV'], 'clamav off');
+    assertEq('0', $env['MAIL_ENABLE_SPAMASSASSIN'], 'spamassassin off');
+    assertEq('1', $env['MAIL_ENABLE_RSPAMD'], 'rspamd still on');
+    return true;
+});
+test('mail', 'SERVER_FQDN drives IMAP_HOST + one shared cert lineage', function () use ($renderer) {
+    $env = parseEnv($renderer->render(sampleVars(['SERVER_FQDN' => 'vps.acme.com'])));
+    assertEq('vps.acme.com', $env['SERVER_FQDN'], 'SERVER_FQDN passthrough');
+    assertEq('vps.acme.com', $env['IMAP_HOST'], 'IMAP_HOST = cert-covered FQDN');
+    assertEq('/etc/letsencrypt/live/vps.acme.com/fullchain.pem', $env['SSL_CERT_FILE'], 'cert file lineage');
+    assertEq('/etc/letsencrypt/live/vps.acme.com/privkey.pem', $env['SSL_KEY_FILE'], 'key file lineage');
+    return true;
+});
+test('mail', 'cert file lineage falls back to EMAIL_DOMAIN when no mail FQDN', function () use ($renderer) {
+    $v = sampleVars(); unset($v['MAIL_DOMAIN'], $v['SERVER_FQDN']);
+    $env = parseEnv($renderer->render($v));
+    assertEq('/etc/letsencrypt/live/email.acme.com/fullchain.pem', $env['SSL_CERT_FILE'], 'cert lineage <- EMAIL_DOMAIN');
     return true;
 });
 

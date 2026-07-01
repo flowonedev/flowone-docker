@@ -112,6 +112,56 @@ test('commands', 'seedVolumeCmd mounts volume + source and fixes key perms', fun
     assertContains($c, "'/tmp/jwt':/src:ro", 'source mount');
     assertContains($c, 'chmod 600', 'private key perms');
 });
+test('commands', 'restartCmd targets a single service on our project', function () {
+    $c = D::restartCmd('mail');
+    assertContains($c, 'restart', 'restart verb');
+    assertContains($c, 'mail', 'service name');
+    assertContains($c, "-p 'flowone'", 'project scope');
+});
+test('commands', 'certPresentCmd tests the LE fullchain for a lineage', function () {
+    $c = D::certPresentCmd('vps.acme.com');
+    assertContains($c, 'test -s', 'non-empty file test');
+    assertContains($c, '/etc/letsencrypt/live/vps.acme.com/fullchain.pem', 'cert path');
+});
+test('commands', 'obtainCertsCmd passes email, cert-name and every domain', function () {
+    $c = D::obtainCertsCmd('postmaster@acme.com', 'vps.acme.com', ['vps.acme.com', 'email.acme.com', 'panel.acme.com']);
+    assertContains($c, '/opt/flowone/obtain-certs.sh', 'helper path');
+    assertContains($c, '--email=postmaster@acme.com', 'email');
+    assertContains($c, '--cert-name=vps.acme.com', 'cert lineage');
+    assertContains($c, 'email.acme.com', 'san domain 1');
+    assertContains($c, 'panel.acme.com', 'san domain 2');
+});
+test('commands', 'createMailboxCmd upserts with quota + stack dir', function () {
+    // Alphanumeric password: Windows escapeshellarg() strips ! and % (dev-only
+    // quirk); the Linux target quotes them fine. Keep the assertion OS-agnostic.
+    $c = D::createMailboxCmd('robert@acme.com', 'S3cretPass', 2048);
+    assertContains($c, '/opt/flowone/create-mail-account.sh', 'helper path');
+    assertContains($c, '--email=robert@acme.com', 'email');
+    assertContains($c, '--password=S3cretPass', 'password');
+    assertContains($c, '--quota-mb=2048', 'quota');
+    assertContains($c, '--stack-dir=/opt/flowone', 'stack dir');
+});
+
+// --- default login resolution (parity with native resolveMailLogin) ---
+section('login');
+test('login', 'defaults to robert@<mail-domain> and uses ADMIN_PASS', function () {
+    $l = D::resolveDefaultLogin(['MAIL_DOMAIN' => 'acme.com', 'ADMIN_PASS' => 'PanelPass123']);
+    assertTrue($l['user'] === 'robert', 'default user robert');
+    assertTrue($l['email'] === 'robert@acme.com', 'email');
+    assertTrue($l['pass'] === 'PanelPass123', 'password <- ADMIN_PASS');
+    assertTrue($l['generated'] === false, 'not generated when ADMIN_PASS present');
+});
+test('login', 'MAIL_LOGIN_USER/PASS override and local part is sanitised', function () {
+    $l = D::resolveDefaultLogin(['MAIL_DOMAIN' => 'mail.acme.com', 'MAIL_LOGIN_USER' => 'Jó Bob!', 'MAIL_LOGIN_PASS' => 'x']);
+    assertTrue($l['user'] === 'jbob', 'sanitised local part: ' . $l['user']);
+    assertTrue($l['email'] === 'jbob@acme.com', 'mail. prefix stripped from domain: ' . $l['email']);
+    assertTrue($l['pass'] === 'x', 'password <- MAIL_LOGIN_PASS');
+});
+test('login', 'password auto-generated when none supplied', function () {
+    $l = D::resolveDefaultLogin(['MAIL_DOMAIN' => 'acme.com']);
+    assertTrue($l['generated'] === true, 'generated flag set');
+    assertTrue(strlen($l['pass']) >= 12, 'generated password has length');
+});
 
 // --- parse ---
 section('parse');

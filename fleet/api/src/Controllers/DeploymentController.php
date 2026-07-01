@@ -173,10 +173,76 @@ class DeploymentController extends BaseController
 
             case DeploymentType::APP_UPDATE:
                 return $this->handleAppUpdate($serverId, $request);
-                
+
+            case DeploymentType::DOCKER_PROVISION:
+                return $this->handleDockerProvision($serverId, $request);
+
             default:
                 return $this->handleOtherDeployment($serverId, $blueprintId, $type);
         }
+    }
+
+    /**
+     * Handle Docker Compose provisioning (Phase D). Runs the compose-native path
+     * (cli/provision-docker.php -> DockerProvisioningService) in the background,
+     * IN PARALLEL with the native full_provision — never touches it. Records a
+     * deployment row the CLI streams progress/log into.
+     */
+    private function handleDockerProvision(int $serverId, Request $request): Response
+    {
+        $enableSsl = (bool) $request->input('enable_ssl', true);
+        $deploymentId = $this->startDockerProvision($serverId, $enableSsl);
+
+        $this->logAction('deployment.docker_provision', $serverId, DeploymentType::DOCKER_PROVISION, 'success');
+
+        return Response::success([
+            'deployment_id' => $deploymentId,
+            'status' => 'pending',
+            'message' => 'Docker provisioning started in background',
+        ], 'Docker provisioning started');
+    }
+
+    /**
+     * Create the deployment row and launch cli/provision-docker.php non-blocking.
+     * Mirrors startFullProvision() but for the Docker path; the CLI updates the
+     * row (status/progress/log/pid) and flips server status to active/error.
+     *
+     * @return int The new deployment ID.
+     */
+    private function startDockerProvision(int $serverId, bool $enableSsl): int
+    {
+        $apiPath = dirname(__DIR__, 2);
+        $logDir = $apiPath . '/storage/logs';
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0755, true);
+        }
+        $logFile = $logDir . '/docker_provision_' . $serverId . '.log';
+
+        // Create the deployment record first so we can stream into it by id.
+        $db = $this->getDatabase();
+        $stmt = $db->prepare(
+            "INSERT INTO deployments (server_id, type, status, progress, current_step)
+             VALUES (?, ?, 'pending', 0, 'Initializing...')"
+        );
+        $stmt->execute([$serverId, DeploymentType::DOCKER_PROVISION]);
+        $deploymentId = (int) $db->lastInsertId();
+
+        // Update server status
+        $stmt = $db->prepare("UPDATE servers SET status = 'provisioning' WHERE id = ?");
+        $stmt->execute([$serverId]);
+
+        $sslFlag = $enableSsl ? '' : ' --no-ssl';
+        $cmd = sprintf(
+            'nohup setsid php -d memory_limit=512M -d max_execution_time=0 %s/cli/provision-docker.php %d --deployment=%d%s > %s 2>&1 &',
+            $apiPath,
+            $serverId,
+            $deploymentId,
+            $sslFlag,
+            $logFile
+        );
+        exec($cmd);
+
+        return $deploymentId;
     }
 
     /**

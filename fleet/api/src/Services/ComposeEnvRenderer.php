@@ -80,7 +80,18 @@ class ComposeEnvRenderer
 
         $emailDomain = (string) $vars['EMAIL_DOMAIN'];
         $panelDomain = (string) ($vars['PANEL_DOMAIN'] ?? $emailDomain);
-        $mailHost    = (string) ($options['imap_host'] ?? $vars['MAIL_DOMAIN'] ?? $emailDomain);
+        $mailDomain  = (string) ($vars['MAIL_DOMAIN'] ?? $emailDomain);
+        // Mail server FQDN = the mail pod's HELO/myhostname + cert lineage. Fleet's
+        // TemplateService sets this to the bare base domain (it owns the A + PTR).
+        $serverFqdn  = (string) ($vars['SERVER_FQDN'] ?? $mailDomain);
+        $serverIp    = (string) ($vars['SERVER_IP'] ?? '');
+        // The web tier and the mail pod share ONE cert lineage = the mail FQDN
+        // (its SANs also cover the webmail + panel hosts). The mail pod's
+        // TLS_CERT_NAME defaults to SERVER_FQDN, so both serve the very same cert.
+        $certName    = $serverFqdn !== '' ? $serverFqdn : $emailDomain;
+        // mailsync/IMAP target: prefer the cert-covered FQDN so IMAP_VERIFY_CERT
+        // holds under a real cert (falls back to the mail/base domain off-cert).
+        $mailHost    = (string) ($options['imap_host'] ?? $serverFqdn);
         $adminEmail  = (string) ($vars['ADMIN_EMAIL'] ?? "admin@{$emailDomain}");
         $enableSsl   = (isset($options['enable_ssl']) ? (bool) $options['enable_ssl'] : true) ? '1' : '0';
         $registry    = (string) ($options['registry'] ?? 'flowone');
@@ -104,6 +115,10 @@ class ComposeEnvRenderer
         $put('APP_ENV', $appEnv);
         $put('APP_DEBUG', 'false');
         $put('ENABLE_SSL', $enableSsl);
+        // OLS reads these only when ENABLE_SSL=1. Same lineage as the mail pod's
+        // TLS_CERT_NAME so web (443) + mail (imaps/submission) present one cert.
+        $put('SSL_CERT_FILE', "/etc/letsencrypt/live/{$certName}/fullchain.pem");
+        $put('SSL_KEY_FILE', "/etc/letsencrypt/live/{$certName}/privkey.pem");
 
         $sec('App database (shared)');
         $put('DB_HOST', self::DB_SERVICE);
@@ -117,6 +132,18 @@ class ComposeEnvRenderer
         $put('MAIL_DB_NAME', $vars['MAIL_DB_NAME'] ?? 'mailserver');
         $put('MAIL_DB_USER', $vars['MAIL_DB_USER'] ?? 'mailuser');
         $put('MAIL_DB_PASS', $vars['MAIL_DB_PASS'] ?? '');
+
+        // The mail pod runs on the HOST network and reads its identity from these.
+        // Heavy AV/spam services default ON for parity; a small box can flip them
+        // OFF in vars (ClamAV alone resident-loads ~1.2GB) — mail + DKIM stay up.
+        $sec('Mail server pod (host-networked)');
+        $put('MAIL_DOMAIN', $mailDomain);
+        $put('SERVER_FQDN', $serverFqdn);
+        $put('SERVER_IP', $serverIp);
+        $put('ADMIN_EMAIL', $adminEmail);
+        $put('MAIL_ENABLE_CLAMAV', (string) ($vars['MAIL_ENABLE_CLAMAV'] ?? '1'));
+        $put('MAIL_ENABLE_SPAMASSASSIN', (string) ($vars['MAIL_ENABLE_SPAMASSASSIN'] ?? '1'));
+        $put('MAIL_ENABLE_RSPAMD', (string) ($vars['MAIL_ENABLE_RSPAMD'] ?? '1'));
 
         $sec('Redis');
         $put('REDIS_HOST', self::REDIS_SERVICE);
