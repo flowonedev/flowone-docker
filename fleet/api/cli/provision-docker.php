@@ -12,7 +12,8 @@
  *
  * Usage:
  *   php provision-docker.php <server_id> [options]
- *   php provision-docker.php <server_id> --update-service=web
+ *   php provision-docker.php <server_id> --services=web,collab --tag=a1b2c3d
+ *   php provision-docker.php <server_id> --update-service=web           (legacy alias)
  *
  * Options:
  *   --no-ssl                 render an HTTP-only .env (ENABLE_SSL=0)
@@ -22,7 +23,8 @@
  *   --skip-docker-install    assume Docker Engine + compose plugin already present
  *   --wait=<seconds>         health-wait timeout (default 180)
  *   --deployment=<id>        deployments row to stream progress/log into (dashboard)
- *   --update-service=<svc>   pull+up a single service instead of a full deploy
+ *   --services=<a,b,c>       Docker Update: pull+up ONLY these services (at --tag)
+ *   --update-service=<svc>   legacy alias for --services with a single service
  */
 
 if (php_sapi_name() !== 'cli') {
@@ -35,7 +37,7 @@ ini_set('log_errors', '1');
 
 $serverId = (int) ($argv[1] ?? 0);
 $options = [];
-$updateService = null;
+$updateServices = null; // null = full provision; array = Docker Update of those services
 
 foreach (array_slice($argv, 2) as $arg) {
     if ($arg === '--no-ssl') $options['enable_ssl'] = false;
@@ -45,13 +47,15 @@ foreach (array_slice($argv, 2) as $arg) {
     elseif (str_starts_with($arg, '--compose=')) $options['compose_source'] = substr($arg, 10);
     elseif (str_starts_with($arg, '--wait=')) $options['wait_timeout'] = (int) substr($arg, 7);
     elseif (str_starts_with($arg, '--deployment=')) $options['deployment_id'] = (int) substr($arg, 13);
-    elseif (str_starts_with($arg, '--update-service=')) $updateService = substr($arg, 17);
+    elseif (str_starts_with($arg, '--services=')) $updateServices = array_values(array_filter(array_map('trim', explode(',', substr($arg, 11)))));
+    elseif (str_starts_with($arg, '--update-service=')) $updateServices = [trim(substr($arg, 17))];
     else { fwrite(STDERR, "Unknown argument: {$arg}\n"); exit(1); }
 }
 
 if (!$serverId) {
     die("Usage: php provision-docker.php <server_id> [--no-ssl] [--registry=..] [--tag=..] "
-        . "[--compose=..] [--skip-docker-install] [--wait=secs] [--deployment=id] [--update-service=svc]\n");
+        . "[--compose=..] [--skip-docker-install] [--wait=secs] [--deployment=id] "
+        . "[--services=a,b,c] [--update-service=svc]\n");
 }
 
 require_once __DIR__ . '/../vendor/autoload.php';
@@ -81,9 +85,10 @@ try {
     /** @var DockerProvisioningService $svc */
     $svc = $container->get(DockerProvisioningService::class);
 
-    if ($updateService !== null) {
-        echo "Updating service '{$updateService}' on server {$serverId}...\n";
-        $result = $svc->updateService($serverId, $updateService);
+    if ($updateServices !== null) {
+        echo "Updating services [" . implode(', ', $updateServices) . "] on server {$serverId}...\n";
+        echo "PID: " . getmypid() . "\n";
+        $result = $svc->updateService($serverId, $updateServices, $options);
     } else {
         echo "Docker-provisioning server {$serverId}...\n";
         echo "PID: " . getmypid() . "\n";

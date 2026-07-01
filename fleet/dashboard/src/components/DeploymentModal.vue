@@ -82,6 +82,17 @@ const selectedApps = ref({
   agent: true,
 })
 
+// Docker Update options (Phase D): which app-tier services to roll, and which
+// image tag to roll them to. Only the version-controlled app tier is offered
+// (mariadb/redis/meilisearch use pinned upstream images; mail is updated via a
+// re-provision). Tag = 'latest', a short git sha (a1b2c3d) or a version (v1.2.3).
+const selectedServices = ref({
+  web: true,
+  collab: true,
+  mailsync: true,
+})
+const dockerTag = ref('latest')
+
 // Computed
 const selectedTypeInfo = computed(() => {
   return deploymentTypes.value.find(t => t.type === selectedType.value) || {}
@@ -97,6 +108,9 @@ const canDeploy = computed(() => {
   }
   if (selectedType.value === 'app_update') {
     return Object.values(selectedApps.value).some(v => v)
+  }
+  if (selectedType.value === 'docker_update') {
+    return Object.values(selectedServices.value).some(v => v)
   }
   if (preflightData.value && !preflightData.value.summary?.can_proceed) {
     return false
@@ -137,10 +151,12 @@ watch(() => props.show, async (newVal) => {
     } else {
       await loadData()
       selectedBlueprint.value = props.currentBlueprintId
-      if (props.initialType && ['full_provision', 'docker_provision', 'config_only', 'packages_config', 'app_update'].includes(props.initialType)) {
+      if (props.initialType && ['full_provision', 'docker_provision', 'docker_update', 'config_only', 'packages_config', 'app_update'].includes(props.initialType)) {
         selectedType.value = props.initialType
       }
       selectedApps.value = { panel: true, email: true, agent: true }
+      selectedServices.value = { web: true, collab: true, mailsync: true }
+      dockerTag.value = 'latest'
     }
   } else {
     previewData.value = null
@@ -233,6 +249,16 @@ const deploy = async () => {
       payload.apps = Object.entries(selectedApps.value)
         .filter(([_, selected]) => selected)
         .map(([app, _]) => app)
+    }
+
+    if (selectedType.value === 'docker_update') {
+      payload.services = Object.entries(selectedServices.value)
+        .filter(([_, selected]) => selected)
+        .map(([svc, _]) => svc)
+      const tag = (dockerTag.value || '').trim()
+      if (tag !== '') {
+        payload.tag = tag
+      }
     }
 
     if (preflightData.value) {
@@ -463,6 +489,7 @@ const getTypeIcon = (type) => {
   const icons = {
     'full_provision': 'build',
     'docker_provision': 'inventory_2',
+    'docker_update': 'upgrade',
     'config_only': 'settings',
     'packages_config': 'deployed_code',
     'app_update': 'system_update',
@@ -987,7 +1014,7 @@ onMounted(() => {
               <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-3">Deployment Type</label>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <button
-                  v-for="dtype in deploymentTypes.filter(t => ['full_provision', 'docker_provision', 'config_only', 'packages_config', 'app_update'].includes(t.type))"
+                  v-for="dtype in deploymentTypes.filter(t => ['full_provision', 'docker_provision', 'docker_update', 'config_only', 'packages_config', 'app_update'].includes(t.type))"
                   :key="dtype.type"
                   @click="selectedType = dtype.type"
                   :class="[
@@ -1040,6 +1067,52 @@ onMounted(() => {
                 <span class="material-symbols-rounded text-sm align-middle">warning</span>
                 Select at least one app to update
               </p>
+            </div>
+
+            <!-- Service + Version Selection (for docker_update) -->
+            <div v-if="selectedType === 'docker_update'" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Services to Update</label>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div
+                    v-for="(svcInfo, svcKey) in { web: { icon: 'language', name: 'Web', desc: 'OLS + SPA + API' }, collab: { icon: 'groups', name: 'Collab', desc: 'Hocuspocus WS' }, mailsync: { icon: 'sync', name: 'Mailsync', desc: 'IMAP-IDLE WS' } }"
+                    :key="svcKey"
+                    @click="selectedServices[svcKey] = !selectedServices[svcKey]"
+                    :class="[
+                      'flex items-center gap-3 p-4 rounded-xl cursor-pointer transition-all',
+                      selectedServices[svcKey]
+                        ? 'bg-primary-500/20 border-2 border-primary-500'
+                        : 'bg-surface-100 dark:bg-surface-700/50 border-2 border-transparent hover:border-surface-300 dark:hover:border-surface-600'
+                    ]"
+                  >
+                    <span :class="['material-symbols-rounded text-2xl', selectedServices[svcKey] ? 'text-primary-500' : 'text-surface-400']">{{ svcInfo.icon }}</span>
+                    <div class="flex-1">
+                      <p class="font-medium text-surface-900 dark:text-surface-100">{{ svcInfo.name }}</p>
+                      <p class="text-xs text-surface-500 dark:text-surface-400">{{ svcInfo.desc }}</p>
+                    </div>
+                    <div :class="['w-5 h-5 rounded-full border-2 flex items-center justify-center', selectedServices[svcKey] ? 'bg-primary-500 border-primary-500' : 'border-surface-400']">
+                      <span v-if="selectedServices[svcKey]" class="material-symbols-rounded text-white text-sm">check</span>
+                    </div>
+                  </div>
+                </div>
+                <p v-if="!canDeploy" class="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                  <span class="material-symbols-rounded text-sm align-middle">warning</span>
+                  Select at least one service to update
+                </p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Image Version (tag)</label>
+                <input
+                  v-model="dockerTag"
+                  type="text"
+                  placeholder="latest"
+                  class="input w-full font-mono"
+                />
+                <p class="text-xs text-surface-500 dark:text-surface-400 mt-1">
+                  <span class="material-symbols-rounded text-sm align-middle">info</span>
+                  Published by CI on every push. Use <code>latest</code>, a short git sha (e.g. <code>a1b2c3d</code>) or a release (e.g. <code>v1.2.3</code>). Blank = latest.
+                </p>
+              </div>
             </div>
 
             <!-- Blueprint Selection -->

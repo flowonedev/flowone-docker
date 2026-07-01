@@ -98,6 +98,14 @@ return [
         // any metering). Override here or in config.local.php / via env.
         'registry' => getenv('DOCKER_REGISTRY') ?: 'ghcr.io/flowonedev',
         'tag'      => getenv('DOCKER_TAG') ?: 'latest',
+        // Registry auth for PULLING private images onto target servers. Leave
+        // both empty to treat the images as public (Fleet then skips docker
+        // login). For private GHCR packages, set these in config.local.php on
+        // the master: registry_user = a GitHub username/bot, registry_token = a
+        // PAT with read:packages. Fleet runs `docker login <host>` on each
+        // target before `docker compose pull`.
+        'registry_user'  => getenv('DOCKER_REGISTRY_USER')  ?: '',
+        'registry_token' => getenv('DOCKER_REGISTRY_TOKEN') ?: '',
         // Canonical compose file. Repo-relative default resolves in this
         // monorepo; on the Fleet server set an absolute path in config.local.php
         // (or bundle the file alongside the deployed Fleet code).

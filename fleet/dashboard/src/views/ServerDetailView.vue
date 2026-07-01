@@ -997,7 +997,17 @@ onUnmounted(() => {
               <span v-else class="material-symbols-rounded text-lg">refresh</span>
             </button>
           </div>
-          <p class="text-surface-500 dark:text-surface-400">{{ server.ip_address }}</p>
+          <div class="flex items-center gap-2 flex-wrap">
+            <p class="text-surface-500 dark:text-surface-400">{{ server.ip_address }}</p>
+            <span
+              v-if="server.deployed_image_tag"
+              class="inline-flex items-center gap-1 text-xs font-mono px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400"
+              title="Docker image version currently deployed"
+            >
+              <span class="material-symbols-rounded text-sm">inventory_2</span>
+              {{ server.deployed_image_tag }}
+            </span>
+          </div>
         </div>
         
         <!-- Action Buttons in Header -->
@@ -1036,6 +1046,16 @@ onUnmounted(() => {
                 <div>
                   <p class="font-medium text-surface-900 dark:text-surface-100">Docker Provision</p>
                   <p class="text-xs text-surface-500 dark:text-surface-400">Deploy full stack via Docker Compose + SSL</p>
+                </div>
+              </button>
+              <button 
+                @click="openDeployModal('docker_update')"
+                class="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-100 dark:hover:bg-surface-600 transition-colors text-left"
+              >
+                <span class="material-symbols-rounded text-blue-600 dark:text-blue-400">upgrade</span>
+                <div>
+                  <p class="font-medium text-surface-900 dark:text-surface-100">Docker Update</p>
+                  <p class="text-xs text-surface-500 dark:text-surface-400">Roll app services to a chosen image version</p>
                 </div>
               </button>
               <button 

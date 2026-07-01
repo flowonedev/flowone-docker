@@ -44,6 +44,15 @@ class DeploymentType
      */
     public const DOCKER_PROVISION = 'docker_provision';
 
+    /**
+     * Docker Update - roll one or more already-running services to a chosen
+     * image tag (Phase D). Re-renders the per-host .env with the tag, logs the
+     * box in to the registry, then `docker compose pull` + `up -d --no-deps`
+     * the selected service(s). The compose equivalent of the retired
+     * panel_update/email_update -- a targeted, on-demand version bump.
+     */
+    public const DOCKER_UPDATE = 'docker_update';
+
     /** Wipe server - remove installed software */
     public const WIPE = 'wipe';
 
@@ -61,6 +70,7 @@ class DeploymentType
             self::SSL_RENEW,
             self::APP_UPDATE,
             self::DOCKER_PROVISION,
+            self::DOCKER_UPDATE,
             self::WIPE,
         ];
     }
@@ -79,6 +89,7 @@ class DeploymentType
             self::SSL_RENEW => 'SSL Renewal',
             self::APP_UPDATE => 'App Update (Code Only)',
             self::DOCKER_PROVISION => 'Docker Provision',
+            self::DOCKER_UPDATE => 'Docker Update',
             self::WIPE => 'Wipe Server',
             default => $type,
         };
@@ -98,6 +109,7 @@ class DeploymentType
             self::SSL_RENEW => 'Renew SSL certificates for all domains',
             self::APP_UPDATE => 'Update application code without touching server configs (preserves config.local.php, .env)',
             self::DOCKER_PROVISION => 'Deploy the full stack via Docker Compose: render per-host .env, pull images, bring the stack up, obtain SSL and seed a default login mailbox',
+            self::DOCKER_UPDATE => 'Roll selected Docker services to a chosen image version: re-render the per-host .env with the tag, then pull + recreate only the picked service(s)',
             self::WIPE => 'Remove all installed software and configs from the server',
             default => '',
         };
@@ -127,6 +139,7 @@ class DeploymentType
             self::CONFIG_UPDATE,
             self::SSL_RENEW,
             self::APP_UPDATE,
+            self::DOCKER_UPDATE,
             self::WIPE,
         ]);
     }

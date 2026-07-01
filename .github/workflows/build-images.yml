@@ -1,0 +1,87 @@
+name: Build & Publish Images
+
+# Hands-free image publishing. On every push to main (and on version tags) this
+# builds all four FlowOne images and pushes them to GHCR. It does NOT deploy to
+# any server -- Fleet Manager stays the only thing that touches a live host.
+#
+# Auth uses the built-in GITHUB_TOKEN (no personal token to manage) because the
+# repo owner (flowonedev) matches the GHCR namespace ghcr.io/flowonedev.
+#
+# Tags produced per image:
+#   :latest            (moving, only on the default branch)
+#   :<short-git-sha>   (immutable, one per commit -- what Fleet pins per server)
+#   :<vX.Y.Z>          (only when you push a git tag like v1.2.3)
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+concurrency:
+  group: build-images-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  NAMESPACE: flowonedev
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # App tier shares the email/ build context; the mail pod is self-contained.
+          - service: web
+            dockerfile: email/docker/web/Dockerfile
+            context: email
+          - service: collab
+            dockerfile: email/docker/collab/Dockerfile
+            context: email
+          - service: mailsync
+            dockerfile: email/docker/mailsync/Dockerfile
+            context: email
+          - service: mail
+            dockerfile: email/docker/mail/Dockerfile
+            context: email/docker/mail
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/flowone-${{ matrix.service }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=,format=short
+            type=ref,event=tag
+
+      - name: Build and push ${{ matrix.service }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Per-service GHA layer cache so repeat builds (esp. the heavy mail pod)
+          # only rebuild changed layers.
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}

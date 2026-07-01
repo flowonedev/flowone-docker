@@ -82,6 +82,32 @@ class DockerProvisioningService
     }
 
     /**
+     * Registry host from a `registry/namespace` value: 'ghcr.io/flowonedev' ->
+     * 'ghcr.io'. A bare host (no slash) is returned unchanged. `docker login`
+     * takes the host only, never the namespace.
+     */
+    public static function registryHost(string $registry): string
+    {
+        return explode('/', trim($registry), 2)[0];
+    }
+
+    /**
+     * `docker login` for pulling PRIVATE images. Feeds the token via stdin
+     * (`--password-stdin`) using printf so it never appears in the process
+     * arg list, and prints nothing but the token to that pipe. Callers must
+     * keep the token out of logs.
+     */
+    public static function dockerLoginCmd(string $registryHost, string $user, string $token): string
+    {
+        return sprintf(
+            'printf %%s %s | docker login %s -u %s --password-stdin',
+            escapeshellarg($token),
+            escapeshellarg($registryHost),
+            escapeshellarg($user)
+        );
+    }
+
+    /**
      * `docker compose up -d`. For a single-service update use --no-deps so peers
      * aren't recreated (the Docker equivalent of the retired panel/email updates).
      */
@@ -337,6 +363,7 @@ class DockerProvisioningService
 
             // 4. Pull images + bring the stack up
             $this->markDeployment(null, 50, 'Pulling images...');
+            $this->maybeDockerLogin($options);
             $this->logLine('Pulling images...');
             $this->run(self::pullCmd(), 900, 'compose pull');
             $this->markDeployment(null, 65, 'Starting stack...');
@@ -366,6 +393,9 @@ class DockerProvisioningService
             $this->markDeployment($healthy ? 'success' : 'failed', 100,
                 $healthy ? 'Completed' : 'Stack did not become healthy');
             $this->setServerStatus($serverId, $healthy ? 'active' : 'error');
+            if ($healthy) {
+                $this->persistDeployedTag($serverId, $this->resolveTag($options));
+            }
 
             return [
                 'success' => $healthy,
@@ -385,24 +415,73 @@ class DockerProvisioningService
     }
 
     /**
-     * Update a single service to the current image (Docker equivalent of the
-     * retired panel_update/email_update, and of APP_UPDATE for one app).
+     * Docker Update: roll one or more already-running services to a chosen image
+     * tag (Docker equivalent of the retired panel_update/email_update, and of
+     * APP_UPDATE for the compose stack). Re-renders the per-host .env with the
+     * new tag (preserving the box's current SSL state), logs the box in to the
+     * registry, then `pull` + `up -d --no-deps` each selected service. The whole
+     * stack keeps running; only the picked containers are recreated.
+     *
+     * @param string[] $services one or more of self::SERVICES
+     * @param array    $options  may carry: tag, registry, deployment_id, registry_user/token
      */
-    public function updateService(int $serverId, string $service): array
+    public function updateService(int $serverId, array $services, array $options = []): array
     {
-        if (!in_array($service, self::SERVICES, true)) {
-            return ['success' => false, 'error' => "unknown service: {$service}"];
-        }
         $this->log = [];
+        $this->deploymentId = isset($options['deployment_id']) ? (int) $options['deployment_id'] : null;
+
+        $services = array_values(array_unique(array_filter($services)));
+        if (empty($services)) {
+            return ['success' => false, 'error' => 'no services specified'];
+        }
+        $unknown = array_diff($services, self::SERVICES);
+        if (!empty($unknown)) {
+            return ['success' => false, 'error' => 'unknown service(s): ' . implode(', ', $unknown)];
+        }
+
         try {
+            $this->markDeployment('running', 5, 'Connecting...');
             $server = $this->getServer($serverId);
+            $this->logLine("Connecting to {$server['name']}...");
             if (!$this->ssh->connectToServer($server)) {
                 throw new \RuntimeException('SSH connection failed');
             }
-            $this->run(self::pullCmd($service), 900, "pull {$service}");
-            $this->run(self::upCmd($service), 180, "up {$service}");
+
+            // Rebuild + persist variables so the re-render reuses the SAME
+            // non-regenerable crypto (never rotate keys on an update).
+            $variables = $this->templates->generateServerVariables($server);
+            $secrets = ServerSecretGenerator::ensureDockerSecrets($variables);
+            $variables = $secrets['vars'];
+            $this->templates->persistDockerSecrets($serverId, $variables);
+
+            // Preserve the box's current SSL state: HTTPS iff a real cert lineage
+            // is already present for its FQDN (bare-IP boxes stay on HTTP).
+            $certName = (string) ($variables['SERVER_FQDN'] ?? $variables['EMAIL_DOMAIN'] ?? '');
+            $isIp = (bool) preg_match('/^\d+(\.\d+){3}$/', $certName);
+            $enableSsl = $certName !== '' && !$isIp && $this->remoteTest(self::certPresentCmd($certName));
+
+            $tag = $this->resolveTag($options);
+            $this->markDeployment(null, 20, 'Rendering .env...');
+            $this->logLine("Re-rendering .env (tag={$tag}, SSL=" . ($enableSsl ? 'on' : 'off') . ')...');
+            $this->renderAndUploadEnv($variables, $options, $enableSsl);
+
+            $this->markDeployment(null, 35, 'Logging in to registry...');
+            $this->maybeDockerLogin($options);
+
+            $total = count($services);
+            foreach ($services as $i => $service) {
+                $pct = 35 + (int) round((($i + 1) / $total) * 55); // 35 -> 90
+                $this->markDeployment(null, $pct, "Updating {$service}...");
+                $this->run(self::pullCmd($service), 900, "pull {$service}");
+                $this->run(self::upCmd($service), 180, "up {$service}");
+            }
+
+            $this->persistDeployedTag($serverId, $tag);
+            $this->markDeployment('success', 100, 'Completed');
             return ['success' => true, 'log' => $this->log];
         } catch (\Throwable $e) {
+            $this->logLine('ERROR: ' . $e->getMessage());
+            $this->markDeployment('failed', null, 'Error: ' . substr($e->getMessage(), 0, 120));
             return ['success' => false, 'error' => $e->getMessage(), 'log' => $this->log];
         } finally {
             if ($this->ssh->isConnected()) {
@@ -522,6 +601,42 @@ class DockerProvisioningService
     }
 
     /**
+     * Log the target host in to the image registry so it can pull PRIVATE
+     * images. No-op when no credentials are configured (public images, or a
+     * login already established on the box). Throws on an explicit auth failure
+     * so a misconfigured token surfaces before the pull times out. The token is
+     * never written to the log.
+     *
+     * @param array $options may carry registry/registry_user/registry_token overrides.
+     */
+    private function maybeDockerLogin(array $options): void
+    {
+        $registry = (string) ($options['registry'] ?? $this->container->getConfig('docker.registry') ?? '');
+        $user     = (string) ($options['registry_user']  ?? $this->container->getConfig('docker.registry_user')  ?? '');
+        $token    = (string) ($options['registry_token'] ?? $this->container->getConfig('docker.registry_token') ?? '');
+
+        if ($user === '' || $token === '') {
+            $this->logLine('No registry credentials configured — treating images as public (skipping docker login).');
+            return;
+        }
+
+        $host = self::registryHost($registry);
+        if ($host === '') {
+            $this->logLine('WARN: registry has no host — skipping docker login.');
+            return;
+        }
+
+        $this->logLine("Logging in to registry {$host} as {$user}...");
+        $res = $this->ssh->execWithTimeout(self::dockerLoginCmd($host, $user, $token), 60);
+        if (empty($res['success'])) {
+            // Deliberately do NOT include command output (could echo the token) —
+            // just the host + hint.
+            throw new \RuntimeException("docker login to {$host} failed — check docker.registry_user / docker.registry_token");
+        }
+        $this->logLine("Registry login ok ({$host})");
+    }
+
+    /**
      * Obtain a Let's Encrypt SAN cert covering every public host the box serves
      * (mail FQDN + webmail + panel), then re-render the .env with ENABLE_SSL=1 and
      * recreate web + reload mail so both pick up the real cert. Non-fatal: if
@@ -617,6 +732,34 @@ class DockerProvisioningService
             $this->db->prepare('UPDATE servers SET status = ? WHERE id = ?')->execute([$status, $serverId]);
         } catch (\Throwable $e) {
             // best-effort
+        }
+    }
+
+    /**
+     * Resolve the image tag this deploy uses. Order: explicit option -> Fleet
+     * config (docker.tag) -> 'latest'. Kept in sync with renderAndUploadEnv so
+     * the persisted tag matches what the .env actually points the images at.
+     */
+    private function resolveTag(array $options): string
+    {
+        return (string) ($options['tag'] ?? $this->container->getConfig('docker.tag') ?? 'latest');
+    }
+
+    /**
+     * Record which image tag is now live on the server (migration 028 column).
+     * Best-effort: never fails the deploy, and silently no-ops on a box whose
+     * schema predates the column.
+     */
+    private function persistDeployedTag(int $serverId, string $tag): void
+    {
+        if ($tag === '') {
+            return;
+        }
+        try {
+            $this->db->prepare('UPDATE servers SET deployed_image_tag = ? WHERE id = ?')->execute([$tag, $serverId]);
+            $this->logLine("Recorded deployed image tag: {$tag}");
+        } catch (\Throwable $e) {
+            // best-effort (column may not exist yet)
         }
     }
 

@@ -10,6 +10,7 @@ use FleetManager\Api\Services\ConfigDeploymentService;
 use FleetManager\Api\Services\PreflightService;
 use FleetManager\Api\Services\AuditService;
 use FleetManager\Api\Services\SSHService;
+use FleetManager\Api\Services\DockerProvisioningService;
 
 /**
  * Deployment controller - handles all deployment operations
@@ -177,6 +178,9 @@ class DeploymentController extends BaseController
             case DeploymentType::DOCKER_PROVISION:
                 return $this->handleDockerProvision($serverId, $request);
 
+            case DeploymentType::DOCKER_UPDATE:
+                return $this->handleDockerUpdate($serverId, $request);
+
             default:
                 return $this->handleOtherDeployment($serverId, $blueprintId, $type);
         }
@@ -238,6 +242,79 @@ class DeploymentController extends BaseController
             $serverId,
             $deploymentId,
             $sslFlag,
+            $logFile
+        );
+        exec($cmd);
+
+        return $deploymentId;
+    }
+
+    /**
+     * Handle a Docker Update (Phase D): roll selected already-running services to
+     * a chosen image tag. Launches cli/provision-docker.php with --services + an
+     * optional --tag in the background, streaming into a fresh deployment row.
+     */
+    private function handleDockerUpdate(int $serverId, Request $request): Response
+    {
+        $services = $request->input('services', []);
+        $tag = trim((string) $request->input('tag', ''));
+
+        if (!is_array($services) || empty($services)) {
+            return Response::validationError(['services' => 'At least one service must be selected']);
+        }
+        $valid = DockerProvisioningService::SERVICES;
+        foreach ($services as $svc) {
+            if (!in_array($svc, $valid, true)) {
+                return Response::validationError(['services' => "Invalid service: {$svc}"]);
+            }
+        }
+
+        $deploymentId = $this->startDockerUpdate($serverId, array_values($services), $tag);
+
+        $this->logAction('deployment.docker_update', $serverId, DeploymentType::DOCKER_UPDATE, 'success');
+
+        return Response::success([
+            'deployment_id' => $deploymentId,
+            'status' => 'pending',
+            'message' => 'Docker update started in background',
+        ], 'Docker update started');
+    }
+
+    /**
+     * Create the deployment row and launch cli/provision-docker.php --services
+     * (+ optional --tag) non-blocking. Mirrors startDockerProvision but does NOT
+     * flip server status to 'provisioning' -- the box stays active while only the
+     * selected containers are recreated.
+     *
+     * @param string[] $services
+     * @return int The new deployment ID.
+     */
+    private function startDockerUpdate(int $serverId, array $services, string $tag): int
+    {
+        $apiPath = dirname(__DIR__, 2);
+        $logDir = $apiPath . '/storage/logs';
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0755, true);
+        }
+        $logFile = $logDir . '/docker_update_' . $serverId . '.log';
+
+        $db = $this->getDatabase();
+        $stmt = $db->prepare(
+            "INSERT INTO deployments (server_id, type, status, progress, current_step)
+             VALUES (?, ?, 'pending', 0, 'Initializing...')"
+        );
+        $stmt->execute([$serverId, DeploymentType::DOCKER_UPDATE]);
+        $deploymentId = (int) $db->lastInsertId();
+
+        $svcArg = ' --services=' . escapeshellarg(implode(',', $services));
+        $tagArg = $tag !== '' ? ' --tag=' . escapeshellarg($tag) : '';
+        $cmd = sprintf(
+            'nohup setsid php -d memory_limit=512M -d max_execution_time=0 %s/cli/provision-docker.php %d --deployment=%d%s%s > %s 2>&1 &',
+            $apiPath,
+            $serverId,
+            $deploymentId,
+            $svcArg,
+            $tagArg,
             $logFile
         );
         exec($cmd);

@@ -141,6 +141,22 @@ test('commands', 'createMailboxCmd upserts with quota + stack dir', function () 
     assertContains($c, '--quota-mb=2048', 'quota');
     assertContains($c, '--stack-dir=/opt/flowone', 'stack dir');
 });
+test('commands', 'registryHost strips the namespace, keeps a bare host', function () {
+    assertTrue(D::registryHost('ghcr.io/flowonedev') === 'ghcr.io', 'ghcr host');
+    assertTrue(D::registryHost('reg.acme.com/team/ns') === 'reg.acme.com', 'nested ns host');
+    assertTrue(D::registryHost('ghcr.io') === 'ghcr.io', 'bare host unchanged');
+    assertTrue(D::registryHost('  ghcr.io/flowonedev  ') === 'ghcr.io', 'trims whitespace');
+});
+test('commands', 'dockerLoginCmd feeds the token via --password-stdin (never as an arg)', function () {
+    $c = D::dockerLoginCmd('ghcr.io', 'flowone-bot', 'ghp_secrettoken');
+    assertContains($c, 'docker login', 'login verb');
+    assertContains($c, 'ghcr.io', 'host');
+    assertContains($c, '-u ' . "'flowone-bot'", 'user flag');
+    assertContains($c, '--password-stdin', 'stdin flag');
+    // The token is piped in via printf, not passed as a `docker login` argument.
+    assertTrue(strpos($c, '--password ') === false, 'must not use --password with an inline value');
+    assertContains($c, 'printf', 'token piped via printf');
+});
 
 // --- default login resolution (parity with native resolveMailLogin) ---
 section('login');

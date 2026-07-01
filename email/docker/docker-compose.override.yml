@@ -1,0 +1,20 @@
+# LOCAL DEV ONLY -- compose auto-merges this over docker-compose.yml when you run
+# `docker compose` from this directory. It forces the app-tier images to be
+# BUILT from your working copy instead of pulled from GHCR, so you always test
+# the code you're editing.
+#
+# This file is NEVER shipped to servers: Fleet uploads only docker-compose.yml +
+# a rendered .env, so production always pulls the CI-published images. Do not put
+# secrets or host-specific values here.
+#
+# Bring the stack up with ./dev-up.sh (it also seeds the JWT volume and skips the
+# host-networked `mail` pod, which Docker Desktop on Windows/macOS can't run).
+services:
+  web:
+    pull_policy: build
+  collab:
+    pull_policy: build
+  mailsync:
+    pull_policy: build
+  mail:
+    pull_policy: build
