@@ -1,0 +1,21 @@
+# OpenDKIM Configuration — FlowOne Docker mail pod
+# Rendered from: {{MAIL_DOMAIN}}
+
+AutoRestart             Yes
+AutoRestartRate         10/1h
+UMask                   002
+Syslog                  yes
+SyslogSuccess           Yes
+LogWhy                  Yes
+
+Canonicalization        relaxed/simple
+ExternalIgnoreList      refile:/etc/opendkim/TrustedHosts
+InternalHosts           refile:/etc/opendkim/TrustedHosts
+KeyTable                refile:/etc/opendkim/KeyTable
+SigningTable            refile:/etc/opendkim/SigningTable
+Mode                    sv
+PidFile                 /var/run/opendkim/opendkim.pid
+SignatureAlgorithm      rsa-sha256
+UserID                  opendkim:opendkim
+# Must match Postfix smtpd_milters / non_smtpd_milters (inet:localhost:8891)
+Socket                  inet:8891@localhost

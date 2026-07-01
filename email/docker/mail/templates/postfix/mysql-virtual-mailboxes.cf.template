@@ -1,0 +1,9 @@
+# Postfix virtual mailboxes MySQL map — FlowOne Docker mail pod
+# Rendered from: {{MAIL_DB_HOST}}, {{MAIL_DB_PORT}}, {{MAIL_DB_USER}}, {{MAIL_DB_PASS}}, {{MAIL_DB_NAME}}
+user = {{MAIL_DB_USER}}
+password = {{MAIL_DB_PASS}}
+hosts = {{MAIL_DB_HOST}}:{{MAIL_DB_PORT}}
+dbname = {{MAIL_DB_NAME}}
+
+# Returns maildir path "domain/username/" relative to virtual_mailbox_base (/home/vmail).
+query = SELECT CONCAT(domain, '/', username, '/') FROM mail_accounts WHERE email='%s' AND status='active'

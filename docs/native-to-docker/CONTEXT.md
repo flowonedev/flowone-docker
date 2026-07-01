@@ -90,16 +90,81 @@
   Fixed both `vps-bootstrap.sh` and `gen-jwt-keys.sh` to mint the pair via `alpine:3` + `apk add openssl`.
   Still TODO on this box: TLS pass (staging subdomain + certbot + `--ssl`), and there is no seeded user
   account yet so browser login needs a registration/seed step.
+- **MAIL POD authored + VALIDATED on the VPS (first host-net pod, Phase E):** the full native mail stack
+  in one supervised container — `email/docker/mail/` (Ubuntu 22.04 + Postfix + Dovecot + OpenDKIM +
+  OpenDMARC + Rspamd + ClamAV + SpamAssassin + Unbound + Redis, `supervisord`), byte-parity Fleet
+  templates rendered at boot by `entrypoint.sh` (DKIM keygen, self-signed cert fallback, milter wiring),
+  `network_mode: host`, DB via the `mariadb` loopback publish (`127.0.0.1:3306`), and `mariadb-init/
+  10-mailserver.sh` for the `mailserver` DB/user/schema on a fresh volume. `docker-compose.yml` gained the
+  `mail` service + web `extra_hosts: host.docker.internal:host-gateway`; `config.php` reads
+  `IMAP_HOST/SMTP_HOST/SIEVE_HOST` from env (was hardcoded `localhost` — broke containerized login).
+  Deployed onto the running VPS stack (existing mariadb volume, so the DB was seeded by hand via the same
+  init script) and proved with `email/backend/tests/mail-system-test.php` (+ `lib/smtp-session.php`):
+  **17/17 green** — IMAP login (Dovecot SQL/BLF-CRYPT, good+bad), SMTP AUTH on 587/STARTTLS (good+bad),
+  SMTP submit -> IMAP retrieve roundtrip (Postfix `dovecot` LDA to maildir), and a DKIM-Signature on the
+  delivered message (`d=devcon2.hu`). Two real fixes baked in: (a) Dovecot must log via **syslog** (rsyslog
+  -> stdout), NOT directly to `/dev/stdout` — the LDA runs as the unprivileged `vmail` user and can't
+  reopen PID 1's stdout, so every delivery deferred with "Can't open log file /dev/stdout: Permission
+  denied"; (b) seed Unbound's DNSSEC `root.key` (`unbound-anchor`) in the entrypoint or it crash-loops.
+  Added `MAIL_ENABLE_CLAMAV/SPAMASSASSIN/RSPAMD` toggles (entrypoint drops the disabled supervisord
+  program blocks + trims the Postfix milter chain) — the dry-run box is 1 vCPU / 1.9 GB, where ClamAV
+  (~1.2 GB resident) would OOM, so `vps-bootstrap.sh` auto-defaults ClamAV+SA OFF under 3 GB RAM while
+  keeping DKIM/DMARC/Rspamd on. `vps-bootstrap.sh` now renders all mail `.env` vars, stages `mariadb-init/`
+  + copies the compose, pulls/builds `mail`, and probes 25/587/993/4190 after boot.
+- **TLS pass — real LE cert on the VPS (web + mail):** DONE on `85.155.242.131` for `vps.devcon2.hu`
+  (A records `vps/panel/email/fleet/www.devcon2.hu` -> the box; bare `devcon2.hu` has NO A record, so the
+  cert is issued for the FQDN, not the bare mail domain). Obtained via **certbot standalone** in a throwaway
+  `certbot/certbot` container on :80 — the web container publishes :80, so the flow briefly `docker stop`s
+  web, runs the ACME HTTP-01, then restarts web (trap-guarded). Cert lands on the HOST `/etc/letsencrypt`
+  (already bind-mounted `:ro` into web). **Web:** flipped `.env` to `EMAIL_DOMAIN=vps.devcon2.hu`,
+  `https://` `FRONTEND_URL/API_URL`, `wss://` `COLLAB_WS_URL`, `ENABLE_SSL=1` + `SSL_CERT_FILE/KEY_FILE` at
+  the LE path; the web entrypoint injects the `vhssl{}` block + maps the stock `:443` listener. **Mail:** the
+  pod's TLS cert must match the hostname MUAs connect to (the server FQDN), which differs from `MAIL_DOMAIN`,
+  so the Postfix/Dovecot templates now use a new `{{TLS_CERT_NAME}}` placeholder (entrypoint sets it to
+  `MAIL_TLS_NAME || SERVER_FQDN`), and the pod bind-mounts the host certbot tree read-only at
+  `/etc/letsencrypt-host` — the entrypoint copies the real cert for `TLS_CERT_NAME` into its writable
+  `/etc/letsencrypt` volume (self-signed fallback still applies on boxes without a cert). Verified live:
+  `https://vps.devcon2.hu` -> 200 with `ssl_verify=0`, and IMAPS :993 / submission :587 / SMTP :25 STARTTLS
+  all present the LE cert (`issuer=Let's Encrypt, subject=CN=vps.devcon2.hu`). Also caught + fixed a **stale
+  web image** on the box: the running image predated the `config.php` env-driven `IMAP_HOST/SMTP_HOST` fix
+  (resolved `localhost`, which would break real browser login); `docker compose pull web` fetched the newer
+  GHCR image (which reads the env) and recreate made it live. Re-ran `mail-system-test.php` **env-driven (no
+  `--imap-host` flags): 17/17 green**, proving the real login path (server-side `imap_open` via `config.php`
+  -> `host.docker.internal` -> mail pod). NOTE: renewal is NOT yet automated — the 90-day cert needs
+  `certbot renew` (which needs :80 free, so stop web around it) + `docker compose restart mail` to re-copy;
+  add a deploy-hook/cron before this pattern goes to prod.
+- **Multi-domain SSL + demo login + DNS tooling (VPS):** DONE. Expanded the cert to a single SAN
+  lineage (kept as `vps.devcon2.hu` so the mail pod's `TLS_CERT_NAME=SERVER_FQDN` is unchanged) covering
+  **vps/email/panel/fleet/www.devcon2.hu**, and repointed the webmail app to **`https://email.devcon2.hu`**
+  (EMAIL_DOMAIN/FRONTEND_URL/API_URL/COLLAB_WS_URL; SSL_CERT_FILE still the `vps.` path, which now serves
+  `email.` via SAN). Verified: `https://email.devcon2.hu` -> 200 valid, and IMAPS:993/submission:587 present
+  the SAN cert. Learned the login model: **webmail login is a live IMAP auth** (`AuthController::login` ->
+  `ImapService::connect`) — no app-DB user row is needed; the colleague record self-creates on `/auth/me`.
+  So a demo account is just a persistent `mail_accounts` row. Authored three committed day-2 tools in
+  `email/docker/`: **`obtain-certs.sh`** (issue/expand ONE LE SAN cert via certbot standalone; stops web to
+  free :80, `--cert-name` keeps one lineage), **`create-mail-account.sh`** (bcrypt upsert into the
+  `mailserver` DB via the mariadb container as root; idempotent), **`dns-records.sh`** (prints MX/SPF/DKIM
+  [read LIVE from the pod's OpenDKIM `mail.txt`, selector `mail`]/DMARC/PTR + client settings). Created
+  **`demo@devcon2.hu` / `Demo-devcon2-2026`** and proved login via the app's exact config path (imap_open ->
+  host.docker.internal -> mail pod = OK). **Provisioning fix** in `vps-bootstrap.sh`: new `--base-domain=<d>`
+  derives the standard host layout (webmail `email.<d>`, mail FQDN `vps.<d>`, mailboxes `@<d>`, SAN cert over
+  vps/email/panel/fleet/www), new `--cert-domains=<csv>`, and `--ssl` now actually OBTAINS the SAN cert
+  (correct ordering: stack up on HTTP -> certbot -> flip ENABLE_SSL on -> recreate web + mail), staging the
+  three helper scripts next to the stack. DKIM/SPF/DMARC/PTR still need to be published in DNS by the operator
+  (records emitted by `dns-records.sh`); until then outbound may land in spam and inbound MX won't route.
 
 ### Next action
 
 Remaining tracks are gated on resources we don't have on Windows:
 
-1. **Linux/staging-dependent (Phase E):** author + validate the host-networking pods (mail incl.
-   Rspamd/ClamAV/unbound + 8891/8893 milters, powerdns gmysql, coturn/livekit) and onlyoffice;
-   then the rest of Layer 2 (SMTP/IMAP roundtrip, Sieve, DKIM/DMARC, client WP HTTP 200) and Layer 3
-   (run `db-parity-check.sh --source=... --target=...` old-box-DB vs new-box-DB, plus maildir byte
-   counts + drive checksums). Docker Desktop on Windows can't run `network_mode: host` faithfully.
+1. **Linux/staging-dependent (Phase E):** the **mail pod is DONE + validated** (see "Done so far" — auth/
+   roundtrip/DKIM 17/17 on the VPS). Remaining host-networking pods: **powerdns gmysql, coturn/livekit**,
+   and **onlyoffice**. Then finish Layer 2 (Sieve filters, DMARC verify, inbound from an external MX on
+   :25, client WP HTTP 200) and Layer 3 (`db-parity-check.sh --source=... --target=...` old-box-DB vs
+   new-box-DB, plus maildir byte counts + drive checksums). Docker Desktop on Windows can't run
+   `network_mode: host` faithfully, so these need the Linux box. Mail-pod follow-ups for prod: **real LE
+   cert DONE** (web + mail on `vps.devcon2.hu`; automate renewal next), publish the DKIM TXT + SPF/DMARC/PTR,
+   and flip ClamAV+SA back on (>=3 GB box).
 2. **Phase D Fleet refactor:** IN PROGRESS (see PLAN.md for the checklist). Done + tested off-box:
    `ComposeEnvRenderer` (Fleet-vars -> per-host `.env`, 18/18), `DockerProvisioningService` +
    `cli/provision-docker.php` (compose pull/up/health, 15/15), dead `panel_update`/`email_update`

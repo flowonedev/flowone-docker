@@ -1,0 +1,160 @@
+# Dovecot main configuration — FlowOne Docker mail pod
+# Rendered from: {{MAIL_DOMAIN}}
+#
+# Byte-parity with fleet/templates/dovecot/dovecot.conf.template. Container-only
+# change: log via syslog (like the native box) instead of directly to the pod's
+# stdio. This is REQUIRED, not cosmetic: Postfix spawns dovecot-lda as the
+# unprivileged vmail user, which cannot reopen the pod's /dev/stdout (that fd is
+# owned by root/PID 1) — direct stdio logging makes every delivery defer with
+# "Can't open log file /dev/stdout: Permission denied". syslog's /dev/log socket
+# is world-writable, so the LDA logs fine; rsyslog (in this pod) then forwards
+# mail.* to /dev/stdout so `docker logs flowone-mail` still shows everything.
+
+# Protocols (sieve = ManageSieve on 4190, used by webmail filter management)
+protocols = imap pop3 sieve
+
+# Logging — container: syslog (mail facility) -> rsyslog -> /dev/stdout.
+log_path = syslog
+info_log_path = syslog
+syslog_facility = mail
+log_timestamp = "%Y-%m-%d %H:%M:%S "
+login_greeting = Mail Server Ready
+
+# SSL — cert for the server's own FQDN (TLS_CERT_NAME), which may differ from the
+# mail domain (e.g. vps.example.com serving mailboxes @example.com).
+ssl = required
+ssl_cert = </etc/letsencrypt/live/{{TLS_CERT_NAME}}/fullchain.pem
+ssl_key = </etc/letsencrypt/live/{{TLS_CERT_NAME}}/privkey.pem
+ssl_min_protocol = TLSv1.2
+ssl_prefer_server_ciphers = yes
+
+# Mail location - uid/gid come from the SQL userdb (5000 = vmail)
+mail_location = maildir:/home/vmail/%d/%n/Maildir
+mail_max_userip_connections = 50
+mail_plugins = zlib
+
+# Namespace - legacy "INBOX." prefix layout with "." separator (folders live as
+# .Sent/.Junk/... maildirs). The webmail app and the mail security learn loop
+# (Junk / INBOX.Junk watchers) are built around this layout.
+namespace {
+    type = private
+    inbox = yes
+    prefix = INBOX.
+    separator = .
+    location =
+
+    mailbox Drafts {
+        auto = subscribe
+        special_use = \Drafts
+    }
+    mailbox Sent {
+        auto = subscribe
+        special_use = \Sent
+    }
+    mailbox Trash {
+        auto = subscribe
+        special_use = \Trash
+    }
+    mailbox Junk {
+        auto = subscribe
+        special_use = \Junk
+    }
+    mailbox Archive {
+        auto = subscribe
+        special_use = \Archive
+    }
+}
+
+# Authentication
+auth_mechanisms = plain login
+disable_plaintext_auth = yes
+
+passdb {
+    driver = sql
+    args = /etc/dovecot/dovecot-sql.conf.ext
+}
+
+userdb {
+    driver = sql
+    args = /etc/dovecot/dovecot-sql.conf.ext
+}
+
+# Service configuration
+service imap-login {
+    inet_listener imap {
+        port = 143
+    }
+    inet_listener imaps {
+        port = 993
+        ssl = yes
+    }
+}
+
+service auth {
+    user = root
+    unix_listener /var/spool/postfix/private/auth {
+        mode = 0666
+        user = postfix
+        group = postfix
+    }
+    # Used by the LDA (deliver) for userdb lookups
+    unix_listener auth-master {
+        mode = 0600
+        user = vmail
+    }
+}
+
+service auth-worker {
+    user = root
+}
+
+service stats {
+    unix_listener stats-reader {
+        user = vmail
+        group = vmail
+        mode = 0660
+    }
+    unix_listener stats-writer {
+        user = vmail
+        group = vmail
+        mode = 0660
+    }
+}
+
+# Sieve "vacation" / "redirect" sends mail through the local Postfix
+submission_host = 127.0.0.1:25
+
+# Delivery (Postfix "dovecot" pipe transport -> dovecot-lda). Sieve runs here:
+# per-user webmail filters, then the global after-script.
+protocol lda {
+    auth_socket_path = /var/run/dovecot/auth-master
+    postmaster_address = postmaster@{{MAIL_DOMAIN}}
+    mail_plugins = zlib sieve
+    # Inherit the global syslog logging (see the logging note above). Do NOT point
+    # this at /dev/stdout — the LDA runs as vmail and can't open it.
+}
+
+protocol imap {
+    mail_plugins = zlib imap_zlib
+}
+
+protocol pop3 {
+    mail_plugins = zlib
+    pop3_uidl_format = %08Xu%08Xv
+}
+
+plugin {
+    # Personal Sieve storage: named scripts live in ~/sieve, and the ACTIVE script
+    # symlink is also kept INSIDE ~/sieve (not in the mailbox home root). On layouts
+    # where the userdb home == the Maildir namespace root (separator "."), a
+    # ~/.dovecot.sieve symlink sitting among the .Folder dirs makes Dovecot's maildir
+    # lister probe it as a mailbox and log on every IMAP enumeration:
+    #   stat(~/.dovecot.sieve/tmp) failed: Not a directory
+    # Placing the active link under ~/sieve/ keeps it out of the namespace root.
+    sieve = file:~/sieve;active=~/sieve/.dovecot.sieve
+    sieve_after = /home/vmail/global.sieve
+
+    # Compressed mail storage
+    zlib_save = gz
+    zlib_save_level = 6
+}

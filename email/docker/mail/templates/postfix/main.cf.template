@@ -1,0 +1,112 @@
+# Postfix main configuration — FlowOne Docker mail pod
+# Rendered at boot from: {{SERVER_FQDN}}, {{MAIL_DOMAIN}}, {{SERVER_IP}}
+#
+# Byte-parity with the native Fleet template (fleet/templates/postfix/main.cf.template).
+# Two things differ for the container, applied at RUNTIME by entrypoint.sh (NOT here):
+#   - maillog_file = /dev/stdout        (so `docker logs` shows the mail log)
+#   - smtpd_milters gets inet:localhost:11332 appended (Rspamd), mirroring the
+#     native panel-agent wireMilter step.
+
+# Basic settings
+smtpd_banner = $myhostname ESMTP
+biff = no
+append_dot_mydomain = no
+readme_directory = no
+compatibility_level = 3.6
+disable_vrfy_command = yes
+default_process_limit = 200
+local_destination_concurrency_limit = 15
+
+# TLS parameters — cert is for the server's own FQDN (what MUAs connect to), which
+# may differ from the mail domain (e.g. vps.example.com serving @example.com).
+smtpd_tls_cert_file = /etc/letsencrypt/live/{{TLS_CERT_NAME}}/fullchain.pem
+smtpd_tls_key_file = /etc/letsencrypt/live/{{TLS_CERT_NAME}}/privkey.pem
+smtpd_tls_security_level = may
+smtpd_tls_auth_only = yes
+smtpd_tls_loglevel = 1
+smtpd_tls_protocols = !SSLv2, !SSLv3, !TLSv1, !TLSv1.1
+smtpd_tls_ciphers = high
+smtpd_tls_exclude_ciphers = aNULL, MD5, DES, 3DES, RC4
+
+# Outbound TLS: the reference server enforces encryption to remote MXes.
+smtp_tls_security_level = encrypt
+smtp_tls_loglevel = 1
+smtp_tls_protocols = !SSLv2, !SSLv3, !TLSv1, !TLSv1.1
+
+# Network settings
+# Use the server's own FQDN (matches hostnamectl + PTR), not <panel-label>.<mail-domain>
+myhostname = {{SERVER_FQDN}}
+myorigin = /etc/mailname
+mydestination = localhost, localhost.localdomain, [::1], {{SERVER_FQDN}}
+mynetworks = 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128
+mailbox_size_limit = 52428800
+recipient_delimiter = +
+inet_interfaces = all
+# IPv4 only, matching the reference server (no AAAA/PTR/SPF story for v6 yet).
+inet_protocols = ipv4
+
+# Virtual mailbox settings - delivery via the Dovecot LDA pipe service defined
+# in master.cf ("dovecot"), NOT lmtp. The LDA runs Sieve (per-user webmail
+# filters, the mail security learn loop, global.sieve) at delivery time.
+virtual_transport = dovecot
+dovecot_destination_recipient_limit = 1
+virtual_mailbox_base = /home/vmail
+virtual_uid_maps = static:5000
+virtual_gid_maps = static:5000
+virtual_mailbox_domains = mysql:/etc/postfix/mysql-virtual-domains.cf
+virtual_mailbox_maps = mysql:/etc/postfix/mysql-virtual-mailboxes.cf
+virtual_alias_maps = mysql:/etc/postfix/mysql-virtual-aliases.cf
+
+# SASL authentication
+smtpd_sasl_type = dovecot
+smtpd_sasl_path = private/auth
+smtpd_sasl_auth_enable = yes
+smtpd_sasl_authenticated_header = yes
+smtpd_sasl_security_options = noanonymous
+smtpd_sasl_local_domain = $myhostname
+broken_sasl_auth_clients = yes
+
+# Restrictions
+smtpd_helo_required = yes
+smtpd_helo_restrictions =
+    permit_mynetworks,
+    permit_sasl_authenticated,
+    reject_invalid_helo_hostname,
+    reject_non_fqdn_helo_hostname
+
+smtpd_sender_restrictions =
+    permit_mynetworks,
+    permit_sasl_authenticated,
+    reject_non_fqdn_sender,
+    reject_unknown_sender_domain
+
+smtpd_recipient_restrictions =
+    permit_mynetworks,
+    permit_sasl_authenticated,
+    reject_unauth_destination,
+    reject_non_fqdn_recipient,
+    reject_unknown_recipient_domain,
+    reject_rbl_client zen.spamhaus.org,
+    reject_rbl_client bl.spamcop.net,
+    check_policy_service unix:private/policyd-spf
+
+# Mail-client (MUA) restriction sets referenced by the submission/smtps
+# services in master.cf.
+mua_client_restrictions = permit_sasl_authenticated,reject
+mua_helo_restrictions = permit_mynetworks,permit_sasl_authenticated,reject
+mua_sender_restrictions = permit_sasl_authenticated,reject
+
+# SPF policy daemon (postfix-policyd-spf-python) time limit
+policyd-spf_time_limit = 3600
+
+# Milters: SpamAssassin (spamass-milter unix socket) + OpenDKIM (8891) + OpenDMARC (8893).
+# Services run NON-chrooted (see master.cf), matching the reference server, so the
+# unix milter socket is given as an absolute path. entrypoint.sh appends
+# inet:localhost:11332 (Rspamd) at runtime (native panel-agent wireMilter parity).
+milter_default_action = accept
+milter_protocol = 6
+smtpd_milters = unix:/var/spool/postfix/spamass/spamass.sock inet:127.0.0.1:8891 inet:127.0.0.1:8893
+non_smtpd_milters = unix:/var/spool/postfix/spamass/spamass.sock, inet:127.0.0.1:8891
+
+# Message size limit (50MB)
+message_size_limit = 52428800

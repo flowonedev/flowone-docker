@@ -1,0 +1,8 @@
+# Postfix virtual domains MySQL map — FlowOne Docker mail pod
+# Rendered from: {{MAIL_DB_HOST}}, {{MAIL_DB_PORT}}, {{MAIL_DB_USER}}, {{MAIL_DB_PASS}}, {{MAIL_DB_NAME}}
+user = {{MAIL_DB_USER}}
+password = {{MAIL_DB_PASS}}
+hosts = {{MAIL_DB_HOST}}:{{MAIL_DB_PORT}}
+dbname = {{MAIL_DB_NAME}}
+
+query = SELECT domain FROM mail_domains WHERE domain='%s' AND status='active'

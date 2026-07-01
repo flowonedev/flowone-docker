@@ -1,0 +1,35 @@
+# Dovecot SQL passdb/userdb — FlowOne Docker mail pod
+# Rendered from: {{MAIL_DB_HOST}}, {{MAIL_DB_PORT}}, {{MAIL_DB_USER}}, {{MAIL_DB_PASS}}, {{MAIL_DB_NAME}}
+#
+# Byte-parity with fleet/templates/dovecot/dovecot-sql.conf.ext.template. Only
+# the connect host/port are env-driven (native hardcodes 127.0.0.1; here the DB
+# lives in the shared mariadb container exposed on the host loopback).
+
+driver = mysql
+connect = host={{MAIL_DB_HOST}} port={{MAIL_DB_PORT}} dbname={{MAIL_DB_NAME}} user={{MAIL_DB_USER}} password={{MAIL_DB_PASS}}
+
+# bcrypt ($2y$) — PHP password_hash(PASSWORD_DEFAULT / PASSWORD_BCRYPT)
+default_pass_scheme = BLF-CRYPT
+
+# login_suspended = 0 enforces the panel "Suspend" button (login blocked, inbound
+# delivery still works because status stays 'active' for the user_query below).
+password_query = \
+  SELECT email AS user, password_hash AS password \
+  FROM mail_accounts \
+  WHERE email = '%u' AND status = 'active' AND login_suspended = 0
+
+# uid/gid 5000 = vmail; home = /home/vmail/<domain>/<user>, Maildir at <home>/Maildir.
+user_query = \
+  SELECT \
+    email AS user, \
+    5000 AS uid, \
+    5000 AS gid, \
+    CONCAT('/home/vmail/', domain, '/', username) AS home, \
+    CONCAT('*:bytes=', quota_mb * 1024 * 1024) AS quota_rule \
+  FROM mail_accounts \
+  WHERE email = '%u' AND status = 'active'
+
+iterate_query = \
+  SELECT email AS user \
+  FROM mail_accounts \
+  WHERE status = 'active'

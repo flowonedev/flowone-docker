@@ -6,22 +6,33 @@
 # fresh per-host secrets + a .env, seeds the JWT key volume, pulls the published
 # images and brings the stack up — then health-checks it.
 #
-# SCOPE: web + mariadb + redis + meilisearch + collab + mailsync only. The
-# host-networking pods (mail, PowerDNS, coTURN/LiveKit, OnlyOffice) are NOT part
-# of this compose yet — they are authored + validated in a later Phase E step.
+# SCOPE: web + mariadb + redis + meilisearch + collab + mailsync + the full
+# host-networked MAIL pod (Postfix/Dovecot/OpenDKIM/OpenDMARC/Rspamd/ClamAV/
+# SpamAssassin/Unbound). Still NOT included: PowerDNS, coTURN/LiveKit, OnlyOffice.
 #
 # NOT FOR PRODUCTION DATA: this MINTS fresh secrets and a fresh JWT pair. Run it
 # only on an empty box. A real migration seeds those from Fleet / the snapshot.
 #
-# Run ON THE TARGET VPS (as root), with docker-compose.yml next to this script:
+# Run ON THE TARGET VPS (as root), with the docker/ tree next to this script:
 #   scp -r email/docker/ root@VPS:/opt/flowone-src/
 #   ssh root@VPS
 #   cd /opt/flowone-src
-#   GHCR_TOKEN=ghp_xxx ./vps-bootstrap.sh --ghcr-user=flowonedev --domain=stg.flowone.pro
+#   GHCR_TOKEN=ghp_xxx ./vps-bootstrap.sh --ghcr-user=flowonedev --domain=stg.flowone.pro \
+#       --mail-domain=stg.flowone.pro
 #
 # Options:
-#   --domain=<host>        EMAIL_DOMAIN (default: this box's public IP)
-#   --ssl                  render an HTTPS .env (expects certs under /etc/letsencrypt/live/<domain>)
+#   --base-domain=<domain> registrable domain (e.g. example.com). Derives the
+#                          standard FlowOne host layout: webmail=email.<d>,
+#                          mail FQDN=vps.<d>, mail/DKIM domain=<d>, and a SAN cert
+#                          over vps/email/panel/fleet/www.<d>. Individual overrides
+#                          (--domain/--mail-domain/--cert-domains) still win.
+#   --domain=<host>        EMAIL_DOMAIN = the webmail host (default: email.<base> or this box's IP)
+#   --mail-domain=<domain> primary mail/DKIM domain (default: <base> or --domain). The mail
+#                          pod signs *@<mail-domain> and serves it as a virtual domain.
+#   --cert-domains=<csv>   SAN hostnames for the TLS cert (default: derived from --base-domain)
+#   --ssl                  obtain a real LE SAN cert (certbot standalone) + render an HTTPS .env.
+#                          Ordering is handled: the stack comes up on HTTP, the cert is issued,
+#                          then SSL is flipped on and web/mail recreated.
 #   --registry=<ref>       image registry/namespace (default: ghcr.io/flowonedev)
 #   --tag=<tag>            image tag (default: latest)
 #   --ghcr-user=<user>     GHCR username for `docker login` (token via GHCR_TOKEN env)
@@ -34,7 +45,10 @@
 set -euo pipefail
 
 # ---- defaults ----
+BASE_DOMAIN=""
 DOMAIN=""
+MAIL_DOMAIN=""
+CERT_DOMAINS=""
 ENABLE_SSL=0
 REGISTRY="${DOCKER_REGISTRY:-ghcr.io/flowonedev}"
 TAG="${DOCKER_TAG:-latest}"
@@ -51,7 +65,10 @@ for arg in "$@"; do
     case "$arg" in
         --help|-h)
             awk 'NR>1 && /^#/ {sub(/^# ?/,""); print; next} NR>1 {exit}' "$0"; exit 0 ;;
+        --base-domain=*)       BASE_DOMAIN="${arg#*=}" ;;
         --domain=*)            DOMAIN="${arg#*=}" ;;
+        --mail-domain=*)       MAIL_DOMAIN="${arg#*=}" ;;
+        --cert-domains=*)      CERT_DOMAINS="${arg#*=}" ;;
         --ssl)                 ENABLE_SSL=1 ;;
         --registry=*)          REGISTRY="${arg#*=}" ;;
         --tag=*)               TAG="${arg#*=}" ;;
@@ -80,13 +97,75 @@ rand_hex() { od -An -tx1 -N"${1:-32}" /dev/urandom | tr -d ' \n'; }
 if [ -z "$COMPOSE_SRC" ]; then COMPOSE_SRC="${SCRIPT_DIR}/docker-compose.yml"; fi
 [ -f "$COMPOSE_SRC" ] || die "docker-compose.yml not found at '$COMPOSE_SRC' (pass --compose=)."
 
+# --base-domain expands to the standard FlowOne host layout (matches the DNS a
+# real box gets: email/panel/fleet/www/vps all A-record the box). Explicit flags
+# still override each derived value.
+if [ -n "$BASE_DOMAIN" ]; then
+    [ -n "$DOMAIN" ]       || DOMAIN="email.${BASE_DOMAIN}"       # webmail host
+    [ -n "$MAIL_DOMAIN" ]  || MAIL_DOMAIN="$BASE_DOMAIN"          # mailboxes @<base>
+    [ -n "$CERT_DOMAINS" ] || CERT_DOMAINS="vps.${BASE_DOMAIN},email.${BASE_DOMAIN},panel.${BASE_DOMAIN},fleet.${BASE_DOMAIN},www.${BASE_DOMAIN}"
+    SERVER_FQDN="vps.${BASE_DOMAIN}"                              # mail HELO/myhostname + cert lineage
+fi
+
 if [ -z "$DOMAIN" ]; then
     DOMAIN="$(curl -fsS https://api.ipify.org 2>/dev/null || hostname -I | awk '{print $1}')"
-    warn "No --domain given; using detected address '$DOMAIN'."
+    warn "No --domain/--base-domain given; using detected address '$DOMAIN'."
+fi
+
+# Primary mail/DKIM domain. Defaults to --domain; the mail pod signs *@MAIL_DOMAIN
+# and serves it as a virtual domain, so the seeded test account must live here.
+[ -n "$MAIL_DOMAIN" ] || MAIL_DOMAIN="$DOMAIN"
+# The mail server's own hostname (HELO / myhostname). Derived from --base-domain
+# above; otherwise mail.<domain> unless the domain is already an IP (no PTR story
+# on a bare-IP dry-run box, so just reuse it).
+if [ -z "${SERVER_FQDN:-}" ]; then
+    if printf '%s' "$MAIL_DOMAIN" | grep -Eq '^[0-9]+(\.[0-9]+){3}$'; then
+        SERVER_FQDN="$MAIL_DOMAIN"
+    else
+        SERVER_FQDN="mail.${MAIL_DOMAIN}"
+    fi
+fi
+SERVER_IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
+
+# The TLS cert lives under ONE lineage = the mail FQDN, and the SAN list covers the
+# webmail host + panel/fleet/www too. Keeping the lineage = SERVER_FQDN means the
+# mail pod's default TLS_CERT_NAME (=SERVER_FQDN) resolves to the same cert, and the
+# web tier serves email.<base> off it via SAN. Fall back to the single host if no
+# SAN list was derived (bare --domain / IP case).
+CERT_NAME="$SERVER_FQDN"
+[ -n "$CERT_DOMAINS" ] || CERT_DOMAINS="$DOMAIN"
+case ",${CERT_DOMAINS}," in *",${CERT_NAME},"*) ;; *) CERT_DOMAINS="${CERT_NAME},${CERT_DOMAINS}" ;; esac
+
+# Auto-size the heavy mail services to the box. ClamAV alone resident-loads
+# ~1.2GB; on anything under ~3GB total RAM it (and SpamAssassin) would OOM the
+# stack, so default them OFF there. Override by exporting MAIL_ENABLE_* first.
+_mem_mb="$(awk '/MemTotal/{print int($2/1024)}' /proc/meminfo 2>/dev/null || echo 0)"
+if [ "${_mem_mb:-0}" -lt 3000 ]; then _heavy_default=0; else _heavy_default=1; fi
+MAIL_ENABLE_CLAMAV="${MAIL_ENABLE_CLAMAV:-$_heavy_default}"
+MAIL_ENABLE_SPAMASSASSIN="${MAIL_ENABLE_SPAMASSASSIN:-$_heavy_default}"
+if [ "$_heavy_default" = "0" ]; then
+    warn "Detected ${_mem_mb}MB RAM (<3GB): defaulting ClamAV + SpamAssassin OFF (mail + DKIM still work)."
 fi
 
 SCHEME="http"; WS_SCHEME="ws"
 if [ "$ENABLE_SSL" = "1" ]; then SCHEME="https"; WS_SCHEME="wss"; fi
+
+# SSL ordering: the web container refuses to start with ENABLE_SSL=1 if the cert
+# file is missing (OLS can't load it), but certbot's HTTP-01 needs the box up on
+# :80 first — chicken/egg. So the INITIAL .env boots HTTP when the cert isn't there
+# yet; step 8b obtains it and flips ENABLE_SSL on. If the cert already exists
+# (re-run), start straight on HTTPS.
+INITIAL_SSL="$ENABLE_SSL"
+if [ "$ENABLE_SSL" = "1" ] && [ ! -s "/etc/letsencrypt/live/${CERT_NAME}/fullchain.pem" ]; then
+    INITIAL_SSL=0
+fi
+
+# Idempotent .env key setter (used by the post-up SSL flip; the initial file is
+# written by the heredoc below only when absent).
+set_env() { # set_env KEY VALUE FILE
+    local k="$1" v="$2" f="$3"
+    if grep -qE "^${k}=" "$f"; then sed -i "s|^${k}=.*|${k}=${v}|" "$f"; else echo "${k}=${v}" >> "$f"; fi
+}
 
 # ---- 1. Docker Engine + compose plugin ----
 if [ "$SKIP_DOCKER_INSTALL" = "0" ]; then
@@ -120,6 +199,22 @@ log "Preparing stack dir: ${STACK_DIR}"
 mkdir -p "$STACK_DIR"
 cp "$COMPOSE_SRC" "${STACK_DIR}/docker-compose.yml"
 
+# The mariadb service bind-mounts ./mariadb-init as its docker-entrypoint-initdb.d
+# (creates the mailserver DB + mailuser + schema on a FRESH volume). It MUST sit
+# next to the compose file on the box, or the mail DB never gets provisioned.
+COMPOSE_DIR="$(dirname "$COMPOSE_SRC")"
+if [ -d "${COMPOSE_DIR}/mariadb-init" ]; then
+    cp -r "${COMPOSE_DIR}/mariadb-init" "${STACK_DIR}/mariadb-init"
+    ok "Copied mariadb-init/ (mail DB bootstrap) next to compose."
+else
+    warn "mariadb-init/ not found beside compose — mail DB won't be auto-provisioned."
+fi
+
+# Day-2 admin helpers live with the stack so operators can run them post-boot.
+for _h in obtain-certs.sh create-mail-account.sh dns-records.sh; do
+    [ -f "${COMPOSE_DIR}/${_h}" ] && install -m755 "${COMPOSE_DIR}/${_h}" "${STACK_DIR}/${_h}"
+done
+
 # ---- 4. Generate .env (fresh secrets) — only if absent, so re-runs are stable ----
 ENV_FILE="${STACK_DIR}/.env"
 if [ -f "$ENV_FILE" ]; then
@@ -140,9 +235,9 @@ FRONTEND_URL=${SCHEME}://${DOMAIN}
 API_URL=${SCHEME}://${DOMAIN}/api
 APP_ENV=prod
 APP_DEBUG=false
-ENABLE_SSL=${ENABLE_SSL}
-SSL_CERT_FILE=/etc/letsencrypt/live/${DOMAIN}/fullchain.pem
-SSL_KEY_FILE=/etc/letsencrypt/live/${DOMAIN}/privkey.pem
+ENABLE_SSL=${INITIAL_SSL}
+SSL_CERT_FILE=/etc/letsencrypt/live/${CERT_NAME}/fullchain.pem
+SSL_KEY_FILE=/etc/letsencrypt/live/${CERT_NAME}/privkey.pem
 
 DB_HOST=mariadb
 DB_PORT=3306
@@ -150,10 +245,25 @@ DB_NAME=devc_vps_dash
 DB_USER=vpsadmin
 DB_PASS=${DB_PASS}
 
+# App-tier view of the mail DB (bridge: reaches mariadb by service name). The
+# mail POD reaches the same DB via 127.0.0.1:3306 (set in compose, host net).
 MAIL_DB_HOST=mariadb
+MAIL_DB_PORT=3306
 MAIL_DB_NAME=mailserver
 MAIL_DB_USER=mailuser
 MAIL_DB_PASS=${MAIL_DB_PASS}
+
+# Mail pod identity (consumed by the mail service + its config templates).
+MAIL_DOMAIN=${MAIL_DOMAIN}
+SERVER_FQDN=${SERVER_FQDN}
+SERVER_IP=${SERVER_IP}
+ADMIN_EMAIL=postmaster@${MAIL_DOMAIN}
+
+# Heavy security services. ClamAV needs ~1.2GB RAM; on a small dry-run box leave
+# these OFF (mail still flows + DKIM/DMARC/Rspamd stay on). Flip to 1 in prod.
+MAIL_ENABLE_CLAMAV=${MAIL_ENABLE_CLAMAV}
+MAIL_ENABLE_SPAMASSASSIN=${MAIL_ENABLE_SPAMASSASSIN}
+MAIL_ENABLE_RSPAMD=1
 
 REDIS_HOST=redis
 REDIS_PORT=6379
@@ -189,10 +299,17 @@ LIVEKIT_WS_URL=
 VAPID_PUBLIC_KEY=
 VAPID_PRIVATE_KEY=
 VAPID_SUBJECT=mailto:admin@${DOMAIN}
-IMAP_HOST=${DOMAIN}
+# The web tier reaches the host-net mail pod via the host gateway
+# (host.docker.internal, mapped in compose). Self-signed cert on the dry-run box,
+# so cert verification is off here; flip to true + a real name for production.
+IMAP_HOST=host.docker.internal
 IMAP_PORT=993
 IMAP_TLS=true
-IMAP_VERIFY_CERT=true
+IMAP_VERIFY_CERT=false
+SMTP_HOST=host.docker.internal
+SMTP_PORT=587
+SIEVE_HOST=host.docker.internal
+SIEVE_PORT=4190
 FCM_ENABLED=false
 APNS_VOIP_ENABLED=false
 PANEL_API_URL=
@@ -234,7 +351,7 @@ ok "JWT volume ready."
 # ---- 6. Pull + up ----
 cd "$STACK_DIR"
 log "Pulling images (${REGISTRY}/flowone-*:${TAG})..."
-docker compose pull web collab mailsync
+docker compose pull web collab mailsync mail
 log "Bringing the stack up..."
 docker compose up -d
 
@@ -252,11 +369,66 @@ done
 echo ""
 docker compose ps
 echo ""
+
+# ---- 8b. TLS: obtain a real SAN cert, then flip SSL on ----
+# Only when --ssl was requested AND the cert lineage isn't a bare IP (LE won't
+# issue for IPs). The stack is already up on HTTP here, so obtain-certs.sh can
+# briefly stop web to free :80, issue over HTTP-01, and restart it.
+if [ "$ENABLE_SSL" = "1" ]; then
+    if printf '%s' "$CERT_NAME" | grep -Eq '^[0-9]+(\.[0-9]+){3}$'; then
+        warn "--ssl requested but the host is a bare IP (${CERT_NAME}); skipping cert (LE needs a domain)."
+    else
+        if [ ! -s "/etc/letsencrypt/live/${CERT_NAME}/fullchain.pem" ]; then
+            log "Obtaining LE SAN cert '${CERT_NAME}' for: ${CERT_DOMAINS}"
+            _cert_args=""; IFS=','; for d in $CERT_DOMAINS; do _cert_args="$_cert_args $d"; done; unset IFS
+            # shellcheck disable=SC2086
+            bash "${SCRIPT_DIR}/obtain-certs.sh" --email="postmaster@${MAIL_DOMAIN}" \
+                --cert-name="${CERT_NAME}" $_cert_args || warn "cert issuance failed; leaving stack on HTTP."
+        fi
+        if [ -s "/etc/letsencrypt/live/${CERT_NAME}/fullchain.pem" ]; then
+            log "Enabling HTTPS in .env and recreating web + mail..."
+            set_env ENABLE_SSL 1 "$ENV_FILE"
+            docker compose up -d web
+            docker compose restart mail
+        fi
+    fi
+    echo ""
+fi
+
+# ---- 8. Mail pod smoke (host-networked: probe the ports on the host itself) ----
+# We don't fail the whole run if mail is slow — ClamAV/freshclam can take a while
+# to warm up — but we surface the port state so the operator knows where it stands.
+log "Probing mail pod ports on the host (25/587/993/4190)..."
+mail_state="$(docker inspect -f '{{.State.Health.Status}}' flowone-mail-1 2>/dev/null || echo missing)"
+probe_port() {
+    # $1=port $2=label  — 3s connect timeout via bash /dev/tcp (no nc dependency)
+    if timeout 3 bash -c ": >/dev/tcp/127.0.0.1/$1" 2>/dev/null; then
+        ok "  mail :$1 ($2) is accepting connections."
+    else
+        warn "  mail :$1 ($2) not answering yet."
+    fi
+}
+probe_port 25  "smtp"
+probe_port 587 "submission"
+probe_port 993 "imaps"
+probe_port 4190 "sieve"
+echo "  mail container health: ${mail_state}"
+echo ""
+
 if [ "$healthy" = "1" ]; then
     code="$(docker exec flowone-web-1 sh -lc "curl -s -o /dev/null -w '%{http_code}' http://localhost/api/auth/me" 2>/dev/null || echo 000)"
     ok "Stack healthy. GET /api/auth/me -> ${code} (401/200 = app booted + DB/Redis answered)."
     echo ""
-    echo "Next: point DNS at this box and, for TLS, obtain certs then re-run with --ssl."
+    echo "Create a login account:   ./create-mail-account.sh --email=you@${MAIL_DOMAIN}"
+    echo "Print DNS records to add:  ./dns-records.sh   (MX/SPF/DKIM/DMARC/PTR)"
+    echo "Verify the whole mail pod (seed + auth + send/receive + DKIM):"
+    echo "  docker exec flowone-web-1 /usr/local/lsws/lsphp83/bin/php \\"
+    echo "    /var/www/vps-email/backend/tests/mail-system-test.php \\"
+    echo "    --mail-domain=${MAIL_DOMAIN} --db-admin-pass=<MYSQL_ROOT_PASSWORD> --verbose"
+    echo ""
+    if [ "$ENABLE_SSL" != "1" ]; then
+        echo "Next: point DNS at this box, then re-run with --ssl (or --base-domain=<d> --ssl) for TLS."
+    fi
     echo "Browse: ${SCHEME}://${DOMAIN}/"
     exit 0
 else

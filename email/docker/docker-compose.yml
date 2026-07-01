@@ -9,10 +9,13 @@
 #                                  # is seeded by Fleet / the migration snapshot)
 #   docker compose up -d           # bring the stack up
 #
-# Bridge-network services only (web, mariadb, redis, meilisearch, collab,
-# mailsync). The host-networking pods (mail, powerdns, coturn/livekit) and
-# onlyoffice are authored separately and validated on Linux (Phase E) — Docker
-# Desktop on Windows can't run network_mode: host faithfully.
+# Bridge-network app tier (web, mariadb, redis, meilisearch, collab, mailsync)
+# PLUS the host-networked `mail` pod (Postfix/Dovecot/OpenDKIM/OpenDMARC/Rspamd/
+# ClamAV/SpamAssassin/Unbound). The remaining host-net pods (powerdns, coturn/
+# livekit) and onlyoffice are still authored separately. NOTE: the `mail` service
+# uses network_mode: host, so the FULL stack only runs on Linux — Docker Desktop
+# on Windows can't run host networking faithfully (bring up the bridge tier there
+# with `--scale mail=0` or omit it).
 name: flowone
 
 services:
@@ -26,8 +29,19 @@ services:
       # On a migrated/restored box the dump already carries users + grants.
       MARIADB_USER: ${DB_USER}
       MARIADB_PASSWORD: ${DB_PASS}
+      # Consumed by mariadb-init/10-mailserver.sh (fresh volume only) to create
+      # the mailserver DB + least-privilege mailuser for the host-net mail pod.
+      MAIL_DB_NAME: ${MAIL_DB_NAME:-mailserver}
+      MAIL_DB_USER: ${MAIL_DB_USER:-mailuser}
+      MAIL_DB_PASS: ${MAIL_DB_PASS:-}
+    # Expose ONLY on the host loopback so the host-networked mail pod can reach
+    # the DB at 127.0.0.1:3306 (matches the native postfix/dovecot `hosts` maps).
+    # Never published to the public interface.
+    ports:
+      - "127.0.0.1:3306:3306"
     volumes:
       - mariadb_data:/var/lib/mysql
+      - ./mariadb-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       # --su-mysql connects via the local socket as the mysql OS user, so it
       # needs no provisioned `healthcheck` DB user (the stock --connect does).
@@ -88,6 +102,11 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    # The mail pod runs on the HOST network (network_mode: host), so the bridge
+    # service name "mail" won't resolve from here. IMAP_HOST/SMTP_HOST/SIEVE_HOST
+    # in .env point at host.docker.internal, which this maps to the host gateway.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - vps_email_storage:/var/www/vps-email/backend/storage
       - vps_email_data:/var/www/vps-email/data
@@ -151,6 +170,48 @@ services:
       redis:
         condition: service_healthy
 
+  # Full mail server (Postfix + Dovecot + OpenDKIM + OpenDMARC + Rspamd + ClamAV
+  # + SpamAssassin + Unbound) in one supervised pod. HOST networking so port-25
+  # inbound preserves real sender IPs (RBLs/SPF/fail2ban) and to bind the mail
+  # ports directly. Reaches the DB via 127.0.0.1:3306 (mariadb's loopback
+  # publish). LINUX ONLY — Docker Desktop can't run network_mode: host faithfully.
+  mail:
+    image: ${REGISTRY:-flowone}/flowone-mail:${TAG:-latest}
+    build:
+      context: ./mail
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      MAIL_DOMAIN: ${MAIL_DOMAIN}
+      SERVER_FQDN: ${SERVER_FQDN:-${MAIL_DOMAIN}}
+      SERVER_IP: ${SERVER_IP:-}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-postmaster@${MAIL_DOMAIN}}
+      MAIL_DB_HOST: 127.0.0.1
+      MAIL_DB_PORT: "3306"
+      MAIL_DB_NAME: ${MAIL_DB_NAME:-mailserver}
+      MAIL_DB_USER: ${MAIL_DB_USER:-mailuser}
+      MAIL_DB_PASS: ${MAIL_DB_PASS}
+      # Heavy security services — default ON for parity. Set to 0 in .env on
+      # small boxes (ClamAV needs ~1.2GB RAM). Postfix stays milter_default_
+      # action=accept, and DKIM/DMARC/Rspamd remain on, so mail + signing work.
+      MAIL_ENABLE_CLAMAV: ${MAIL_ENABLE_CLAMAV:-1}
+      MAIL_ENABLE_SPAMASSASSIN: ${MAIL_ENABLE_SPAMASSASSIN:-1}
+      MAIL_ENABLE_RSPAMD: ${MAIL_ENABLE_RSPAMD:-1}
+    volumes:
+      - mail_vmail:/home/vmail                 # user mail (CRITICAL)
+      - mail_dkim:/etc/opendkim/keys           # DKIM key (must stay stable)
+      - mail_certs:/etc/letsencrypt            # pod's own cert dir (self-signed fallback + copied real cert)
+      # Host certbot tree (read-only). entrypoint copies the real cert for
+      # TLS_CERT_NAME from here into the writable volume above; absent on boxes
+      # without certs (self-signed fallback then). Renewal: restart the mail pod.
+      - /etc/letsencrypt:/etc/letsencrypt-host:ro
+      - mail_clamav:/var/lib/clamav            # AV signatures (avoid re-download)
+      - mail_rspamd_redis:/var/lib/redis-rspamd # Bayes training
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
 volumes:
   mariadb_data:
   redis_data:
@@ -159,3 +220,8 @@ volumes:
   vps_email_data:
   vps_email_files:
   jwt_keys:
+  mail_vmail:
+  mail_dkim:
+  mail_certs:
+  mail_clamav:
+  mail_rspamd_redis:

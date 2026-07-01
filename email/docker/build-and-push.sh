@@ -5,10 +5,11 @@
 # provisioned by Fleet run `docker compose pull ${REGISTRY}/flowone-<svc>:${TAG}`,
 # so those images must exist in the registry first.
 #
-# Builds three images from the email/ build context:
-#   flowone-web       (docker/web/Dockerfile)      OLS + lsphp83 + baked SPA
-#   flowone-collab    (docker/collab/Dockerfile)   Hocuspocus WS
-#   flowone-mailsync  (docker/mailsync/Dockerfile) IMAP-IDLE WS
+# Builds these images:
+#   flowone-web       (docker/web/Dockerfile,   ctx email/)     OLS + lsphp83 + SPA
+#   flowone-collab    (docker/collab/Dockerfile, ctx email/)    Hocuspocus WS
+#   flowone-mailsync  (docker/mailsync/Dockerfile, ctx email/)  IMAP-IDLE WS
+#   flowone-mail      (docker/mail/Dockerfile,  ctx docker/mail) full mail stack
 #
 # Default is BUILD ONLY (safe). Pass --push to also push (requires a prior
 # `docker login` to the registry).
@@ -51,12 +52,20 @@ done
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"   # email/docker
 EMAIL_DIR="$(dirname "$SCRIPT_DIR")"                          # email (build context)
 
-# service name -> Dockerfile (relative to EMAIL_DIR)
-SERVICES=("web" "collab" "mailsync")
+# service name -> Dockerfile + build context. The app tier shares the email/
+# context; the mail pod is self-contained under docker/mail.
+SERVICES=("web" "collab" "mailsync" "mail")
 declare -A DOCKERFILES=(
-    [web]="docker/web/Dockerfile"
-    [collab]="docker/collab/Dockerfile"
-    [mailsync]="docker/mailsync/Dockerfile"
+    [web]="${EMAIL_DIR}/docker/web/Dockerfile"
+    [collab]="${EMAIL_DIR}/docker/collab/Dockerfile"
+    [mailsync]="${EMAIL_DIR}/docker/mailsync/Dockerfile"
+    [mail]="${SCRIPT_DIR}/mail/Dockerfile"
+)
+declare -A CONTEXTS=(
+    [web]="${EMAIL_DIR}"
+    [collab]="${EMAIL_DIR}"
+    [mailsync]="${EMAIL_DIR}"
+    [mail]="${SCRIPT_DIR}/mail"
 )
 
 if [ -n "$ONLY_SERVICE" ]; then
@@ -68,17 +77,18 @@ if [ -n "$ONLY_SERVICE" ]; then
 fi
 
 echo "==> Registry: ${REGISTRY}   Tag: ${TAG}   Push: $([ "$PUSH" = 1 ] && echo yes || echo no)"
-echo "==> Build context: ${EMAIL_DIR}"
 
 build_one() {
     local svc="$1"
-    local dockerfile="${EMAIL_DIR}/${DOCKERFILES[$svc]}"
+    local dockerfile="${DOCKERFILES[$svc]}"
+    local context="${CONTEXTS[$svc]}"
     local image="${REGISTRY}/flowone-${svc}:${TAG}"
 
     echo ""
     echo "==> Building ${image}"
     echo "    dockerfile: ${dockerfile}"
-    docker build -f "$dockerfile" -t "$image" "$EMAIL_DIR"
+    echo "    context:    ${context}"
+    docker build -f "$dockerfile" -t "$image" "$context"
 }
 
 push_one() {
@@ -94,7 +104,7 @@ done
 
 echo ""
 echo "==> Built images:"
-docker images --format '{{.Repository}}:{{.Tag}}\t{{.Size}}' | grep -E "flowone-(web|collab|mailsync):" || true
+docker images --format '{{.Repository}}:{{.Tag}}\t{{.Size}}' | grep -E "flowone-(web|collab|mailsync|mail):" || true
 
 if [ "$PUSH" = 1 ]; then
     # Fail early with a clear message if not logged in to the registry host.
