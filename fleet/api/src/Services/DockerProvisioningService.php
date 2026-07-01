@@ -536,6 +536,35 @@ class DockerProvisioningService
     }
 
     /**
+     * Day-2 backfill: (re)write the Server Credentials inventory for an already
+     * provisioned Docker box, WITHOUT touching the running stack (no SSH to the
+     * target, no image pull, no container churn). Variables — including all
+     * generated secrets — are reloaded from the persisted `servers.*_encrypted`
+     * columns, so this is safe, idempotent, and reproduces the exact logins the
+     * box is already running with. Use it for boxes provisioned before the
+     * inventory was recorded on the Docker path.
+     *
+     * @return array{success:bool, error?:string, log:array}
+     */
+    public function backfillCredentials(int $serverId): array
+    {
+        $this->log = [];
+        try {
+            $server = $this->getServer($serverId);
+            $variables = $this->templates->generateServerVariables($server);
+            $variables = ServerSecretGenerator::ensureDockerSecrets($variables)['vars'];
+            $variables = self::normalizeLiveKit($variables)['vars'];
+            // COALESCE-based persist: never rotates an existing secret, only fills gaps.
+            $this->templates->persistDockerSecrets($serverId, $variables);
+            $this->persistCredentialInventory($serverId, $variables);
+            return ['success' => true, 'log' => $this->log];
+        } catch (\Throwable $e) {
+            $this->logLine('ERROR: ' . $e->getMessage());
+            return ['success' => false, 'error' => $e->getMessage(), 'log' => $this->log];
+        }
+    }
+
+    /**
      * Docker Update: roll one or more already-running services to a chosen image
      * tag (Docker equivalent of the retired panel_update/email_update, and of
      * APP_UPDATE for the compose stack). Re-renders the per-host .env with the
