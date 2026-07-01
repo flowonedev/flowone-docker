@@ -137,7 +137,7 @@ watch(() => props.show, async (newVal) => {
     } else {
       await loadData()
       selectedBlueprint.value = props.currentBlueprintId
-      if (props.initialType && ['full_provision', 'config_only', 'packages_config', 'app_update'].includes(props.initialType)) {
+      if (props.initialType && ['full_provision', 'docker_provision', 'config_only', 'packages_config', 'app_update'].includes(props.initialType)) {
         selectedType.value = props.initialType
       }
       selectedApps.value = { panel: true, email: true, agent: true }
@@ -462,6 +462,7 @@ onUnmounted(() => {
 const getTypeIcon = (type) => {
   const icons = {
     'full_provision': 'build',
+    'docker_provision': 'inventory_2',
     'config_only': 'settings',
     'packages_config': 'deployed_code',
     'app_update': 'system_update',
@@ -986,7 +987,7 @@ onMounted(() => {
               <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-3">Deployment Type</label>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <button
-                  v-for="dtype in deploymentTypes.filter(t => ['full_provision', 'config_only', 'packages_config', 'app_update'].includes(t.type))"
+                  v-for="dtype in deploymentTypes.filter(t => ['full_provision', 'docker_provision', 'config_only', 'packages_config', 'app_update'].includes(t.type))"
                   :key="dtype.type"
                   @click="selectedType = dtype.type"
                   :class="[

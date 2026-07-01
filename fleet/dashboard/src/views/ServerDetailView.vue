@@ -1025,7 +1025,17 @@ onUnmounted(() => {
                 <span class="material-symbols-rounded text-primary-600 dark:text-primary-400">build</span>
                 <div>
                   <p class="font-medium text-surface-900 dark:text-surface-100">Full Provision</p>
-                  <p class="text-xs text-surface-500 dark:text-surface-400">Install everything from scratch</p>
+                  <p class="text-xs text-surface-500 dark:text-surface-400">Native install (packages + configs + apps)</p>
+                </div>
+              </button>
+              <button 
+                @click="openDeployModal('docker_provision')"
+                class="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-100 dark:hover:bg-surface-600 transition-colors text-left"
+              >
+                <span class="material-symbols-rounded text-blue-600 dark:text-blue-400">inventory_2</span>
+                <div>
+                  <p class="font-medium text-surface-900 dark:text-surface-100">Docker Provision</p>
+                  <p class="text-xs text-surface-500 dark:text-surface-400">Deploy full stack via Docker Compose + SSL</p>
                 </div>
               </button>
               <button 
