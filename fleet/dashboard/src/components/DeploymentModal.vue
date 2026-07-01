@@ -465,8 +465,6 @@ const getTypeIcon = (type) => {
     'config_only': 'settings',
     'packages_config': 'deployed_code',
     'app_update': 'system_update',
-    'panel_update': 'dashboard',
-    'email_update': 'mail',
     'agent_update': 'smart_toy',
     'ssl_renew': 'lock',
   }

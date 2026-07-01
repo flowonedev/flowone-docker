@@ -461,8 +461,6 @@ const getDeploymentTypeLabel = (type) => {
     'full_provision': 'Full Provision',
     'config_only': 'Config Only',
     'packages_config': 'Packages + Config',
-    'panel_update': 'Panel Update',
-    'email_update': 'Email Update',
     'agent_update': 'Agent Update',
     'app_update': 'App Update',
     'wipe': 'Wipe',

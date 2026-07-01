@@ -15,13 +15,15 @@ class DeploymentType
     
     /** Packages + config - install packages and apply configs, but skip app deployment */
     public const PACKAGES_CONFIG = 'packages_config';
-    
-    /** Update VPS Admin Panel only */
-    public const PANEL_UPDATE = 'panel_update';
-    
-    /** Update Email App only */
-    public const EMAIL_UPDATE = 'email_update';
-    
+
+    // NOTE: PANEL_UPDATE ('panel_update') and EMAIL_UPDATE ('email_update') were
+    // retired in the native->docker migration (Phase D). They were dead stubs
+    // (handleOtherDeployment() only inserted a pending row, nothing executed).
+    // Real per-app updates flow through APP_UPDATE -> deployAppUpdate(); the
+    // Docker deploy updates a single service with `docker compose pull/up`.
+    // The DB `deployments.type` enum still lists the old strings for historical
+    // rows; they are simply no longer offered or handled.
+
     /** Update Fleet Agent only */
     public const AGENT_UPDATE = 'agent_update';
     
@@ -46,8 +48,6 @@ class DeploymentType
             self::FULL_PROVISION,
             self::CONFIG_ONLY,
             self::PACKAGES_CONFIG,
-            self::PANEL_UPDATE,
-            self::EMAIL_UPDATE,
             self::AGENT_UPDATE,
             self::CONFIG_UPDATE,
             self::SSL_RENEW,
@@ -65,8 +65,6 @@ class DeploymentType
             self::FULL_PROVISION => 'Full Provision',
             self::CONFIG_ONLY => 'Config Only',
             self::PACKAGES_CONFIG => 'Packages + Config',
-            self::PANEL_UPDATE => 'Panel Update',
-            self::EMAIL_UPDATE => 'Email App Update',
             self::AGENT_UPDATE => 'Agent Update',
             self::CONFIG_UPDATE => 'Config Update',
             self::SSL_RENEW => 'SSL Renewal',
@@ -85,8 +83,6 @@ class DeploymentType
             self::FULL_PROVISION => 'Complete server setup: install all packages, apply configs, deploy apps, setup SSL',
             self::CONFIG_ONLY => 'Apply configuration templates only, restart affected services',
             self::PACKAGES_CONFIG => 'Install required packages and apply configurations (no app deployment)',
-            self::PANEL_UPDATE => 'Update the VPS Admin Panel to the latest version',
-            self::EMAIL_UPDATE => 'Update the MailFlow Email App to the latest version',
             self::AGENT_UPDATE => 'Update the Fleet Agent to the latest version',
             self::CONFIG_UPDATE => 'Push configuration changes to the server',
             self::SSL_RENEW => 'Renew SSL certificates for all domains',
@@ -116,8 +112,6 @@ class DeploymentType
         return in_array($type, [
             self::CONFIG_ONLY,
             self::PACKAGES_CONFIG,
-            self::PANEL_UPDATE,
-            self::EMAIL_UPDATE,
             self::AGENT_UPDATE,
             self::CONFIG_UPDATE,
             self::SSL_RENEW,
