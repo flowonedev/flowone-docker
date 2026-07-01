@@ -74,6 +74,14 @@
   laid to rest); `/var/www/vps-email/storage` is the persistent volume with drive/ + mood-uploads/ at 777
   and writable (B2). Local `.env` REGISTRY switched to `ghcr.io/flowonedev` so a plain `docker compose up`
   keeps using the published images.
+- **Manual VPS dry-run tooling (Phase E step 1):** added `email/docker/vps-bootstrap.sh` (hand-run analog
+  of `DockerProvisioningService`: installs Docker, `docker login` GHCR, mints fresh secrets + `.env`, seeds
+  the JWT volume, pulls the published images, `compose up`, health-checks) + `docs/native-to-docker/DRY-RUN.md`
+  runbook. Confirmed scope reality: **only the bridge stack is dockerized** — the host-networking pods
+  (mail, PowerDNS, coTURN/LiveKit, OnlyOffice) are NOT authored yet (they exist only as a compose-header
+  TODO), so the first dry-run validates real-Linux runtime + GHCR pull + TLS + domain routing for the
+  webmail app, not mail/calls. The target-side `docker login` step in `vps-bootstrap.sh` is also the spec
+  for the same gap in `DockerProvisioningService::provisionDocker()`.
 
 ### Next action
 
