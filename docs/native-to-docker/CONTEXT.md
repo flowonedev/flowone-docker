@@ -64,9 +64,16 @@
   `email/docker/build-and-push.sh` (builds web/collab/mailsync from the `email/` context, `--push`
   optional, GHCR by default). All three images build locally (exit 0, ~8 min cold): **web 1.39 GB,
   mailsync 433 MB, collab 321 MB**. Decision: publish to **GHCR** (free for private images at our scale
-  today, 1-month notice before metering; self-hosted registry as fallback). PENDING: `docker login ghcr.io`
-  with a write:packages PAT, then `build-and-push.sh --push`, then a clean-room pull+up to re-run
-  Layer 1/2 against the published images.
+  today, 1-month notice before metering; self-hosted registry as fallback). **B3 CLOSED** — pushed all
+  three to `ghcr.io/flowonedev/flowone-{web,collab,mailsync}:latest` (private packages).
+- **Registry round-trip VALIDATED (Layer 1/2, clean-room):** removed the local GHCR tags, re-pulled from
+  the registry (genuine download), and `up -d` recreated the stack on the pulled images. All six services
+  healthy (incl. meilisearch via the new healthcheck); the `vps_email_files` volume was created on first
+  mount. In the running GHCR web image: `GET /api/auth/me` -> 401 and `GET /` -> 200 (app boots, router +
+  DB + Redis answer, SPA served); `php -m` confirms gd/zip/imap/imagick/intl/pdo_mysql/redis loaded (B1
+  laid to rest); `/var/www/vps-email/storage` is the persistent volume with drive/ + mood-uploads/ at 777
+  and writable (B2). Local `.env` REGISTRY switched to `ghcr.io/flowonedev` so a plain `docker compose up`
+  keeps using the published images.
 
 ### Next action
 
