@@ -660,7 +660,9 @@ class DockerProvisioningService
         }
 
         $this->logLine("Logging in to registry {$host} as {$user}...");
-        $res = $this->ssh->execWithTimeout(self::dockerLoginCmd($host, $user, $token), 60);
+        // sensitive=true: the command pipes the token via printf, so its text must
+        // never be echoed to the provision log.
+        $res = $this->ssh->execWithTimeout(self::dockerLoginCmd($host, $user, $token), 60, true);
         if (empty($res['success'])) {
             // Deliberately do NOT include command output (could echo the token) —
             // just the host + hint.

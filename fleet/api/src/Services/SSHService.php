@@ -680,8 +680,12 @@ SH;
 
     /**
      * Execute a command
+     *
+     * @param bool $sensitive When true the command text is NEVER echoed to the
+     *                        verbose CLI log — use for anything carrying a secret
+     *                        (e.g. `docker login --password-stdin` pipes a token).
      */
-    public function exec(string $command, bool $pty = false): array
+    public function exec(string $command, bool $pty = false, bool $sensitive = false): array
     {
         if (!$this->ssh) {
             return ['success' => false, 'error' => 'Not connected'];
@@ -690,10 +694,16 @@ SH;
         // Elevate to root via sudo when connected as the unprivileged pxr user.
         $command = $this->maybeSudo($command);
 
-        // Verbose CLI logging: show what command is being executed
+        // Verbose CLI logging: show what command is being executed. Sensitive
+        // commands are redacted so a secret (registry token, password) can never
+        // land in the provision log file.
         if (php_sapi_name() === 'cli' && strlen($command) < 200) {
-            $shortCmd = substr(trim($command), 0, 120);
-            fwrite(STDERR, "  [SSH] exec: {$shortCmd}" . (strlen($command) > 120 ? '...' : '') . "\n");
+            if ($sensitive) {
+                fwrite(STDERR, "  [SSH] exec: <redacted sensitive command>\n");
+            } else {
+                $shortCmd = substr(trim($command), 0, 120);
+                fwrite(STDERR, "  [SSH] exec: {$shortCmd}" . (strlen($command) > 120 ? '...' : '') . "\n");
+            }
         }
 
         try {
@@ -780,14 +790,14 @@ SH;
     /**
      * Execute command with timeout
      */
-    public function execWithTimeout(string $command, int $timeout = 300): array
+    public function execWithTimeout(string $command, int $timeout = 300, bool $sensitive = false): array
     {
         if (!$this->ssh) {
             return ['success' => false, 'error' => 'Not connected'];
         }
 
         $this->ssh->setTimeout($timeout);
-        return $this->exec($command);
+        return $this->exec($command, false, $sensitive);
     }
 
     /**
