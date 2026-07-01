@@ -51,10 +51,30 @@ a later, optional phase.
   tamper-reject, Redis set/get/del, Meili index/await/search) plus an optional credentialed
   login->me->logout. The mail/Sieve/DKIM/DMARC + client-WP-HTTP-200 parts of Layer 2 and all of
   Layer 3 (old-vs-new parity) need the mail pod + parallel box (Phase E).
-- [ ] **Phase D — Fleet refactor:** Refactor the 8,354-line `ProvisioningService` from
-  apt/systemctl steps to render `.env` + compose then `docker compose pull/up`; switch heartbeat
-  health checks from `systemctl is-active` to `docker inspect` (reuse flowone-office pattern);
-  retire dead `panel_update`/`email_update` types and mostly retire `ConfigExtractorService`.
+- [~] **Phase D — Fleet refactor:** IN PROGRESS. Built as NEW focused modules (the 8,354-line
+  native `ProvisioningService` is untouched, so native + docker provisioning run in parallel during
+  cutover):
+  - [x] `ComposeEnvRenderer` (`fleet/api/src/Services/`) — pure Fleet-vars -> per-host compose `.env`
+    mapper; rewrites hosts to bridge service names, derives URLs, fails loudly on missing secrets /
+    the LiveKit ws_url landmine. Test: `fleet/api/tests/compose-env-renderer-test.php` (18/18).
+  - [x] `DockerProvisioningService` (`fleet/api/src/Services/`) — `provisionDocker()` (ensure docker
+    -> ship compose -> render+upload `.env` -> `docker compose pull` -> `up -d` -> wait health via
+    `ps --format json`) and `updateService()` (single-service `pull + up --no-deps`). Pure command
+    builders + ps-json/health parsing tested off-box: `fleet/api/tests/docker-provisioning-test.php`
+    (15/15). Entry point: `fleet/api/cli/provision-docker.php` (mirrors `cli/provision.php`).
+  - [x] Retired dead `panel_update`/`email_update` deployment types (no-op stubs; real updates flow
+    through `APP_UPDATE`/`updateService`). Removed from `DeploymentType` + dashboard label/icon maps.
+  - [x] Docker-aware health: `fleet/agent/Lib/DockerHealth.php` + `heartbeat.php` +
+    `SSHService::collectSystemInfo()` now report compose container state for the app tier
+    (web->openlitespeed, mariadb, redis, meilisearch, collab, mailsync). ADDITIVE + detection-gated
+    (null on native boxes). Test: `fleet/agent/tests/docker-health-test.php` (9/9).
+  - [ ] Extend `generateServerVariables()` + `storeGeneratedPasswords()` (servers-table migration) to
+    generate/persist the non-regenerable crypto the renderer requires on a FRESH box
+    (`IMAP_ENCRYPTION_KEY`, `OAUTH_KEYS`/version, VAPID pair, `SSO_SERVER_KEY`, JWT RS256 PEMs), and
+    have `provisionDocker()` seed the JWT PEM pair into the `jwt_keys` volume (`seedVolumeCmd`).
+  - [ ] Live-dashboard wiring: new `DOCKER_PROVISION` deployment type + `DeploymentController` branch
+    (deferred — exposing an unvalidated provisioning path to operators is gated on Phase E validation).
+  - [ ] Mostly retire `ConfigExtractorService` (once the Docker path is the default).
 - [ ] **Phase E — Staging dry-run:** Provision a throwaway VM with the new stack and run Layer 1+2
   tests (no real data) to prove functional correctness end-to-end.
 - [ ] **Phase E — Parallel box:** Provision a real parallel Docker box from a production snapshot,

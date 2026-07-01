@@ -49,10 +49,17 @@ Remaining tracks are gated on resources we don't have on Windows:
    then the rest of Layer 2 (SMTP/IMAP roundtrip, Sieve, DKIM/DMARC, client WP HTTP 200) and Layer 3
    (run `db-parity-check.sh --source=... --target=...` old-box-DB vs new-box-DB, plus maildir byte
    counts + drive checksums). Docker Desktop on Windows can't run `network_mode: host` faithfully.
-2. **Phase D Fleet refactor:** turn the 8,354-line apt/systemctl `ProvisioningService` into
-   render-`.env` + `docker compose up`; switch heartbeat from `systemctl is-active` to
-   `docker inspect`. This is editable/reviewable locally (PHP), though only runnable against the
-   Fleet stack.
+2. **Phase D Fleet refactor:** IN PROGRESS (see PLAN.md for the checklist). Done + tested off-box:
+   `ComposeEnvRenderer` (Fleet-vars -> per-host `.env`, 18/18), `DockerProvisioningService` +
+   `cli/provision-docker.php` (compose pull/up/health, 15/15), dead `panel_update`/`email_update`
+   retired, docker-aware health for heartbeat + SSH probe (9/9, additive/gated so native boxes are
+   untouched). All built as NEW modules — the native `ProvisioningService` is untouched, so the two
+   provisioners run in parallel during cutover. STILL TODO: (a) generate+persist the non-regenerable
+   crypto on a fresh box (`IMAP_ENCRYPTION_KEY`, `OAUTH_KEYS`, VAPID, `SSO_SERVER_KEY`, JWT PEMs —
+   needs a servers-table migration) so the renderer's guards pass without a migrated snapshot, and
+   seed the JWT pair into the `jwt_keys` volume; (b) wire a `DOCKER_PROVISION` type into the live
+   dashboard (gated on Phase E validation). The SSH orchestration itself is only runnable against a
+   real Linux target (Phase E).
 3. **Migration delta-sync mode** (deferred): `snapshot.sh` is a full capture today; add an
    incremental/rsync-delta mode for the short cutover window.
 
