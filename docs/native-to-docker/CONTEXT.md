@@ -41,8 +41,12 @@
   added so the `.sh` stay LF (authored on Windows, run on Linux).
 
 - **Pre-VPS deep audit:** DONE (3 parallel audits + direct verification). Architecture sound; found
-  and FIXED in one pass: **B1** web image was missing `lsphp83-gd` + `lsphp83-zip` (image/PDF/Office/
-  zip fatals); **B2** user-file trees (`/var/www/vps-email/storage` drive/mood/docs) had no persistent
+  and FIXED in one pass: **B1** was a FALSE ALARM later corrected — gd + zip are already compiled into
+  the `litespeedtech/openlitespeed:1.8.5-lsphp83` base (`php -m` lists both) and there is NO
+  `lsphp83-gd`/`lsphp83-zip` apt package; the interim "fix" that added those packages broke the build
+  ("no installation candidate") and was reverted. `imap` IS absent from the base and is the one
+  extension installed. Caught by a full local build of all three images. **B2** user-file trees
+  (`/var/www/vps-email/storage` drive/mood/docs) had no persistent
   volume -> added `vps_email_files` mount + image dir/perms (were ephemeral, lost on recreate); **I1**
   `useOfficePresence.js` still hardcoded `wss://host:1234` -> now mirrors the `/collab-ws` proxy
   resolution; **I2** `DriveView.vue` desktop-app download hardcoded `flowone.pro` -> `VITE_DESKTOP_APP_URL`
@@ -53,13 +57,16 @@
   `email/docker/gen-jwt-keys.sh` (DEV-ONLY, idempotent) so a plain local `docker compose up` can seed
   the `jwt_keys` volume — prod is seeded by Fleet/snapshot. docker-provisioning test 16/16; compose
   validates.
-- **Still open before a fresh-VPS dry-run (the "registry round-trip"):** **B3** no images published
-  anywhere (default `flowone/flowone-web:latest` doesn't exist) + no build/push tooling; **B4** the
-  provisioner has no default compose-file source (`docker.compose_path` config unset, no
-  `packages/docker-compose.yml`). Decision made: publish to **GHCR** (ghcr.io) — free for private
-  images at our scale today, 1-month notice before any metering; fall back to a self-hosted registry
-  if that changes. Next concrete step: add a `docker` config block (registry/tag/compose_path) + a
-  build+push script, then a local clean-room pull+up to re-run Layer 1/2 against the published images.
+- **Registry round-trip (was B3/B4):** **B4 CLOSED** — added a `docker` config block to
+  `fleet/api/config.php` (`registry` default `ghcr.io/flowonedev`, `tag` `latest`, `compose_path`
+  repo-relative default); `DockerProvisioningService` already reads all three keys, so the provisioner
+  now has a working compose source + image coordinates. **B3 IN PROGRESS** — added
+  `email/docker/build-and-push.sh` (builds web/collab/mailsync from the `email/` context, `--push`
+  optional, GHCR by default). All three images build locally (exit 0, ~8 min cold): **web 1.39 GB,
+  mailsync 433 MB, collab 321 MB**. Decision: publish to **GHCR** (free for private images at our scale
+  today, 1-month notice before metering; self-hosted registry as fallback). PENDING: `docker login ghcr.io`
+  with a write:packages PAT, then `build-and-push.sh --push`, then a clean-room pull+up to re-run
+  Layer 1/2 against the published images.
 
 ### Next action
 

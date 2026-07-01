@@ -28,10 +28,14 @@ FROM litespeedtech/openlitespeed:1.8.5-lsphp83
 
 # Match the production lsphp83 extension set (see fleet/installer/ols-install.sh).
 # curl is the CLI tool used by the container HEALTHCHECK.
-# gd + zip are REQUIRED (not optional): backend calls gd image functions
-# (thumbnails, PDF/PPTX render) and ZipArchive (drive zip download, and the
-# phpoffice .docx/.xlsx/.pptx read-write which are ZIP containers). imagick does
-# NOT satisfy gd. Omitting either fatals every image/office/zip request path.
+#
+# gd + zip are REQUIRED by the app (gd: thumbnails/PDF/PPTX render — imagick does
+# NOT satisfy gd; zip: ZipArchive for drive zip download + phpoffice docx/xlsx/pptx
+# which are ZIP containers). They are ALREADY compiled into this base image
+# (verified: `php -m` lists both gd and zip), and there is NO lsphp83-gd/lsphp83-zip
+# apt package — asking for them fails the build ("no installation candidate"). So
+# do NOT add them here; only extensions genuinely absent from the base go below.
+# imap is NOT in the base image (`php -m` confirms), hence installed here.
 RUN apt-get update && apt-get install -y --no-install-recommends \
       lsphp83-mysql \
       lsphp83-curl \
@@ -40,8 +44,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       lsphp83-opcache \
       lsphp83-redis \
       lsphp83-imagick \
-      lsphp83-gd \
-      lsphp83-zip \
       curl \
  && apt-get clean && rm -rf /var/lib/apt/lists/*
 
