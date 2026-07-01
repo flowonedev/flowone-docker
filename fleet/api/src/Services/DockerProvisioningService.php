@@ -609,6 +609,15 @@ class DockerProvisioningService
             // provisioned before the inventory was recorded on the Docker path).
             $this->persistCredentialInventory($serverId, $variables);
 
+            // Re-ship the compose file (+ sidecar helpers) so compose-level changes
+            // — e.g. a tuned healthcheck — reach the box on an update, not only on a
+            // full provision. `up -d --no-deps <svc>` below then recreates the picked
+            // services with the new config. Cheap + idempotent.
+            $this->markDeployment(null, 15, 'Shipping stack files...');
+            $this->run('mkdir -p ' . escapeshellarg(self::STACK_DIR), 30, 'mkdir stack');
+            $this->uploadComposeFile($options);
+            $this->shipStackFiles($options);
+
             // Preserve the box's current SSL state: HTTPS iff a real cert lineage
             // is already present for its FQDN (bare-IP boxes stay on HTTP).
             $certName = (string) ($variables['SERVER_FQDN'] ?? $variables['EMAIL_DOMAIN'] ?? '');

@@ -107,6 +107,19 @@ services:
     # in .env point at host.docker.internal, which this maps to the host gateway.
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    # The image ships a HEALTHCHECK, but the app's cold-start (a fresh lsphp
+    # worker must autoload the framework + open DB/Redis connections) can spike a
+    # first request to ~8s. A tight 5s check false-flags the whole box "unhealthy"
+    # (Degraded) even though warm requests answer in ~0.4s. Override here (compose
+    # takes precedence over the image's HEALTHCHECK, so it applies WITHOUT an image
+    # rebuild) with a tolerant window and 127.0.0.1 to skip the IPv6-localhost
+    # fallback. 401 = app booted + router ran + DB/Redis answered (healthy liveness).
+    healthcheck:
+      test: ["CMD-SHELL", "c=$$(curl -s -o /dev/null -w '%{http_code}' --max-time 18 http://127.0.0.1/api/auth/me); [ \"$$c\" = 200 ] || [ \"$$c\" = 401 ]"]
+      interval: 30s
+      timeout: 20s
+      start_period: 90s
+      retries: 5
     volumes:
       - vps_email_storage:/var/www/vps-email/backend/storage
       - vps_email_data:/var/www/vps-email/data

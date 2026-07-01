@@ -201,6 +201,15 @@ const loadingDns = ref(false)
 const reseedingDns = ref(false)
 
 const fetchDns = async () => {
+  // Docker boxes don't run PowerDNS — the compose stack has no DNS server, so the
+  // native "read the panel DB's dns_records" probe (and Re-seed) don't apply. DNS
+  // for these servers lives at the registrar; the records to publish are in the
+  // Server Credentials (DNS) section. Skip the host-DB lookup entirely.
+  if (isDocker.value) {
+    dnsRecords.value = []
+    dnsDb.value = null
+    return
+  }
   loadingDns.value = true
   try {
     const response = await api.get(`/api/servers/${route.params.id}/dns`)
@@ -2056,7 +2065,7 @@ onUnmounted(() => {
                 DNS Records
                 <span v-if="dnsRecords.length" class="text-xs font-normal text-surface-500 dark:text-surface-400">({{ dnsRecords.length }})</span>
               </h2>
-              <div class="flex items-center gap-1.5">
+              <div v-if="!isDocker" class="flex items-center gap-1.5">
                 <button
                   @click="reseedDns"
                   :disabled="reseedingDns"
@@ -2073,7 +2082,18 @@ onUnmounted(() => {
               </div>
             </div>
             <div class="card-body">
-              <div v-if="loadingDns && !dnsRecords.length" class="text-center py-6">
+              <!-- Docker boxes don't host DNS (no PowerDNS in the compose stack) -->
+              <div v-if="isDocker" class="text-sm text-surface-600 dark:text-surface-400 space-y-2">
+                <p class="flex items-start gap-2">
+                  <span class="material-symbols-rounded text-base text-teal-500 shrink-0">info</span>
+                  <span>This server runs the Docker stack, which doesn't host its own DNS. Publish DNS at your domain registrar (or wherever the zone is delegated).</span>
+                </p>
+                <p class="text-xs">
+                  The exact <span class="font-medium">MX / SPF / DMARC / DKIM</span> records to publish are listed above under
+                  <span class="font-medium">Server Credentials → DNS</span>.
+                </p>
+              </div>
+              <div v-else-if="loadingDns && !dnsRecords.length" class="text-center py-6">
                 <div class="spinner w-6 h-6 mx-auto mb-2"></div>
                 <p class="text-sm text-surface-500 dark:text-surface-400">Reading DNS zone from the server...</p>
               </div>

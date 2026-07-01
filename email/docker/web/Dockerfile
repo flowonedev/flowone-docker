@@ -114,7 +114,13 @@ WORKDIR /var/www/vps-email
 
 # 401 (auth required) means the app booted, the router ran, and the DB/Redis
 # stack answered — a meaningful liveness signal for this API. 000 = OLS down.
-HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=5 \
-  CMD curl -s -o /dev/null -w '%{http_code}' http://localhost/api/auth/me | grep -qE '^(200|401)$'
+#
+# Tolerant window: a fresh lsphp worker cold-starts the framework (autoload +
+# DB/Redis connect) and a first request can take ~8s, so a 5s timeout false-flags
+# the box unhealthy even though warm requests answer in ~0.4s. Use 127.0.0.1
+# (skip the IPv6-localhost fallback), a bounded --max-time, and a wide start
+# period. NOTE: docker-compose.yml overrides this per-service; keep them in sync.
+HEALTHCHECK --interval=30s --timeout=20s --start-period=90s --retries=5 \
+  CMD c=$(curl -s -o /dev/null -w '%{http_code}' --max-time 18 http://127.0.0.1/api/auth/me); [ "$c" = 200 ] || [ "$c" = 401 ]
 
 ENTRYPOINT ["/flowone-entrypoint.sh"]
