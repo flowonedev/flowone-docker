@@ -68,10 +68,14 @@ a later, optional phase.
     `SSHService::collectSystemInfo()` now report compose container state for the app tier
     (web->openlitespeed, mariadb, redis, meilisearch, collab, mailsync). ADDITIVE + detection-gated
     (null on native boxes). Test: `fleet/agent/tests/docker-health-test.php` (9/9).
-  - [ ] Extend `generateServerVariables()` + `storeGeneratedPasswords()` (servers-table migration) to
-    generate/persist the non-regenerable crypto the renderer requires on a FRESH box
-    (`IMAP_ENCRYPTION_KEY`, `OAUTH_KEYS`/version, VAPID pair, `SSO_SERVER_KEY`, JWT RS256 PEMs), and
-    have `provisionDocker()` seed the JWT PEM pair into the `jwt_keys` volume (`seedVolumeCmd`).
+  - [x] Non-regenerable crypto for a FRESH box: `ServerSecretGenerator` mints IMAP key, AI key, SSO
+    key + RS256 JWT PEM pair; migration `026_add_docker_crypto_columns.sql` adds encrypted servers
+    columns; `TemplateService::generateServerVariables()` loads persisted keys and
+    `persistDockerSecrets()` stores freshly-minted ones idempotently (COALESCE, never rotates);
+    `provisionDocker()` seeds the JWT pair into the `jwt_keys` volume before `up`. Test:
+    `fleet/api/tests/server-secrets-test.php` (8/8, incl. RS256 sign/verify + PEM encrypt/decrypt
+    round-trip + fresh-box renders a valid `.env`). (OAUTH_KEYS + VAPID left empty = app fallback /
+    push-disabled until configured.)
   - [ ] Live-dashboard wiring: new `DOCKER_PROVISION` deployment type + `DeploymentController` branch
     (deferred — exposing an unvalidated provisioning path to operators is gated on Phase E validation).
   - [ ] Mostly retire `ConfigExtractorService` (once the Docker path is the default).

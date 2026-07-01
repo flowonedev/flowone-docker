@@ -275,7 +275,58 @@ class TemplateService
         $variables['REDIS_PASSWORD'] = $variables['REDIS_PASS'];
         $variables['ADMIN_PASSWORD'] = $variables['ADMIN_PASS'];
 
+        // --- Docker deploy crypto (non-regenerable) ---
+        // Loaded here only if already persisted (migration 026). On a FRESH box the
+        // Docker provisioner mints + persists these via ServerSecretGenerator +
+        // persistDockerSecrets(); on a MIGRATED box restore.sh writes the real keys.
+        // The NATIVE path ignores these entirely (install.sh mints its own on-box),
+        // so we do NOT generate here -- that would burn an RSA keygen on every call.
+        if (!empty($server['imap_encryption_key_encrypted'] ?? null)) {
+            $variables['IMAP_ENCRYPTION_KEY'] = $this->encryption->decrypt($server['imap_encryption_key_encrypted']);
+        }
+        if (!empty($server['ai_encryption_key_encrypted'] ?? null)) {
+            $variables['AI_ENCRYPTION_KEY'] = $this->encryption->decrypt($server['ai_encryption_key_encrypted']);
+        }
+        if (!empty($server['sso_server_key_encrypted'] ?? null)) {
+            $variables['SSO_SERVER_KEY'] = $this->encryption->decrypt($server['sso_server_key_encrypted']);
+        }
+        if (!empty($server['jwt_private_key_encrypted'] ?? null)) {
+            $variables['JWT_PRIVATE_KEY_PEM'] = $this->encryption->decrypt($server['jwt_private_key_encrypted']);
+        }
+        if (!empty($server['jwt_public_key'] ?? null)) {
+            $variables['JWT_PUBLIC_KEY_PEM'] = $server['jwt_public_key'];
+        }
+
         return $variables;
+    }
+
+    /**
+     * Persist the Docker-deploy crypto for a server (encrypted, except the JWT
+     * public key). COALESCE means we only fill columns that are still NULL, so
+     * this is idempotent and never rotates a key that already exists -- reusing
+     * IMAP_ENCRYPTION_KEY / the JWT pair across re-provisions is mandatory
+     * (rotating them bricks stored passwords / logs everyone out).
+     */
+    public function persistDockerSecrets(int $serverId, array $variables): void
+    {
+        $db = $this->container->getDatabase();
+        $stmt = $db->prepare(
+            "UPDATE servers SET
+                imap_encryption_key_encrypted = COALESCE(imap_encryption_key_encrypted, ?),
+                ai_encryption_key_encrypted   = COALESCE(ai_encryption_key_encrypted, ?),
+                sso_server_key_encrypted      = COALESCE(sso_server_key_encrypted, ?),
+                jwt_private_key_encrypted     = COALESCE(jwt_private_key_encrypted, ?),
+                jwt_public_key                = COALESCE(jwt_public_key, ?)
+             WHERE id = ?"
+        );
+        $stmt->execute([
+            !empty($variables['IMAP_ENCRYPTION_KEY']) ? $this->encryption->encrypt($variables['IMAP_ENCRYPTION_KEY']) : null,
+            !empty($variables['AI_ENCRYPTION_KEY']) ? $this->encryption->encrypt($variables['AI_ENCRYPTION_KEY']) : null,
+            !empty($variables['SSO_SERVER_KEY']) ? $this->encryption->encrypt($variables['SSO_SERVER_KEY']) : null,
+            !empty($variables['JWT_PRIVATE_KEY_PEM']) ? $this->encryption->encrypt($variables['JWT_PRIVATE_KEY_PEM']) : null,
+            !empty($variables['JWT_PUBLIC_KEY_PEM']) ? $variables['JWT_PUBLIC_KEY_PEM'] : null,
+            $serverId,
+        ]);
     }
 
     /**

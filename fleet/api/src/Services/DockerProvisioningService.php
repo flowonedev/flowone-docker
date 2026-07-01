@@ -191,6 +191,16 @@ class DockerProvisioningService
 
             $variables = $this->templates->generateServerVariables($server);
 
+            // Fill + persist the non-regenerable crypto on a fresh box (loaded from
+            // persisted columns / a migrated snapshot when present) so the renderer's
+            // guards pass and every re-provision reuses the SAME keys.
+            $secrets = ServerSecretGenerator::ensureDockerSecrets($variables);
+            $variables = $secrets['vars'];
+            if (!empty($secrets['generated'])) {
+                $this->logLine('Generated crypto: ' . implode(', ', $secrets['generated']));
+            }
+            $this->templates->persistDockerSecrets($serverId, $variables);
+
             // 1. Docker engine + compose plugin
             if (empty($options['skip_docker_install'])) {
                 $this->logLine('Ensuring Docker Engine + compose plugin...');
@@ -212,6 +222,10 @@ class DockerProvisioningService
                 throw new \RuntimeException('Failed to upload .env');
             }
             $this->run('chmod 600 ' . escapeshellarg(self::ENV_FILE), 30, 'chmod .env');
+
+            // 3b. Seed the JWT PEM pair into the shared jwt_keys volume BEFORE the
+            // stack comes up, so web/collab/mailsync mount a populated volume.
+            $this->seedJwtVolume($variables);
 
             // 4. Pull images + bring the stack up
             $this->logLine('Pulling images...');
@@ -299,6 +313,33 @@ class DockerProvisioningService
             throw new \RuntimeException('Failed to upload docker-compose.yml');
         }
         $this->logLine("Uploaded compose file from {$source}");
+    }
+
+    /**
+     * Seed the JWT RS256 PEM pair into the shared `jwt_keys` named volume. The
+     * volume is created first (idempotent) so this can run before `compose up`;
+     * a throwaway helper container copies the keys in and fixes perms.
+     */
+    private function seedJwtVolume(array $variables): void
+    {
+        $priv = (string) ($variables['JWT_PRIVATE_KEY_PEM'] ?? '');
+        $pub  = (string) ($variables['JWT_PUBLIC_KEY_PEM'] ?? '');
+        if ($priv === '' || $pub === '') {
+            throw new \RuntimeException('JWT key pair missing; cannot seed jwt_keys volume');
+        }
+
+        $tmp = '/tmp/flowone-jwt-seed';
+        $this->run('mkdir -p ' . escapeshellarg($tmp), 30, 'mkdir jwt seed dir');
+        if (!$this->ssh->uploadContent($priv, $tmp . '/jwt-private.pem')) {
+            throw new \RuntimeException('Failed to upload jwt-private.pem');
+        }
+        if (!$this->ssh->uploadContent($pub, $tmp . '/jwt-public.pem')) {
+            throw new \RuntimeException('Failed to upload jwt-public.pem');
+        }
+        $this->run('docker volume create ' . escapeshellarg(self::JWT_VOLUME), 60, 'create jwt volume');
+        $this->run(self::seedVolumeCmd(self::JWT_VOLUME, $tmp), 120, 'seed jwt volume');
+        $this->run('rm -rf ' . escapeshellarg($tmp), 30, 'cleanup jwt seed dir');
+        $this->logLine('Seeded JWT key pair into ' . self::JWT_VOLUME);
     }
 
     private function getServer(int $serverId): array

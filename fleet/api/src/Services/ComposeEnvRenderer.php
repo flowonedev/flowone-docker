@@ -38,6 +38,14 @@ class ComposeEnvRenderer
     private const JWT_PUBLIC_PATH  = '/etc/flowone/jwt/jwt-public.pem';
 
     /**
+     * Keys that ride along in the variables array but are NEVER written to the
+     * `.env` (they are seeded into the jwt_keys volume instead). Multi-line PEMs
+     * would otherwise trip the "no newline" guard even though they never touch
+     * the file.
+     */
+    private const NOT_EMITTED = ['JWT_PRIVATE_KEY_PEM', 'JWT_PUBLIC_KEY_PEM'];
+
+    /**
      * Keys that MUST be present and non-empty, or the stack cannot boot / would
      * corrupt data. Missing any of these aborts provisioning loudly rather than
      * shipping a broken `.env`.
@@ -196,8 +204,12 @@ class ComposeEnvRenderer
             }
         }
 
-        // No value may contain a newline — it would corrupt the .env line format.
+        // No EMITTED value may contain a newline — it would corrupt the .env line
+        // format. PEM material (NOT_EMITTED) is seeded into a volume, not the file.
         foreach ($vars as $k => $v) {
+            if (in_array($k, self::NOT_EMITTED, true)) {
+                continue;
+            }
             if (is_scalar($v) && preg_match('/[\r\n]/', (string) $v)) {
                 $problems[] = "value for {$k} contains a newline (would break .env)";
             }
