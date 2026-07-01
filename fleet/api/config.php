@@ -88,6 +88,22 @@ return [
         'path' => __DIR__ . '/../templates/',
     ],
 
+    // Docker Compose provisioning (native->docker migration, Phase D).
+    // Consumed by DockerProvisioningService: `registry`/`tag` are injected into
+    // the per-host .env (compose pulls ${REGISTRY}/flowone-<svc>:${TAG});
+    // `compose_path` is the docker-compose.yml uploaded to the target.
+    'docker' => [
+        // Image registry/namespace. Publish with email/docker/build-and-push.sh.
+        // GHCR is free for private images at fleet scale (1-month notice before
+        // any metering). Override here or in config.local.php / via env.
+        'registry' => getenv('DOCKER_REGISTRY') ?: 'ghcr.io/flowonedev',
+        'tag'      => getenv('DOCKER_TAG') ?: 'latest',
+        // Canonical compose file. Repo-relative default resolves in this
+        // monorepo; on the Fleet server set an absolute path in config.local.php
+        // (or bundle the file alongside the deployed Fleet code).
+        'compose_path' => __DIR__ . '/../../email/docker/docker-compose.yml',
+    ],
+
     // Provisioning database structure
     // Defines which databases to create on new servers and where to dump schemas from
     'provisioning' => [
