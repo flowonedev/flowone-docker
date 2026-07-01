@@ -52,8 +52,10 @@ const navigationGroups = [
   {
     items: [
       { name: 'Servers', path: '/servers', icon: 'dns' },
-      { name: 'Blueprints', path: '/blueprints', icon: 'inventory_2' },
-      { name: 'Packages', path: '/packages', icon: 'package_2' },
+      // Blueprints + Packages are native-flow (config snapshots / tarball builds)
+      // and obsolete under the Docker workflow: provisioning is driven by
+      // docker-compose.yml + the .env renderer (in Git) and CI-built GHCR images.
+      // Routes are kept for legacy/direct access but hidden from the sidebar.
     ]
   },
   {

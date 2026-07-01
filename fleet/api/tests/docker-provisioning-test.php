@@ -33,7 +33,7 @@ foreach (array_slice($argv, 1) as $arg) {
     elseif (str_starts_with($arg, '--only=')) $opts['only'] = array_filter(explode(',', substr($arg, 7)));
     else { fwrite(STDERR, "Unknown argument: {$arg}\n"); exit(1); }
 }
-if ($opts['help']) { echo "Usage: php docker-provisioning-test.php [--verbose] [--json] [--only=commands,ssl,login,livekit,parse,health]\n"; exit(0); }
+if ($opts['help']) { echo "Usage: php docker-provisioning-test.php [--verbose] [--json] [--only=commands,ssl,login,credentials,livekit,parse,health]\n"; exit(0); }
 
 const C_GREEN = "\033[32m"; const C_RED = "\033[31m"; const C_YELLOW = "\033[33m"; const C_RESET = "\033[0m";
 $logDir = __DIR__ . '/../storage/logs';
@@ -208,6 +208,68 @@ test('login', 'password auto-generated when none supplied', function () {
     $l = D::resolveDefaultLogin(['MAIL_DOMAIN' => 'acme.com']);
     assertTrue($l['generated'] === true, 'generated flag set');
     assertTrue(strlen($l['pass']) >= 12, 'generated password has length');
+});
+
+// --- credentials (Server Credentials panel parity for Docker boxes) ---
+section('credentials');
+$credVars = [
+    'ADMIN_EMAIL' => 'admin@acme.com', 'ADMIN_PASS' => 'PanelPass123',
+    'DB_ROOT_PASS' => 'rootpw', 'PANEL_DB_NAME' => 'devc_vps_dash', 'PANEL_DB_USER' => 'vpsadmin', 'PANEL_DB_PASS' => 'panelpw',
+    'MAIL_DB_NAME' => 'mailserver', 'MAIL_DB_USER' => 'mailuser', 'MAIL_DB_PASS' => 'mailpw',
+    'REDIS_PASS' => 'redispw', 'MEILI_MASTER_KEY' => 'meilikey',
+    'EMAIL_API_KEY' => 'apikey', 'JWT_SECRET' => 'jwtsec', 'ENCRYPTION_KEY' => 'enckey',
+    'MAIL_DOMAIN' => 'acme.com', 'PANEL_DOMAIN' => 'panel.acme.com', 'SERVER_IP' => '85.155.242.130',
+];
+/** @return array{0:string,1:string,2:string,3:string,4:bool}|null */
+function findCred(array $rows, string $key): ?array {
+    foreach ($rows as $r) { if (($r[1] ?? '') === $key) return $r; }
+    return null;
+}
+test('credentials', 'includes panel admin login (email/user/pass) with pass marked secret', function () use ($credVars) {
+    $rows = D::buildCredentialRows($credVars);
+    assertTrue(findCred($rows, 'ADMIN_EMAIL')[3] === 'admin@acme.com', 'admin email');
+    assertTrue(findCred($rows, 'ADMIN_USER')[3] === 'pxradmin', 'admin user defaults to pxradmin');
+    $pass = findCred($rows, 'ADMIN_PASS');
+    assertTrue($pass[3] === 'PanelPass123' && $pass[4] === true, 'admin pass present + secret');
+});
+test('credentials', 'includes all DB passwords (root/panel/mail) marked secret', function () use ($credVars) {
+    $rows = D::buildCredentialRows($credVars);
+    foreach (['DB_ROOT_PASS' => 'rootpw', 'PANEL_DB_PASS' => 'panelpw', 'MAIL_DB_PASS' => 'mailpw'] as $k => $v) {
+        $r = findCred($rows, $k);
+        assertTrue($r !== null && $r[3] === $v && $r[4] === true, "{$k} present + secret");
+    }
+});
+test('credentials', 'includes redis/meili/api/jwt/encryption secrets', function () use ($credVars) {
+    $rows = D::buildCredentialRows($credVars);
+    foreach (['REDIS_PASS', 'MEILI_MASTER_KEY', 'EMAIL_API_KEY', 'JWT_SECRET', 'ENCRYPTION_KEY'] as $k) {
+        $r = findCred($rows, $k);
+        assertTrue($r !== null && $r[3] !== '' && $r[4] === true, "{$k} present + secret");
+    }
+});
+test('credentials', 'derives the mailbox login (robert@domain <- ADMIN_PASS)', function () use ($credVars) {
+    $rows = D::buildCredentialRows($credVars);
+    assertTrue(findCred($rows, 'MAIL_ADMIN_EMAIL')[3] === 'robert@acme.com', 'mailbox email');
+    $mp = findCred($rows, 'MAIL_ADMIN_PASS');
+    assertTrue($mp[3] === 'PanelPass123' && $mp[4] === true, 'mailbox pass <- ADMIN_PASS + secret');
+});
+test('credentials', 'computes SPF/DMARC/MX from PANEL_DOMAIN base + SERVER_IP', function () use ($credVars) {
+    $rows = D::buildCredentialRows($credVars);
+    assertContains(findCred($rows, 'SPF_RECORD')[3], 'ip4:85.155.242.130', 'spf carries the box ip');
+    assertContains(findCred($rows, 'MX_RECORD')[3], '10 acme.com', 'mx points at base domain');
+    assertTrue(findCred($rows, 'DMARC_NAME')[3] === '_dmarc.acme.com', 'dmarc record name');
+});
+test('credentials', 'every row uses an allowed category (matches getCredentials ordering)', function () use ($credVars) {
+    $allowed = ['panel', 'ssh', 'database', 'mail', 'services', 'agent', 'secrets', 'dns'];
+    foreach (D::buildCredentialRows($credVars) as $r) {
+        assertTrue(in_array($r[0], $allowed, true), "unexpected category: {$r[0]}");
+    }
+});
+test('credentials', 'unset optional vars yield empty values (writer skips them)', function () {
+    $rows = D::buildCredentialRows(['MAIL_DOMAIN' => 'acme.com']);
+    assertTrue(findCred($rows, 'DKIM_DNS_RECORD')[3] === '', 'no DKIM => empty value');
+    assertTrue(findCred($rows, 'REDIS_PASS')[3] === '', 'no redis pass => empty value');
+    // Mailbox still resolves even with no ADMIN_PASS (auto-generated), so it is never empty.
+    assertTrue(findCred($rows, 'MAIL_ADMIN_PASS')[3] !== '', 'mailbox pass auto-generated');
 });
 
 // --- livekit (compose treats LiveKit as opt-in/external) ---

@@ -400,6 +400,11 @@ class DockerProvisioningService
             }
             $this->templates->persistDockerSecrets($serverId, $variables);
 
+            // Populate the "Server Credentials" panel (logins/keys/DNS) now that
+            // all secrets are resolved — even if the stack later fails to become
+            // healthy, the operator still has the generated credentials on record.
+            $this->persistCredentialInventory($serverId, $variables);
+
             // 1. Docker engine + compose plugin
             if (empty($options['skip_docker_install'])) {
                 $this->markDeployment(null, 15, 'Installing Docker...');
@@ -570,6 +575,10 @@ class DockerProvisioningService
             $variables = $secrets['vars'];
             $variables = self::normalizeLiveKit($variables)['vars'];
             $this->templates->persistDockerSecrets($serverId, $variables);
+
+            // Backfill/refresh the Server Credentials panel (covers boxes first
+            // provisioned before the inventory was recorded on the Docker path).
+            $this->persistCredentialInventory($serverId, $variables);
 
             // Preserve the box's current SSL state: HTTPS iff a real cert lineage
             // is already present for its FQDN (bare-IP boxes stay on HTTP).
@@ -912,6 +921,105 @@ class DockerProvisioningService
         } catch (\Throwable $e) {
             // best-effort (column may not exist yet)
         }
+    }
+
+    /**
+     * Mirror the native ProvisioningService credential inventory into
+     * `server_credentials` so the dashboard's "Server Credentials" panel shows
+     * the full set of generated logins/keys for a Docker-provisioned box. Before
+     * this, the Docker path persisted secrets only to the `servers.*_encrypted`
+     * columns and never populated this table, so the panel showed just the SSH
+     * row. Values are encrypted at rest with the same EncryptionService the
+     * native flow uses, and upserted (unique key: server_id + credential_key) so
+     * re-provisions refresh values in place. Best-effort: never fails a deploy.
+     */
+    private function persistCredentialInventory(int $serverId, array $variables): void
+    {
+        $rows = self::buildCredentialRows($variables);
+        try {
+            $stmt = $this->db->prepare(
+                "INSERT INTO server_credentials (server_id, category, credential_key, label, value_encrypted, is_secret)
+                 VALUES (?, ?, ?, ?, ?, ?)
+                 ON DUPLICATE KEY UPDATE value_encrypted = VALUES(value_encrypted), label = VALUES(label), is_secret = VALUES(is_secret)"
+            );
+            $stored = 0;
+            foreach ($rows as [$category, $key, $label, $value, $isSecret]) {
+                if ($value === '' || $value === null) {
+                    continue;
+                }
+                $stmt->execute([
+                    $serverId,
+                    $category,
+                    $key,
+                    $label,
+                    $this->encryption->encrypt((string) $value),
+                    $isSecret ? 1 : 0,
+                ]);
+                $stored++;
+            }
+            $this->logLine("Recorded {$stored} credentials in Fleet Manager (Server Credentials panel).");
+        } catch (\Throwable $e) {
+            // Convenience panel only — never block a deploy on it.
+            $this->logLine('Warning: could not record credential inventory: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Build the full credential inventory (pure; no DB/encryption) for a set of
+     * rendered server variables — mirrors the native ProvisioningService set so
+     * the dashboard panel is identical for Docker and native boxes. Rows with an
+     * empty value are still returned; the writer skips them. Extracted as a
+     * static so it can be unit-tested without a database.
+     *
+     * @return list<array{0:string,1:string,2:string,3:string,4:bool}> [category, key, label, value, is_secret]
+     */
+    public static function buildCredentialRows(array $vars): array
+    {
+        $login = self::resolveDefaultLogin($vars);
+
+        // DNS values an operator may need to publish at an external registrar
+        // (domain delegated off-box). Mirror what the native flow records.
+        $baseDomain = (string) preg_replace('/^panel\./', '', (string) ($vars['PANEL_DOMAIN'] ?? ''));
+        $serverIp   = (string) ($vars['SERVER_IP'] ?? '');
+        $spf        = ($baseDomain !== '' && $serverIp !== '') ? "v=spf1 a mx ip4:{$serverIp} -all" : '';
+        $dmarcName  = $baseDomain !== '' ? "_dmarc.{$baseDomain}" : '';
+        $dmarcValue = $baseDomain !== '' ? "v=DMARC1; p=reject; adkim=s; aspf=s; pct=100; rua=mailto:postmaster@{$baseDomain}; fo=1" : '';
+        $mx         = $baseDomain !== '' ? "10 {$baseDomain}" : '';
+
+        return [
+            ['panel', 'ADMIN_EMAIL', 'Panel Admin Email', (string) ($vars['ADMIN_EMAIL'] ?? ''), false],
+            ['panel', 'ADMIN_USER', 'Panel Admin Username', (string) ($vars['ADMIN_USER'] ?? 'pxradmin'), false],
+            ['panel', 'ADMIN_PASS', 'Panel Admin Password', (string) ($vars['ADMIN_PASS'] ?? ''), true],
+
+            ['database', 'DB_ROOT_USER', 'MariaDB Root User', 'root', false],
+            ['database', 'DB_ROOT_PASS', 'MariaDB Root Password', (string) ($vars['DB_ROOT_PASS'] ?? ''), true],
+            ['database', 'PANEL_DB_NAME', 'Panel+Email DB Name', (string) ($vars['PANEL_DB_NAME'] ?? ''), false],
+            ['database', 'PANEL_DB_USER', 'Panel+Email DB User', (string) ($vars['PANEL_DB_USER'] ?? ''), false],
+            ['database', 'PANEL_DB_PASS', 'Panel+Email DB Password', (string) ($vars['PANEL_DB_PASS'] ?? ''), true],
+            ['database', 'MAIL_DB_NAME', 'Mail Server DB Name', (string) ($vars['MAIL_DB_NAME'] ?? ''), false],
+            ['database', 'MAIL_DB_USER', 'Mail Server DB User', (string) ($vars['MAIL_DB_USER'] ?? ''), false],
+            ['database', 'MAIL_DB_PASS', 'Mail Server DB Password', (string) ($vars['MAIL_DB_PASS'] ?? ''), true],
+
+            ['services', 'REDIS_PASS', 'Redis Password', (string) ($vars['REDIS_PASS'] ?? ''), true],
+            ['services', 'MEILI_MASTER_KEY', 'Meilisearch Master Key', (string) ($vars['MEILI_MASTER_KEY'] ?? ''), true],
+
+            ['secrets', 'EMAIL_API_KEY', 'Email App API Key (Panel external_api)', (string) ($vars['EMAIL_API_KEY'] ?? ''), true],
+            ['secrets', 'JWT_SECRET', 'JWT Secret', (string) ($vars['JWT_SECRET'] ?? ''), true],
+            ['secrets', 'ENCRYPTION_KEY', 'Encryption Key', (string) ($vars['ENCRYPTION_KEY'] ?? ''), true],
+
+            ['mail', 'MAIL_ADMIN_EMAIL', 'Email App Login (mailbox)', $login['email'], false],
+            ['mail', 'MAIL_ADMIN_PASS', 'Email App Login Password', $login['pass'], true],
+
+            ['ssh', 'SSH_USER', 'SSH User', (string) ($vars['SSH_USER'] ?? 'root'), false],
+            ['ssh', 'SSH_PORT', 'SSH Port', (string) ($vars['SSH_PORT'] ?? '22'), false],
+
+            ['dns', 'MX_RECORD', 'MX (name: ' . $baseDomain . ')', $mx, false],
+            ['dns', 'SPF_RECORD', 'SPF TXT (name: ' . $baseDomain . ')', $spf, false],
+            ['dns', 'DMARC_NAME', 'DMARC Record Name', $dmarcName, false],
+            ['dns', 'DMARC_RECORD', 'DMARC TXT Value', $dmarcValue, false],
+            ['dns', 'DKIM_DNS_NAME', 'DKIM Record Name', (string) ($vars['DKIM_DNS_NAME'] ?? ''), false],
+            ['dns', 'DKIM_DNS_RECORD', 'DKIM TXT Value', (string) ($vars['DKIM_DNS_RECORD'] ?? ''), false],
+        ];
     }
 
     /**
