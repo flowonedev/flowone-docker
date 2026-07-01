@@ -1708,6 +1708,60 @@ BASH;
     }
 
     /**
+     * Live Docker container health for a Docker-provisioned server. Runs
+     * `docker compose ps --format json` over SSH and returns per-service
+     * state/health so the dashboard can show real container status instead of
+     * the native systemd service list (which doesn't apply to a Docker box).
+     *
+     * GET /api/servers/{id}/docker-status
+     */
+    public function dockerStatus(Request $request): Response
+    {
+        $id = (int)$request->getParam('id');
+        $db = $this->getDatabase();
+
+        $stmt = $db->prepare("SELECT * FROM servers WHERE id = ?");
+        $stmt->execute([$id]);
+        $server = $stmt->fetch();
+        if (!$server) {
+            return Response::notFound('Server not found');
+        }
+
+        // A box is "Docker" once it has recorded a deployed image tag.
+        $isDocker = !empty($server['deployed_image_tag']);
+
+        $ssh = $this->container->get(\FleetManager\Api\Services\SSHService::class);
+        if (!$ssh->connectToServer($server)) {
+            return Response::success([
+                'reachable' => false,
+                'is_docker' => $isDocker,
+                'tag'       => $server['deployed_image_tag'] ?? null,
+                'services'  => [],
+                'healthy'   => false,
+                'message'   => 'Server unreachable over SSH - run Test Connection first.',
+            ]);
+        }
+
+        try {
+            $res = $ssh->exec(\FleetManager\Api\Services\DockerProvisioningService::psJsonCmd());
+            $raw = (string)($res['output'] ?? '');
+            $states = \FleetManager\Api\Services\DockerProvisioningService::parsePsJson($raw);
+            $healthy = !empty($states)
+                && \FleetManager\Api\Services\DockerProvisioningService::isStackHealthy($states);
+
+            return Response::success([
+                'reachable' => true,
+                'is_docker' => $isDocker,
+                'tag'       => $server['deployed_image_tag'] ?? null,
+                'services'  => $states,
+                'healthy'   => $healthy,
+            ]);
+        } finally {
+            $ssh->disconnect();
+        }
+    }
+
+    /**
      * Install CPGuard on a provisioned server with a license key. The key comes
      * from the request body (and is then stored encrypted on the server row) or,
      * when omitted, from the key already on file. Runs the official installer:

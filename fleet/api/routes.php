@@ -115,6 +115,9 @@ $router->group(['middleware' => 'auth'], function($router) {
     $router->get('/api/servers/{id}/cpguard', [ServerController::class, 'cpguardStatus']);
     $router->post('/api/servers/{id}/cpguard/install', [ServerController::class, 'installCpguard']);
 
+    // Live Docker container health for Docker-provisioned servers
+    $router->get('/api/servers/{id}/docker-status', [ServerController::class, 'dockerStatus']);
+
     // Server Reports & Issues
     $router->get('/api/servers/{id}/reports', [ServerController::class, 'listReports']);
     $router->get('/api/servers/{id}/reports/download', [ServerController::class, 'downloadReport']);

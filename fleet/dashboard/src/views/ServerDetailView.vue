@@ -51,6 +51,8 @@ const fetchServer = async () => {
     fetchAudit()
     fetchDns()
     fetchCpguard()
+    // Docker-provisioned boxes carry an image tag - pull live container health.
+    if (server.value?.deployed_image_tag) fetchDockerStatus()
   } catch (error) {
     toast.error('Failed to load server details')
     router.push('/servers')
@@ -272,6 +274,25 @@ const installCpguard = async () => {
     toast.error(error.response?.data?.message || error.response?.data?.error || error.message || 'CPGuard install failed')
   } finally {
     installingCpguard.value = false
+  }
+}
+
+// Docker container health - live `docker compose ps` over SSH for
+// Docker-provisioned boxes, so the Services + Versions panels reflect the real
+// container stack instead of the native systemd/version model that never applies here.
+const dockerStatus = ref(null)
+const loadingDockerStatus = ref(false)
+
+const fetchDockerStatus = async () => {
+  loadingDockerStatus.value = true
+  try {
+    const response = await api.get(`/api/servers/${route.params.id}/docker-status`)
+    dockerStatus.value = response.data
+  } catch (error) {
+    // Non-fatal: box may be unreachable, or not a Docker deploy.
+    dockerStatus.value = null
+  } finally {
+    loadingDockerStatus.value = false
   }
 }
 
@@ -528,6 +549,52 @@ const serviceList = computed(() => {
     }
     return { label: s.label, status }
   })
+})
+
+// A box is "Docker" once a Docker provision has recorded an image tag on it.
+// This flips the Versions + Services panels from the native model (systemd
+// services, panel/email/agent versions) to the container reality.
+const isDocker = computed(() => !!server.value?.deployed_image_tag)
+
+// The containers this stack ships, in display order. Infra images (mariadb,
+// redis, meilisearch) are pinned upstream; the app tier (web/collab/mailsync/
+// mail) carries our deployed_image_tag.
+const DOCKER_SERVICE_PANEL = [
+  { key: 'web',         label: 'Web (OpenLiteSpeed)',   app: true },
+  { key: 'collab',      label: 'Collab Server',         app: true },
+  { key: 'mailsync',    label: 'MailSync Server',       app: true },
+  { key: 'mail',        label: 'Mail (Postfix/Dovecot)', app: true },
+  { key: 'mariadb',     label: 'MariaDB',               app: false },
+  { key: 'redis',       label: 'Redis',                 app: false },
+  { key: 'meilisearch', label: 'Meilisearch',           app: false },
+]
+
+// Map a compose ps state/health pair onto the panel's status vocabulary
+// (running | error | disabled | stopped) used by the icon + colour helpers.
+const dockerContainerStatus = (svc) => {
+  if (!svc) return null
+  const state = (svc.state || '').toLowerCase()
+  const health = (svc.health || '').toLowerCase()
+  if (state === 'running') {
+    if (health === '' || health === 'healthy') return 'running'
+    if (health === 'starting') return 'disabled' // amber "coming up"
+    return 'error' // unhealthy
+  }
+  if (state === 'restarting') return 'disabled'
+  return 'error' // exited / dead / created / paused
+}
+
+const dockerServiceList = computed(() => {
+  const svcs = dockerStatus.value?.services || {}
+  return DOCKER_SERVICE_PANEL
+    .filter((s) => svcs[s.key] || dockerStatus.value?.reachable) // hide unknowns only when we truly have no data
+    .map((s) => ({
+      key: s.key,
+      label: s.label,
+      app: s.app,
+      status: dockerContainerStatus(svcs[s.key]),
+      health: (svcs[s.key]?.health || '').toLowerCase(),
+    }))
 })
 
 const formatDate = (date) => {
@@ -1028,16 +1095,8 @@ onUnmounted(() => {
               v-if="showDeployMenu"
               class="absolute top-full right-0 mt-2 w-64 bg-white dark:bg-surface-700 rounded-xl shadow-xl border border-surface-200 dark:border-surface-600 overflow-hidden z-50"
             >
-              <button 
-                @click="openDeployModal('full_provision')"
-                class="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-100 dark:hover:bg-surface-600 transition-colors text-left"
-              >
-                <span class="material-symbols-rounded text-primary-600 dark:text-primary-400">build</span>
-                <div>
-                  <p class="font-medium text-surface-900 dark:text-surface-100">Full Provision</p>
-                  <p class="text-xs text-surface-500 dark:text-surface-400">Native install (packages + configs + apps)</p>
-                </div>
-              </button>
+              <!-- Docker (default workflow) -->
+              <p class="px-4 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500">Docker</p>
               <button 
                 @click="openDeployModal('docker_provision')"
                 class="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-100 dark:hover:bg-surface-600 transition-colors text-left"
@@ -1056,6 +1115,20 @@ onUnmounted(() => {
                 <div>
                   <p class="font-medium text-surface-900 dark:text-surface-100">Docker Update</p>
                   <p class="text-xs text-surface-500 dark:text-surface-400">Roll app services to a chosen image version</p>
+                </div>
+              </button>
+
+              <!-- Native (legacy, non-Docker installs) -->
+              <div class="border-t border-surface-200 dark:border-surface-600 mt-1"></div>
+              <p class="px-4 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500">Native (legacy)</p>
+              <button 
+                @click="openDeployModal('full_provision')"
+                class="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-100 dark:hover:bg-surface-600 transition-colors text-left"
+              >
+                <span class="material-symbols-rounded text-primary-600 dark:text-primary-400">build</span>
+                <div>
+                  <p class="font-medium text-surface-900 dark:text-surface-100">Full Provision</p>
+                  <p class="text-xs text-surface-500 dark:text-surface-400">Native install (packages + configs + apps)</p>
                 </div>
               </button>
               <button 
@@ -1078,7 +1151,6 @@ onUnmounted(() => {
                   <p class="text-xs text-surface-500 dark:text-surface-400">Install packages and configs</p>
                 </div>
               </button>
-              <div class="border-t border-surface-200 dark:border-surface-600"></div>
               <button 
                 @click="openDeployModal('app_update')"
                 class="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-100 dark:hover:bg-surface-600 transition-colors text-left"
@@ -1576,13 +1648,43 @@ onUnmounted(() => {
 
           <!-- Versions Row -->
           <div class="card">
-            <div class="card-header">
+            <div class="card-header flex items-center justify-between">
               <h2 class="font-semibold text-surface-900 dark:text-surface-100 flex items-center gap-2">
                 <span class="material-symbols-rounded text-blue-500">deployed_code</span>
-                Deployed Versions
+                {{ isDocker ? 'Deployed Image' : 'Deployed Versions' }}
               </h2>
+              <span
+                v-if="isDocker"
+                class="inline-flex items-center gap-1 text-xs font-mono px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                title="Docker image tag deployed to the app tier"
+              >
+                <span class="material-symbols-rounded text-sm">inventory_2</span>
+                {{ server.deployed_image_tag }}
+              </span>
             </div>
-            <div class="card-body">
+
+            <!-- Docker: app tier runs one image tag; infra images are pinned upstream -->
+            <div v-if="isDocker" class="card-body">
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div
+                  v-for="app in ['Web', 'Collab', 'MailSync', 'Mail']"
+                  :key="app"
+                  class="text-center p-3 bg-surface-100 dark:bg-surface-700/50 rounded-xl"
+                >
+                  <p class="text-surface-500 dark:text-surface-400 text-xs uppercase tracking-wider mb-1">{{ app }}</p>
+                  <p class="text-surface-900 dark:text-surface-100 font-mono text-sm font-semibold truncate" :title="server.deployed_image_tag">
+                    {{ server.deployed_image_tag }}
+                  </p>
+                </div>
+              </div>
+              <p class="text-xs text-surface-500 dark:text-surface-400 mt-3 flex items-center gap-1">
+                <span class="material-symbols-rounded text-sm">info</span>
+                MariaDB, Redis &amp; Meilisearch run pinned upstream images. Roll the app tier via Deploy &rarr; Docker Update.
+              </p>
+            </div>
+
+            <!-- Native: panel / email app / agent build versions -->
+            <div v-else class="card-body">
               <div class="grid grid-cols-3 gap-4">
                 <div class="text-center p-3 bg-surface-100 dark:bg-surface-700/50 rounded-xl">
                   <p class="text-surface-500 dark:text-surface-400 text-xs uppercase tracking-wider mb-1">Panel</p>
@@ -2097,13 +2199,57 @@ onUnmounted(() => {
 
           <!-- Services -->
           <div class="card">
-            <div class="card-header">
+            <div class="card-header flex items-center justify-between">
               <h2 class="font-semibold text-surface-900 dark:text-surface-100 flex items-center gap-2">
                 <span class="material-symbols-rounded text-purple-500">settings_suggest</span>
-                Services
+                {{ isDocker ? 'Containers' : 'Services' }}
+                <span
+                  v-if="isDocker && dockerStatus"
+                  :class="['inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold',
+                           dockerStatus.healthy ? 'bg-green-500/10 text-green-500' : 'bg-amber-500/10 text-amber-500']"
+                >{{ dockerStatus.healthy ? 'Healthy' : (dockerStatus.reachable ? 'Degraded' : 'Unreachable') }}</span>
               </h2>
+              <button
+                v-if="isDocker"
+                @click="fetchDockerStatus"
+                class="btn btn-ghost btn-xs"
+                :disabled="loadingDockerStatus"
+                title="Re-check live `docker compose ps` on the server"
+              >
+                <span class="material-symbols-rounded" :class="{ 'animate-spin': loadingDockerStatus }">refresh</span>
+              </button>
             </div>
-            <div class="card-body">
+
+            <!-- Docker: live container state from `docker compose ps` -->
+            <div v-if="isDocker" class="card-body">
+              <div v-if="loadingDockerStatus && !dockerStatus" class="text-center py-4">
+                <div class="spinner w-6 h-6 mx-auto mb-2"></div>
+                <p class="text-sm text-surface-500 dark:text-surface-400">Reading container status...</p>
+              </div>
+              <div v-else-if="dockerStatus && dockerStatus.reachable === false" class="text-sm text-surface-500 dark:text-surface-400 py-2">
+                Server unreachable over SSH - run Test Connection first, then refresh.
+              </div>
+              <div v-else-if="dockerServiceList.length" class="space-y-2">
+                <div v-for="svc in dockerServiceList" :key="svc.key" class="flex items-center justify-between py-1">
+                  <span class="text-sm text-surface-700 dark:text-surface-300 flex items-center gap-1.5">
+                    {{ svc.label }}
+                    <span v-if="!svc.app" class="text-[10px] uppercase tracking-wider text-surface-400 dark:text-surface-500">infra</span>
+                  </span>
+                  <span class="flex items-center gap-1.5">
+                    <span v-if="svc.health && svc.health !== 'healthy'" class="text-[10px] uppercase text-surface-400 dark:text-surface-500">{{ svc.health }}</span>
+                    <span :class="['material-symbols-rounded text-lg', getServiceStatusClass(svc.status)]">
+                      {{ svc.status === 'running' ? 'check_circle' : svc.status === 'disabled' ? 'pending' : svc.status === 'error' ? 'error' : 'cancel' }}
+                    </span>
+                  </span>
+                </div>
+              </div>
+              <p v-else class="text-surface-500 dark:text-surface-400 text-center py-4 text-sm">
+                No container data - refresh once the stack is up.
+              </p>
+            </div>
+
+            <!-- Native: systemd services from the agent heartbeat / audit -->
+            <div v-else class="card-body">
               <div v-if="server.health || auditData" class="space-y-2">
                 <div v-for="svc in serviceList" :key="svc.label" class="flex items-center justify-between py-1">
                   <span class="text-sm text-surface-700 dark:text-surface-300">{{ svc.label }}</span>

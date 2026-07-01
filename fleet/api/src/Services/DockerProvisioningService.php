@@ -193,6 +193,46 @@ class DockerProvisioningService
         );
     }
 
+    /**
+     * Print "<domain> <first-ipv4|none>" for each domain, resolved with the box's
+     * own resolver (getent is always present, unlike dig). Lets us keep the SAN
+     * request to domains that actually point here — so ONE missing A record can't
+     * fail the entire Let's Encrypt cert (the bug that left boxes on self-signed).
+     */
+    public static function resolveHostsCmd(array $domains): string
+    {
+        $clean = array_values(array_filter(array_map('strval', $domains)));
+        if (empty($clean)) {
+            return 'true';
+        }
+        $list = implode(' ', array_map('escapeshellarg', $clean));
+        return 'for d in ' . $list . '; do '
+            . 'ip=$(getent ahostsv4 "$d" 2>/dev/null | awk \'{print $1; exit}\'); '
+            . 'echo "$d ${ip:-none}"; done';
+    }
+
+    /**
+     * Parse resolveHostsCmd output → the subset of domains whose resolved IPv4
+     * equals $ip (i.e. genuinely point at this box, so HTTP-01 will pass).
+     *
+     * @return string[]
+     */
+    public static function parseResolvableHosts(string $raw, string $ip): array
+    {
+        $ok = [];
+        foreach (preg_split('/\r\n|\r|\n/', trim($raw)) as $line) {
+            $line = trim($line);
+            if ($line === '') {
+                continue;
+            }
+            $parts = preg_split('/\s+/', $line);
+            if (count($parts) >= 2 && $ip !== '' && $parts[1] === $ip) {
+                $ok[] = $parts[0];
+            }
+        }
+        return array_values(array_unique($ok));
+    }
+
     /** create-mail-account.sh invocation — idempotent mailbox upsert in the mail DB. */
     public static function createMailboxCmd(string $email, string $password, int $quotaMb = 2048): string
     {
@@ -409,7 +449,7 @@ class DockerProvisioningService
             // 6. Obtain the SAN cert then flip SSL on (only if we deferred it above).
             if ($deferSsl) {
                 $this->markDeployment(null, 85, 'Obtaining SSL certificate...');
-                $this->obtainCertsAndEnableSsl($variables, $options, $certName);
+                $this->obtainCertsAndEnableSsl($variables, $options, $certName, (string) ($server['ip_address'] ?? ''));
             }
 
             // 7. Warm the DB schema (best-effort) once web is serving, so the first
@@ -438,6 +478,50 @@ class DockerProvisioningService
             $this->logLine('ERROR: ' . $e->getMessage());
             $this->markDeployment('failed', null, 'Error: ' . substr($e->getMessage(), 0, 120));
             $this->setServerStatus($serverId, 'error');
+            return ['success' => false, 'error' => $e->getMessage(), 'log' => $this->log];
+        } finally {
+            if ($this->ssh->isConnected()) {
+                $this->ssh->disconnect();
+            }
+        }
+    }
+
+    /**
+     * Day-2 SSL: (re)issue the Let's Encrypt SAN cert for whatever public domains
+     * currently resolve to the box, then flip HTTPS on — WITHOUT a full
+     * re-provision (no image pull, no container churn beyond `up web` + mail
+     * reload). Use after adding/fixing DNS A records. Idempotent and safe to
+     * repeat. Bare-IP boxes (no FQDN) are a no-op.
+     *
+     * @return array{success:bool, cert_present?:bool, error?:string, log:array}
+     */
+    public function renewSsl(int $serverId, array $options = []): array
+    {
+        $this->log = [];
+        $this->deploymentId = isset($options['deployment_id']) ? (int) $options['deployment_id'] : null;
+        try {
+            $server = $this->getServer($serverId);
+            $this->logLine("Connecting to {$server['name']} for SSL renewal...");
+            if (!$this->ssh->connectToServer($server)) {
+                throw new \RuntimeException('SSH connection failed');
+            }
+
+            $variables = $this->templates->generateServerVariables($server);
+            $variables = ServerSecretGenerator::ensureDockerSecrets($variables)['vars'];
+            $variables = self::normalizeLiveKit($variables)['vars'];
+
+            $certName = (string) ($variables['SERVER_FQDN'] ?? $variables['EMAIL_DOMAIN'] ?? '');
+            if ($certName === '' || preg_match('/^\d+(\.\d+){3}$/', $certName)) {
+                $this->logLine('Server has no domain FQDN (bare IP) — nothing to secure.');
+                return ['success' => false, 'error' => 'server has no domain FQDN for SSL', 'log' => $this->log];
+            }
+
+            $this->obtainCertsAndEnableSsl($variables, $options, $certName, (string) ($server['ip_address'] ?? ''));
+            $present = $this->remoteTest(self::certPresentCmd($certName));
+            $this->logLine($present ? 'SSL renewal complete — HTTPS active.' : 'SSL renewal did not produce a cert (see warnings).');
+            return ['success' => $present, 'cert_present' => $present, 'log' => $this->log];
+        } catch (\Throwable $e) {
+            $this->logLine('ERROR: ' . $e->getMessage());
             return ['success' => false, 'error' => $e->getMessage(), 'log' => $this->log];
         } finally {
             if ($this->ssh->isConnected()) {
@@ -677,17 +761,37 @@ class DockerProvisioningService
      * recreate web + reload mail so both pick up the real cert. Non-fatal: if
      * issuance fails the stack simply stays on HTTP and the operator can retry.
      */
-    private function obtainCertsAndEnableSsl(array $variables, array $options, string $certName): void
+    private function obtainCertsAndEnableSsl(array $variables, array $options, string $certName, string $serverIp): void
     {
         $email = (string) ($variables['ADMIN_EMAIL']
             ?? ('postmaster@' . ($variables['MAIL_DOMAIN'] ?? $variables['EMAIL_DOMAIN'] ?? '')));
-        $domains = array_values(array_unique(array_filter([
+
+        // Every public host the box could serve. The lineage (--cert-name) is a
+        // label only; the SAN list is what LE validates over HTTP-01.
+        $candidates = array_values(array_unique(array_filter([
             $certName,
             (string) ($variables['EMAIL_DOMAIN'] ?? ''),
             (string) ($variables['PANEL_DOMAIN'] ?? ''),
+            (string) ($variables['MAIL_DOMAIN'] ?? ''),
         ])));
 
-        $this->logLine('Obtaining LE SAN cert for: ' . implode(', ', $domains));
+        // Only request the ones that actually resolve here. Without this, a single
+        // missing A record (e.g. the apex or mail. host) fails the whole SAN and
+        // the box silently stays on the OLS self-signed cert.
+        $domains = $this->filterResolvable($candidates, $serverIp);
+        $skipped = array_values(array_diff($candidates, $domains));
+        if (!empty($skipped)) {
+            $this->logLine('WARN: these domains do not resolve to ' . $serverIp
+                . ' and were EXCLUDED from the cert — add A records -> ' . $serverIp
+                . ' then re-run SSL: ' . implode(', ', $skipped));
+        }
+        if (empty($domains)) {
+            $this->logLine('WARN: no public domains resolve to ' . $serverIp
+                . '; leaving stack on HTTP. Add DNS A records, then re-provision or renew SSL.');
+            return;
+        }
+
+        $this->logLine('Obtaining LE SAN cert (lineage ' . $certName . ') for: ' . implode(', ', $domains));
         $res = $this->ssh->execWithTimeout(self::obtainCertsCmd($email, $certName, $domains), 300);
         if (empty($res['success']) || !$this->remoteTest(self::certPresentCmd($certName))) {
             $this->logLine('WARN: cert issuance failed; leaving stack on HTTP: '
@@ -699,6 +803,17 @@ class DockerProvisioningService
         $this->renderAndUploadEnv($variables, $options, true);
         $this->run(self::upCmd('web'), 180, 'up web (ssl)');
         $this->run(self::restartCmd('mail'), 120, 'restart mail (ssl)');
+    }
+
+    /** Keep only the domains whose public A record points at this box ($ip). */
+    private function filterResolvable(array $domains, string $ip): array
+    {
+        $domains = array_values(array_unique(array_filter($domains)));
+        if (empty($domains) || $ip === '') {
+            return [];
+        }
+        $res = $this->ssh->exec(self::resolveHostsCmd($domains));
+        return self::parseResolvableHosts((string) ($res['output'] ?? ''), $ip);
     }
 
     /**

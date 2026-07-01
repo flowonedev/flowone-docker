@@ -33,7 +33,7 @@ foreach (array_slice($argv, 1) as $arg) {
     elseif (str_starts_with($arg, '--only=')) $opts['only'] = array_filter(explode(',', substr($arg, 7)));
     else { fwrite(STDERR, "Unknown argument: {$arg}\n"); exit(1); }
 }
-if ($opts['help']) { echo "Usage: php docker-provisioning-test.php [--verbose] [--json] [--only=commands,login,livekit,parse,health]\n"; exit(0); }
+if ($opts['help']) { echo "Usage: php docker-provisioning-test.php [--verbose] [--json] [--only=commands,ssl,login,livekit,parse,health]\n"; exit(0); }
 
 const C_GREEN = "\033[32m"; const C_RED = "\033[31m"; const C_YELLOW = "\033[33m"; const C_RESET = "\033[0m";
 $logDir = __DIR__ . '/../storage/logs';
@@ -158,6 +158,37 @@ test('commands', 'dockerLoginCmd feeds the token via --password-stdin (never as 
     assertContains($c, 'printf', 'token piped via printf');
 });
 
+// --- ssl domain resolution filter (one missing A record must not fail the cert) ---
+section('ssl');
+test('ssl', 'resolveHostsCmd loops the domains via getent and prints "domain ip"', function () {
+    $c = D::resolveHostsCmd(['panel.acme.com', 'email.acme.com']);
+    assertContains($c, 'getent ahostsv4', 'uses getent (always present)');
+    assertContains($c, 'panel.acme.com', 'domain 1');
+    assertContains($c, 'email.acme.com', 'domain 2');
+    assertContains($c, 'none', 'empty-resolution sentinel');
+});
+test('ssl', 'resolveHostsCmd with no domains is a no-op', function () {
+    assertTrue(D::resolveHostsCmd([]) === 'true', 'empty list => true');
+});
+test('ssl', 'parseResolvableHosts keeps ONLY domains pointing at the box IP', function () {
+    $raw = "devcon3.hu none\npanel.devcon3.hu 85.155.242.130\nemail.devcon3.hu 85.155.242.130\nmail.devcon3.hu none";
+    $ok = D::parseResolvableHosts($raw, '85.155.242.130');
+    assertTrue(in_array('panel.devcon3.hu', $ok, true), 'panel kept');
+    assertTrue(in_array('email.devcon3.hu', $ok, true), 'email kept');
+    assertTrue(!in_array('devcon3.hu', $ok, true), 'apex (no A) dropped');
+    assertTrue(!in_array('mail.devcon3.hu', $ok, true), 'mail (no A) dropped');
+    assertTrue(count($ok) === 2, 'exactly the two resolving hosts');
+});
+test('ssl', 'parseResolvableHosts drops domains pointing at a DIFFERENT ip', function () {
+    $raw = "a.acme.com 1.2.3.4\nb.acme.com 85.155.242.130";
+    $ok = D::parseResolvableHosts($raw, '85.155.242.130');
+    assertTrue($ok === ['b.acme.com'], 'only the matching host survives');
+});
+test('ssl', 'parseResolvableHosts with empty target ip keeps nothing', function () {
+    $raw = "a.acme.com 1.2.3.4";
+    assertTrue(D::parseResolvableHosts($raw, '') === [], 'no ip => no domains');
+});
+
 // --- default login resolution (parity with native resolveMailLogin) ---
 section('login');
 test('login', 'defaults to robert@<mail-domain> and uses ADMIN_PASS', function () {
@@ -231,6 +262,17 @@ test('parse', 'falls back to Name when Service key absent', function () {
     $states = D::parsePsJson($raw);
     assertTrue(isset($states['collab']), 'named by Name');
 });
+test('parse', 'full-stack ps (incl. host-net mail) yields every container for the status panel', function () {
+    // Mirrors what GET /servers/{id}/docker-status feeds the dashboard: all 7
+    // containers, mail included (host network mode still shows in compose ps).
+    $rows = [];
+    foreach (['mariadb', 'redis', 'meilisearch', 'web', 'collab', 'mailsync', 'mail'] as $svc) {
+        $rows[] = ['Service' => $svc, 'State' => 'running', 'Health' => 'healthy'];
+    }
+    $states = D::parsePsJson(json_encode($rows));
+    assertTrue(count($states) === 7, 'all 7 containers surfaced');
+    assertTrue(isset($states['mail']), 'mail container included for the panel');
+});
 
 // --- health ---
 section('health');
@@ -257,6 +299,12 @@ test('health', 'health=starting => not healthy', function () {
 test('health', 'running with no healthcheck (empty health) => healthy', function () {
     $s = allHealthy(); $s['meilisearch']['health'] = '';
     assertTrue(D::isStackHealthy($s), 'no-healthcheck running service is ok');
+});
+test('health', 'extra host-net mail container does not break the managed-stack verdict', function () {
+    // The status endpoint reports mail too, but isStackHealthy() only gates on
+    // the managed bridge-net SERVICES; a present-and-healthy mail must not flip it.
+    $s = allHealthy(); $s['mail'] = ['state' => 'running', 'health' => 'healthy'];
+    assertTrue(D::isStackHealthy($s), 'mail present + healthy stays healthy');
 });
 
 $total = $results['passed'] + $results['failed'] + $results['warned'];
