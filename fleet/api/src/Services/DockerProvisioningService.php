@@ -242,6 +242,33 @@ class DockerProvisioningService
     }
 
     /**
+     * Normalise LiveKit for the compose stack, where LiveKit is NOT a service —
+     * it runs as an EXTERNAL server, unlike the native install which puts a
+     * `livekit-server` (+ stunnel :7443) on the host and therefore always has a
+     * valid ws_url. TemplateService still auto-generates a LIVEKIT_API_KEY for
+     * every box (native parity), so a fresh Docker box arrives here with a key
+     * but an empty LIVEKIT_WS_URL — which trips ComposeEnvRenderer's loud
+     * "key set but ws_url empty" guard and blocks the whole deploy.
+     *
+     * Treat LiveKit as opt-in for compose: with no ws_url there is nowhere to
+     * connect, so disable it (clear key + secret). Calls/huddles are simply off
+     * until an operator points the box at an external LiveKit by setting
+     * livekit_ws_url on the server. A ws_url that IS set is left untouched.
+     *
+     * @return array{vars: array, disabled: bool}
+     */
+    public static function normalizeLiveKit(array $vars): array
+    {
+        $wsUrl = trim((string) ($vars['LIVEKIT_WS_URL'] ?? ''));
+        if ($wsUrl === '' && !empty($vars['LIVEKIT_API_KEY'])) {
+            $vars['LIVEKIT_API_KEY'] = '';
+            $vars['LIVEKIT_API_SECRET'] = '';
+            return ['vars' => $vars, 'disabled' => true];
+        }
+        return ['vars' => $vars, 'disabled' => false];
+    }
+
+    /**
      * Parse `docker compose ps --format json` output into service => state.
      * Compose emits either a JSON array or one JSON object per line depending on
      * version; handle both. Returns ['web' => ['state' => 'running', 'health' => 'healthy'], ...].
@@ -325,6 +352,11 @@ class DockerProvisioningService
             $variables = $secrets['vars'];
             if (!empty($secrets['generated'])) {
                 $this->logLine('Generated crypto: ' . implode(', ', $secrets['generated']));
+            }
+            $lk = self::normalizeLiveKit($variables);
+            $variables = $lk['vars'];
+            if ($lk['disabled']) {
+                $this->logLine('LiveKit disabled (no LIVEKIT_WS_URL configured) — calls/huddles off until an external LiveKit endpoint is set on the server.');
             }
             $this->templates->persistDockerSecrets($serverId, $variables);
 
@@ -452,6 +484,7 @@ class DockerProvisioningService
             $variables = $this->templates->generateServerVariables($server);
             $secrets = ServerSecretGenerator::ensureDockerSecrets($variables);
             $variables = $secrets['vars'];
+            $variables = self::normalizeLiveKit($variables)['vars'];
             $this->templates->persistDockerSecrets($serverId, $variables);
 
             // Preserve the box's current SSL state: HTTPS iff a real cert lineage

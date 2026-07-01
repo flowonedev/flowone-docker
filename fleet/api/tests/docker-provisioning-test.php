@@ -33,7 +33,7 @@ foreach (array_slice($argv, 1) as $arg) {
     elseif (str_starts_with($arg, '--only=')) $opts['only'] = array_filter(explode(',', substr($arg, 7)));
     else { fwrite(STDERR, "Unknown argument: {$arg}\n"); exit(1); }
 }
-if ($opts['help']) { echo "Usage: php docker-provisioning-test.php [--verbose] [--json] [--only=commands,parse,health]\n"; exit(0); }
+if ($opts['help']) { echo "Usage: php docker-provisioning-test.php [--verbose] [--json] [--only=commands,login,livekit,parse,health]\n"; exit(0); }
 
 const C_GREEN = "\033[32m"; const C_RED = "\033[31m"; const C_YELLOW = "\033[33m"; const C_RESET = "\033[0m";
 $logDir = __DIR__ . '/../storage/logs';
@@ -177,6 +177,30 @@ test('login', 'password auto-generated when none supplied', function () {
     $l = D::resolveDefaultLogin(['MAIL_DOMAIN' => 'acme.com']);
     assertTrue($l['generated'] === true, 'generated flag set');
     assertTrue(strlen($l['pass']) >= 12, 'generated password has length');
+});
+
+// --- livekit (compose treats LiveKit as opt-in/external) ---
+section('livekit');
+test('livekit', 'key set + empty ws_url => LiveKit disabled (key/secret cleared)', function () {
+    $r = D::normalizeLiveKit(['LIVEKIT_API_KEY' => 'APIabc', 'LIVEKIT_API_SECRET' => 'sek', 'LIVEKIT_WS_URL' => '']);
+    assertTrue($r['disabled'] === true, 'should report disabled');
+    assertTrue($r['vars']['LIVEKIT_API_KEY'] === '', 'api key cleared');
+    assertTrue($r['vars']['LIVEKIT_API_SECRET'] === '', 'api secret cleared');
+});
+test('livekit', 'whitespace-only ws_url is treated as empty', function () {
+    $r = D::normalizeLiveKit(['LIVEKIT_API_KEY' => 'APIabc', 'LIVEKIT_WS_URL' => '   ']);
+    assertTrue($r['disabled'] === true, 'blank ws_url disables');
+    assertTrue($r['vars']['LIVEKIT_API_KEY'] === '', 'api key cleared');
+});
+test('livekit', 'key + real ws_url => left untouched (LiveKit enabled)', function () {
+    $r = D::normalizeLiveKit(['LIVEKIT_API_KEY' => 'APIabc', 'LIVEKIT_API_SECRET' => 'sek', 'LIVEKIT_WS_URL' => 'wss://acme.com:7443']);
+    assertTrue($r['disabled'] === false, 'should not disable when ws_url present');
+    assertTrue($r['vars']['LIVEKIT_API_KEY'] === 'APIabc', 'api key preserved');
+    assertTrue($r['vars']['LIVEKIT_WS_URL'] === 'wss://acme.com:7443', 'ws_url preserved');
+});
+test('livekit', 'no key at all => nothing to disable', function () {
+    $r = D::normalizeLiveKit(['LIVEKIT_WS_URL' => '']);
+    assertTrue($r['disabled'] === false, 'no key means no change');
 });
 
 // --- parse ---
