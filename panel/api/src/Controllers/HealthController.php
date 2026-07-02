@@ -7,10 +7,37 @@ use VpsAdmin\Api\Core\Response;
 
 class HealthController extends BaseController
 {
+    /**
+     * Hybrid boxes run these as Docker containers (flowone compose stack)
+     * instead of systemd units. When the unit is inactive/not-found we consult
+     * the container state before declaring the service down.
+     */
+    private const DOCKER_CONTAINERS = [
+        'mariadb'         => 'flowone-mariadb-1',
+        'redis-server'    => 'flowone-redis-1',
+        'meilisearch'     => 'flowone-meilisearch-1',
+        'collab-server'   => 'flowone-collab-1',
+        'mailsync-server' => 'flowone-mailsync-1',
+    ];
+
+    /** Programs supervised INSIDE the host-networked mail pod. */
+    private const MAIL_POD = 'flowone-mail-1';
+    private const MAIL_POD_PROGRAMS = [
+        'postfix'          => 'postfix',
+        'dovecot'          => 'dovecot',
+        'opendkim'         => 'opendkim',
+        'opendmarc'        => 'opendmarc',
+        'spamd'            => 'spamassassin',
+        'clamav-daemon'    => 'clamd',
+        'clamav-freshclam' => 'freshclam',
+    ];
+
     private array $checks = [];
     private int $passed = 0;
     private int $failed = 0;
     private int $warnings = 0;
+    /** Lazily fetched docker container + mail-pod program states. */
+    private ?array $dockerStates = null;
 
     public function index(Request $request): Response
     {
@@ -63,6 +90,8 @@ class HealthController extends BaseController
             'certbot certonly',
             'apt-get install',
             'mariadb --defaults-file=/root/.my.cnf',
+            'docker restart flowone-',
+            'docker exec flowone-mail-1 supervisorctl restart ',
         ];
 
         $isAllowed = false;
@@ -169,6 +198,56 @@ class HealthController extends BaseController
         return trim(shell_exec($cmd . ' 2>/dev/null') ?? '');
     }
 
+    /**
+     * One-shot snapshot of the Docker side: running containers + the mail
+     * pod's supervised program states. Cached per request — the health page
+     * checks ~20 services and must not fork docker 20 times.
+     */
+    private function dockerStates(): array
+    {
+        if ($this->dockerStates !== null) {
+            return $this->dockerStates;
+        }
+        $states = ['containers' => [], 'programs' => []];
+        $ps = $this->run("docker ps --format '{{.Names}}|{{.Status}}'");
+        foreach (array_filter(explode("\n", $ps)) as $line) {
+            [$cname, $cstatus] = array_pad(explode('|', $line, 2), 2, '');
+            if (str_starts_with($cstatus, 'Up') && !str_contains($cstatus, 'unhealthy')) {
+                $states['containers'][$cname] = true;
+            }
+        }
+        if (isset($states['containers'][self::MAIL_POD])) {
+            $sv = $this->run('docker exec ' . self::MAIL_POD . ' supervisorctl status');
+            foreach (array_filter(explode("\n", $sv)) as $line) {
+                if (preg_match('/^(\S+)\s+RUNNING\b/', $line, $m)) {
+                    $states['programs'][$m[1]] = true;
+                }
+            }
+        }
+        return $this->dockerStates = $states;
+    }
+
+    /**
+     * Docker-side status for a service name, or null when it has no Docker
+     * backing on this box. Returns [running(bool), detail, fixCmd].
+     */
+    private function dockerServiceState(string $svc): ?array
+    {
+        $states = $this->dockerStates();
+        if (isset(self::DOCKER_CONTAINERS[$svc])) {
+            $cname = self::DOCKER_CONTAINERS[$svc];
+            $up = isset($states['containers'][$cname]);
+            return [$up, "docker: {$cname} " . ($up ? 'up' : 'down'), "docker restart {$cname}"];
+        }
+        if (isset(self::MAIL_POD_PROGRAMS[$svc]) && isset($states['containers'][self::MAIL_POD])) {
+            $prog = self::MAIL_POD_PROGRAMS[$svc];
+            $up = isset($states['programs'][$prog]);
+            return [$up, "mail pod: {$prog} " . ($up ? 'running' : 'stopped'),
+                'docker exec ' . self::MAIL_POD . " supervisorctl restart {$prog}"];
+        }
+        return null;
+    }
+
     private function checkServices(): void
     {
         $required = [
@@ -198,25 +277,38 @@ class HealthController extends BaseController
         ];
 
         foreach ($required as $svc => $label) {
-            $status = $this->run("systemctl is-active {$svc}");
-            $running = in_array($status, ['active', 'exited']);
+            [$running, $detail, $fixCmd] = $this->serviceState($svc);
             $this->addCheck('services', $label, $running ? 'pass' : 'fail',
-                "systemd: {$status}",
-                $running ? null : "systemctl restart {$svc}", 'Restart');
+                $detail, $running ? null : $fixCmd, 'Restart');
         }
 
         foreach ($optional as $svc => $label) {
-            $status = $this->run("systemctl is-active {$svc}");
-            $running = in_array($status, ['active', 'activating', 'exited']);
+            [$running, $detail, $fixCmd] = $this->serviceState($svc);
             if (!$running && $svc === 'spamd') {
-                $status = $this->run('systemctl is-active spamassassin');
-                $running = in_array($status, ['active', 'activating', 'exited']);
-                if ($running) $svc = 'spamassassin';
+                [$running, $altDetail] = $this->serviceState('spamassassin');
+                if ($running) $detail = $altDetail;
             }
             $this->addCheck('services', $label, $running ? 'pass' : 'warning',
-                "systemd: {$status}",
-                $running ? null : "systemctl restart {$svc}", 'Restart');
+                $detail, $running ? null : $fixCmd, 'Restart');
         }
+    }
+
+    /**
+     * Resolve a service's real state on a hybrid box: systemd first, then the
+     * Docker container / mail-pod program that replaced it.
+     * Returns [running(bool), detail, fixCmd].
+     */
+    private function serviceState(string $svc): array
+    {
+        $status = $this->run("systemctl is-active {$svc}");
+        if (in_array($status, ['active', 'activating', 'exited'])) {
+            return [true, "systemd: {$status}", null];
+        }
+        $docker = $this->dockerServiceState($svc);
+        if ($docker !== null) {
+            return $docker;
+        }
+        return [false, "systemd: {$status}", "systemctl restart {$svc}"];
     }
 
     private function checkPorts(): void
@@ -260,19 +352,26 @@ class HealthController extends BaseController
     {
         $ss = $this->run('ss -tlnp');
         $checks = [
-            [80,   'OLS HTTP',      'systemctl restart lshttpd'],
-            [443,  'OLS HTTPS',     'systemctl restart lshttpd'],
-            [25,   'Postfix SMTP',  'systemctl restart postfix'],
-            [993,  'Dovecot IMAPS', 'systemctl restart dovecot'],
-            [53,   'PowerDNS',      'systemctl restart pdns'],
-            [3306, 'MariaDB',       'systemctl restart mariadb'],
-            [6379, 'Redis',         'systemctl restart redis-server'],
+            [80,   'OLS HTTP',      'lshttpd'],
+            [443,  'OLS HTTPS',     'lshttpd'],
+            [25,   'Postfix SMTP',  'postfix'],
+            [993,  'Dovecot IMAPS', 'dovecot'],
+            [53,   'PowerDNS',      'pdns'],
+            [3306, 'MariaDB',       'mariadb'],
+            [6379, 'Redis',         'redis-server'],
         ];
-        foreach ($checks as [$port, $label, $fix]) {
+        foreach ($checks as [$port, $label, $svc]) {
             $listening = str_contains($ss, ":{$port} ");
+            $fix = null;
+            if (!$listening) {
+                // On hybrid boxes the port may belong to a container, so the
+                // restart command must target docker, not a systemd unit.
+                $docker = $this->dockerServiceState($svc);
+                $fix = $docker !== null ? $docker[2] : "systemctl restart {$svc}";
+            }
             $this->addCheck('listening', "{$label} (:{$port})", $listening ? 'pass' : 'fail',
                 $listening ? 'Listening' : 'Not listening',
-                $listening ? null : $fix, 'Restart');
+                $fix, 'Restart');
         }
     }
 
@@ -292,13 +391,28 @@ class HealthController extends BaseController
             if (!empty($hostname)) $domains[] = $hostname;
         }
 
+        $myIp = $this->run("hostname -I | awk '{print \$1}'");
+
         foreach ($domains as $domain) {
             $certPath = "/etc/letsencrypt/live/{$domain}/fullchain.pem";
             $renewCmd = "certbot certonly --standalone -d {$domain} --non-interactive --agree-tos --register-unsafely-without-email";
 
+            // Let's Encrypt HTTP validation is impossible when the domain has
+            // no public A record (typical for a bare apex whose registrar DNS
+            // only carries the subdomains). Report the real blocker instead
+            // of offering a certbot run that is guaranteed to fail.
+            $resolved = $this->run("dig +short {$domain} A @1.1.1.1 | head -n1");
+            $dnsBlocked = $resolved === '' && $this->run('command -v dig') !== '';
+            $dnsHint = "No public A record for {$domain} — Let's Encrypt cannot validate. "
+                . "Add an A record ({$domain} -> {$myIp}) at your DNS provider, then re-check.";
+
             if (!file_exists($certPath)) {
-                $this->addCheck('ssl', "SSL: {$domain}", 'fail',
-                    'No certificate found', $renewCmd, 'Request cert');
+                if ($dnsBlocked) {
+                    $this->addCheck('ssl', "SSL: {$domain}", 'warning', $dnsHint);
+                } else {
+                    $this->addCheck('ssl', "SSL: {$domain}", 'fail',
+                        'No certificate found', $renewCmd, 'Request cert');
+                }
                 continue;
             }
 
@@ -306,8 +420,13 @@ class HealthController extends BaseController
             $isLE = str_contains($issuer, "Let's Encrypt") || preg_match('/\b(R3|R10|R11|E[5-9])\b/', $issuer);
 
             if (!$isLE) {
-                $this->addCheck('ssl', "SSL: {$domain}", 'fail',
-                    'Self-signed placeholder', $renewCmd, 'Request Let\'s Encrypt cert');
+                if ($dnsBlocked) {
+                    $this->addCheck('ssl', "SSL: {$domain}", 'warning',
+                        'Self-signed placeholder. ' . $dnsHint);
+                } else {
+                    $this->addCheck('ssl', "SSL: {$domain}", 'fail',
+                        'Self-signed placeholder', $renewCmd, 'Request Let\'s Encrypt cert');
+                }
                 continue;
             }
 

@@ -613,16 +613,34 @@ class DockerAuditService
         $lineages = array_filter(array_map('trim', explode("\n",
             $this->exec("ls /etc/letsencrypt/live 2>/dev/null | grep -v README"))));
 
+        $serverIp = trim($this->exec("hostname -I 2>/dev/null | awk '{print \$1}'"));
+
         foreach ($domains as $domain) {
             $certPath = "/etc/letsencrypt/live/{$domain}/fullchain.pem";
             $hasOwn = strpos($this->exec("test -f {$certPath} && echo EXISTS || echo MISSING"), 'EXISTS') !== false;
+
+            // Let's Encrypt HTTP validation is impossible while the domain has
+            // no public A record (typical for a bare apex whose registrar DNS
+            // only carries the subdomains). Offering a renew_ssl action there
+            // guarantees a failed Fix, so report the real blocker instead.
+            $digProbe = trim($this->exec(
+                "command -v dig >/dev/null 2>&1 && (dig +short {$domain} A @1.1.1.1 2>/dev/null | head -n1) || echo NODIG"
+            ));
+            $dnsBlocked = $digProbe === '';
+            $dnsHint = "No public A record for {$domain} — Let's Encrypt cannot validate. "
+                . "Add an A record ({$domain} -> {$serverIp}) at your DNS provider, then re-audit.";
 
             if ($hasOwn) {
                 $expiry = $this->exec("openssl x509 -enddate -noout -in {$certPath} 2>/dev/null");
                 $issuer = $this->exec("openssl x509 -issuer -noout -in {$certPath} 2>/dev/null");
                 $selfSigned = stripos($issuer, 'Fleet Manager') !== false || stripos($issuer, 'self') !== false;
-                $this->addCheck($results, 'ssl', "SSL cert for {$domain}", $selfSigned ? 'warning' : 'pass',
-                    $selfSigned ? 'Self-signed (needs Let\'s Encrypt)' : $expiry, 'renew_ssl', ['domain' => $domain]);
+                if ($selfSigned && $dnsBlocked) {
+                    $this->addCheck($results, 'ssl', "SSL cert for {$domain}", 'warning',
+                        'Self-signed placeholder. ' . $dnsHint);
+                } else {
+                    $this->addCheck($results, 'ssl', "SSL cert for {$domain}", $selfSigned ? 'warning' : 'pass',
+                        $selfSigned ? 'Self-signed (needs Let\'s Encrypt)' : $expiry, 'renew_ssl', ['domain' => $domain]);
+                }
                 continue;
             }
 
@@ -634,6 +652,8 @@ class DockerAuditService
             }
             if ($covered) {
                 $this->addCheck($results, 'ssl', "SSL cert for {$domain}", 'pass', 'Covered by combined (SAN) certificate');
+            } elseif ($dnsBlocked) {
+                $this->addCheck($results, 'ssl', "SSL cert for {$domain}", 'warning', $dnsHint);
             } else {
                 $this->addCheck($results, 'ssl', "SSL cert for {$domain}", 'fail',
                     "No certificate found for {$domain}", 'renew_ssl', ['domain' => $domain]);

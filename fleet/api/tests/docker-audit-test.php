@@ -141,6 +141,13 @@ $test('unit', 'AuditService delegates Docker boxes', function () use ($apiPath, 
     $assert(substr_count($src, 'DockerAuditService::class') >= 2, 'run()/fix() delegation to DockerAuditService missing');
     return 'pass';
 });
+$test('unit', 'SSL audit gates renew_ssl behind public DNS', function () use ($apiPath, $assert) {
+    $src = file_get_contents($apiPath . '/src/Services/DockerAuditService.php');
+    $assert(str_contains($src, 'dnsBlocked'), 'checkSSL missing the public-DNS gate');
+    $assert(str_contains($src, 'dig +short'), 'checkSSL missing the public resolver probe');
+    $assert(str_contains($src, 'Add an A record'), 'checkSSL missing the actionable A-record hint');
+    return 'pass';
+});
 $test('unit', 'UPDATABLE_SERVICES includes the mail pod', function () use ($assert) {
     $assert(in_array('mail', DPS::UPDATABLE_SERVICES, true), 'mail not updatable');
     $assert(!in_array('mail', DPS::SERVICES, true), 'mail must stay OUT of health-gated SERVICES');
