@@ -80,6 +80,18 @@ $mark = function (?string $status, ?int $progress, ?string $step, ?string $log =
     }
 };
 
+/**
+ * ProvisioningService log entries are ['time' => ..., 'message' => ...] arrays;
+ * a bare implode() casts each to the literal string "Array" and the dashboard
+ * log becomes useless. Flatten to "[time] message" lines.
+ */
+$flattenLog = fn(array $entries): string => implode("\n", array_map(
+    fn($e) => is_array($e)
+        ? '[' . ($e['time'] ?? '') . '] ' . ($e['message'] ?? '')
+        : (string) $e,
+    $entries
+)) . "\n";
+
 try {
     /** @var ProvisioningService $svc */
     $svc = $container->get(ProvisioningService::class);
@@ -87,7 +99,7 @@ try {
     $mark('running', 10, 'Hardening (firewall + fail2ban + SSH lockdown)...');
 
     $res = $svc->hardenExistingServer($serverId, ['docker' => $dockerHost]);
-    $logText = implode("\n", $res['log'] ?? []) . "\n";
+    $logText = $flattenLog($res['log'] ?? []);
 
     if (!empty($res['success'])) {
         $p = $res['hardened'] ?? null;

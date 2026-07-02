@@ -76,6 +76,18 @@ $mark = function (?string $status, ?int $progress, ?string $step, ?string $log =
     }
 };
 
+/**
+ * ProvisioningService log entries are ['time' => ..., 'message' => ...] arrays;
+ * a bare implode() casts each to the literal string "Array" and the dashboard
+ * log becomes useless. Flatten to "[time] message" lines.
+ */
+$flattenLog = fn(array $entries): string => implode("\n", array_map(
+    fn($e) => is_array($e)
+        ? '[' . ($e['time'] ?? '') . '] ' . ($e['message'] ?? '')
+        : (string) $e,
+    $entries
+)) . "\n";
+
 try {
     /** @var ProvisioningService $svc */
     $svc = $container->get(ProvisioningService::class);
@@ -83,7 +95,7 @@ try {
     $mark('running', 10, 'Updating panel...');
 
     $result = $svc->updatePanel($serverId);
-    $logText = implode("\n", $result['log'] ?? []) . "\n";
+    $logText = $flattenLog($result['log'] ?? []);
 
     if (!empty($result['success'])) {
         $mark('success', 100, 'Panel update completed', $logText);
