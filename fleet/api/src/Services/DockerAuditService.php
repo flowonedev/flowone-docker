@@ -685,8 +685,10 @@ class DockerAuditService
         $openPorts = $this->exec("firewall-cmd --list-ports 2>/dev/null");
         $openServices = $this->exec("firewall-cmd --list-services 2>/dev/null");
 
-        // SSH may have been moved by hardening (e.g. 1985) - check the REAL port.
-        $sshPort = trim($this->exec("grep -E '^\\s*Port\\s+[0-9]+' /etc/ssh/sshd_config 2>/dev/null | awk '{print \$2}' | head -1")) ?: '22';
+        // SSH may have been moved by hardening (e.g. 1985). Hardening writes the
+        // port into a sshd_config.d drop-in, so scan those too - last match wins,
+        // same precedence sshd itself uses with Include at the top of the config.
+        $sshPort = trim($this->exec("grep -hE '^\\s*Port\\s+[0-9]+' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null | awk '{print \$2}' | tail -1")) ?: '22';
         $ports = ["{$sshPort}/tcp" => "SSH (port {$sshPort})"] + self::FIREWALL_REQUIRED_PORTS;
 
         foreach ($ports as $port => $label) {

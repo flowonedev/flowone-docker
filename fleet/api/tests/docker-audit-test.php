@@ -92,24 +92,38 @@ $test = function (string $group, string $name, callable $fn) use (&$results, $op
 $assert = function (bool $cond, string $msg) { if (!$cond) throw new \RuntimeException($msg); };
 
 // =============================================================================
-echo "--- 1. PREFLIGHT ---\n";
+// BOOTSTRAP (always runs, regardless of --only, so every group has a container)
 // =============================================================================
 $container = null;
-$test('preflight', 'PHP >= 8.1', fn() => $assert(PHP_VERSION_ID >= 80100, 'PHP ' . PHP_VERSION) ?? 'pass');
-$test('preflight', 'Autoloader + config load', function () use ($apiPath, &$container, $assert) {
-    $assert(file_exists($apiPath . '/vendor/autoload.php'), 'vendor/autoload.php missing (composer install)');
+$bootError = null;
+try {
+    if (!file_exists($apiPath . '/vendor/autoload.php')) {
+        throw new \RuntimeException('vendor/autoload.php missing (composer install)');
+    }
     require_once $apiPath . '/vendor/autoload.php';
     $config = require $apiPath . '/config.php';
     $local = file_exists($apiPath . '/config.local.php') ? require $apiPath . '/config.local.php' : [];
     $container = new \FleetManager\Api\Core\Container(array_replace_recursive($config, $local));
-    return 'pass';
-});
+} catch (\Throwable $e) {
+    $bootError = $e->getMessage();
+}
+
+// =============================================================================
+echo "--- 1. PREFLIGHT ---\n";
+// =============================================================================
+$test('preflight', 'PHP >= 8.1', fn() => $assert(PHP_VERSION_ID >= 80100, 'PHP ' . PHP_VERSION) ?? 'pass');
+$test('preflight', 'Autoloader + config load', fn() => $assert($bootError === null, (string) $bootError) ?? 'pass');
 $test('preflight', 'Fleet DB reachable', function () use (&$container, $assert) {
     $assert($container !== null, 'container not built');
     $container->getDatabase()->query('SELECT 1');
     return 'pass';
 });
 $test('preflight', 'storage/logs writable', fn() => $assert(is_writable(dirname($logFile)), $logDir . ' not writable') ?? 'pass');
+
+if ($container === null) {
+    echo "\nABORT: cannot bootstrap the API container ({$bootError}) - no further tests possible.\n";
+    exit(1);
+}
 
 // =============================================================================
 echo "--- 2. UNIT (pure, no SSH) ---\n";
