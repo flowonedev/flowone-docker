@@ -29,6 +29,12 @@
 # Update mode flag
 UPDATE_ONLY=0
 
+# Database host. Native installs use the local unix socket (localhost). DOCKER
+# installs pass --db-host=127.0.0.1 so every mysql client + the panel runtime
+# talk to the containerized MariaDB over TCP (published on the host loopback);
+# there is NO native mariadb service to manage in that mode.
+DB_HOST="localhost"
+
 # Installation paths
 INSTALL_PATH="/var/www/vps-admin"
 AGENT_PATH="/opt/vps-admin"
@@ -39,6 +45,7 @@ for arg in "$@"; do
     case $arg in
         --domain=*) PANEL_DOMAIN="${arg#*=}" ;;
         --db-name=*) DB_NAME="${arg#*=}" ;;
+        --db-host=*) DB_HOST="${arg#*=}" ;;
         --db-user=*) DB_USER="${arg#*=}" ;;
         --db-pass=*) DB_PASS="${arg#*=}" ;;
         --db-root-pass=*) DB_ROOT_PASS="${arg#*=}" ;;
@@ -176,30 +183,49 @@ verify_php_extensions() {
 }
 
 # Verify MariaDB is running
+# MySQL client host option: empty (local socket) for native, "-h <host>" for the
+# Docker/TCP case. Set once verify_mariadb runs; reused by the DB-setup block.
+MYSQL_HOSTOPT=""
+
 verify_mariadb() {
-    log_info "Verifying MariaDB..."
-    
-    if ! systemctl is-active --quiet mariadb 2>/dev/null; then
-        log_info "Starting MariaDB service..."
-        systemctl start mariadb || log_error "MariaDB failed to start"
-    fi
-    
-    # Test connection using MYSQL_PWD env var (avoids shell quoting issues with special chars)
-    if [ -n "$DB_ROOT_PASS" ]; then
-        if ! MYSQL_PWD="$DB_ROOT_PASS" mysql -u root -e "SELECT 1" >/dev/null 2>&1; then
-            # Try without password (unix_socket auth may work when running as root)
-            if ! mysql -e "SELECT 1" >/dev/null 2>&1; then
-                log_warn "Cannot connect to MariaDB - provisioning should have set it up, continuing..."
+    log_info "Verifying MariaDB (host: ${DB_HOST:-localhost})..."
+
+    case "${DB_HOST:-localhost}" in
+        ""|localhost)
+            # Native install: a local mariadb service must be up.
+            if ! systemctl is-active --quiet mariadb 2>/dev/null; then
+                log_info "Starting MariaDB service..."
+                systemctl start mariadb || log_error "MariaDB failed to start"
             fi
+            MYSQL_HOSTOPT=""
+            ;;
+        *)
+            # Docker/TCP install: the DB is a container published on the host
+            # loopback. There is NO native mariadb unit to start — connect over TCP.
+            MYSQL_HOSTOPT="-h ${DB_HOST}"
+            ;;
+    esac
+
+    # Test connectivity with retries — a freshly (re)started container DB can still
+    # be warming up. NEVER hard-fail here: the DB lifecycle is managed elsewhere
+    # (compose) on Docker boxes, and provisioning already verified it on native.
+    local ok=0 i
+    for i in $(seq 1 10); do
+        if [ -n "$DB_ROOT_PASS" ] && MYSQL_PWD="$DB_ROOT_PASS" mysql $MYSQL_HOSTOPT -u root -e "SELECT 1" >/dev/null 2>&1; then
+            ok=1; break
         fi
+        # Socket unix_socket auth fallback (native only).
+        if [ -z "$MYSQL_HOSTOPT" ] && mysql -e "SELECT 1" >/dev/null 2>&1; then
+            ok=1; break
+        fi
+        sleep 3
+    done
+
+    if [ "$ok" = "1" ]; then
+        log_info "MariaDB reachable."
     else
-        # Try passwordless first, then skip if fails (provisioning already verified)
-        if ! mysql -e "SELECT 1" >/dev/null 2>&1; then
-            log_warn "Cannot connect to MariaDB without password - assuming provisioning verified it"
-        fi
+        log_warn "Cannot confirm MariaDB connectivity on '${DB_HOST:-localhost}' - continuing (provisioning/compose manages the DB)."
     fi
-    
-    log_info "MariaDB verified and running"
 }
 
 echo ""
@@ -418,20 +444,28 @@ fi
 if [ "${SKIP_DB:-0}" != "1" ]; then
     log_info "Setting up database..."
     
-    # Build mysql command with or without root password
-    # Note: Using environment variable for password avoids shell quoting issues with special chars
+    # Build mysql command with or without root password.
+    # MYSQL_HOSTOPT (set by verify_mariadb) is empty on native (socket) or
+    # "-h 127.0.0.1" on Docker/TCP. Env var for the password avoids shell quoting
+    # issues with special chars.
     if [ -n "$DB_ROOT_PASS" ]; then
         export MYSQL_PWD="$DB_ROOT_PASS"
-        MYSQL_CMD="mysql -u root"
+        MYSQL_CMD="mysql $MYSQL_HOSTOPT -u root"
     else
-        MYSQL_CMD="mysql"
+        MYSQL_CMD="mysql $MYSQL_HOSTOPT"
     fi
-    
+
+    # On native the app connects over the local socket (user@'localhost'); on
+    # Docker the native panel connects to the CONTAINER over TCP and arrives from
+    # the docker bridge, so the user must be granted for '%' (the compose init
+    # already creates it — this is an idempotent safety net).
+    if [ -n "$MYSQL_HOSTOPT" ]; then DB_USER_HOST='%'; else DB_USER_HOST='localhost'; fi
+
     # Create database and user (these should already exist from provisioning, but ensure they're there)
     # Use printf to avoid bash expansion issues with special chars in passwords ($, !, etc.)
     printf "CREATE DATABASE IF NOT EXISTS \`%s\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;\n" "$DB_NAME" | $MYSQL_CMD 2>&1 || log_warn "DB create may have failed"
-    printf "CREATE USER IF NOT EXISTS '%s'@'localhost' IDENTIFIED BY '%s';\n" "$DB_USER" "$DB_PASS" | $MYSQL_CMD 2>&1 || log_warn "DB user create may have failed"
-    printf "GRANT ALL PRIVILEGES ON \`%s\`.* TO '%s'@'localhost';\n" "$DB_NAME" "$DB_USER" | $MYSQL_CMD 2>&1 || log_warn "DB grant may have failed"
+    printf "CREATE USER IF NOT EXISTS '%s'@'%s' IDENTIFIED BY '%s';\n" "$DB_USER" "$DB_USER_HOST" "$DB_PASS" | $MYSQL_CMD 2>&1 || log_warn "DB user create may have failed"
+    printf "GRANT ALL PRIVILEGES ON \`%s\`.* TO '%s'@'%s';\n" "$DB_NAME" "$DB_USER" "$DB_USER_HOST" | $MYSQL_CMD 2>&1 || log_warn "DB grant may have failed"
     printf "FLUSH PRIVILEGES;\n" | $MYSQL_CMD 2>&1 || true
     
     # Run schema (remove CREATE DATABASE and USE statements to use our DB_NAME)
@@ -1067,15 +1101,17 @@ if ! systemctl is-active --quiet lshttpd 2>/dev/null; then
         log_info "OpenLiteSpeed started successfully on retry"
     fi
 fi
-if ! systemctl is-active --quiet mariadb 2>/dev/null; then
+# Native only: a local mariadb unit should be up. On Docker/TCP the DB is a
+# container (no local unit), so skip this check and rely on the connection test.
+if [ -z "$MYSQL_HOSTOPT" ] && ! systemctl is-active --quiet mariadb 2>/dev/null; then
     WARNINGS="${WARNINGS}  - MariaDB not running\n"
     INSTALL_STATUS="PARTIAL"
 fi
 
 # Verify database connection (use app user credentials, not root)
 if [ "${SKIP_DB:-0}" != "1" ]; then
-    if ! MYSQL_PWD="$DB_PASS" mysql -u "$DB_USER" "$DB_NAME" -e "SELECT 1" 2>/dev/null; then
-        WARNINGS="${WARNINGS}  - Cannot connect to database as ${DB_USER}\n"
+    if ! MYSQL_PWD="$DB_PASS" mysql $MYSQL_HOSTOPT -u "$DB_USER" "$DB_NAME" -e "SELECT 1" 2>/dev/null; then
+        WARNINGS="${WARNINGS}  - Cannot connect to database as ${DB_USER} (host ${DB_HOST:-localhost})\n"
         INSTALL_STATUS="PARTIAL"
     fi
 fi

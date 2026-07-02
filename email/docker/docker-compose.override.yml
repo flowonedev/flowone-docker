@@ -12,6 +12,13 @@
 services:
   web:
     pull_policy: build
+    # Local dev has no native OpenLiteSpeed front tier, so publish the app on the
+    # public :80 here (compose CONCATENATES `ports`, so this coexists with the
+    # base file's 127.0.0.1:8080 loopback bind). dev-up.sh then serves at
+    # http://localhost. Production ships ONLY docker-compose.yml (loopback), and
+    # native OLS owns :80/:443.
+    ports:
+      - "80:80"
   collab:
     pull_policy: build
   mailsync:

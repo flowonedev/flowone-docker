@@ -423,21 +423,13 @@ class DockerProvisioningService
             $this->uploadComposeFile($options);
             $this->shipStackFiles($options);
 
-            // 3. SSL ordering (chicken/egg): OLS refuses to start with ENABLE_SSL=1
-            // when the cert file is missing, but certbot HTTP-01 needs the box up on
-            // :80 first. So boot HTTP-first when SSL is wanted but the cert isn't
-            // present yet; obtain it after `up`, then flip to HTTPS. A bare-IP host
-            // (no LE) or an already-present cert skips straight to the final scheme.
-            $wantSsl  = $options['enable_ssl'] ?? true;
-            $certName = (string) ($variables['SERVER_FQDN'] ?? $variables['EMAIL_DOMAIN'] ?? '');
-            $isIp     = (bool) preg_match('/^\d+(\.\d+){3}$/', $certName);
-            $certPresent = $certName !== '' && $this->remoteTest(self::certPresentCmd($certName));
-            $deferSsl = $wantSsl && !$isIp && !$certPresent;
-            $initialSsl = $wantSsl && !$deferSsl;
-
+            // 3. TLS is terminated by the NATIVE OpenLiteSpeed front tier (installed
+            // in the panel-front phase below): it owns :80/:443 and reverse-proxies to
+            // the web container on the host loopback. The CONTAINER therefore always
+            // serves plain HTTP — no cert chicken/egg, and no container-side certbot.
             $this->markDeployment(null, 35, 'Rendering .env...');
-            $this->logLine('Rendering per-host .env (SSL=' . ($initialSsl ? 'on' : 'off') . ')...');
-            $this->renderAndUploadEnv($variables, $options, $initialSsl);
+            $this->logLine('Rendering per-host .env (container = plain HTTP; native OLS front terminates TLS)...');
+            $this->renderAndUploadEnv($variables, $options, false);
 
             // 3b. Seed the JWT PEM pair into the shared jwt_keys volume BEFORE the
             // stack comes up, so web/collab/mailsync mount a populated volume.
@@ -456,11 +448,9 @@ class DockerProvisioningService
             $this->markDeployment(null, 75, 'Waiting for health...');
             $healthy = $this->waitHealthy((int) ($options['wait_timeout'] ?? 180));
 
-            // 6. Obtain the SAN cert then flip SSL on (only if we deferred it above).
-            if ($deferSsl) {
-                $this->markDeployment(null, 85, 'Obtaining SSL certificate...');
-                $this->obtainCertsAndEnableSsl($variables, $options, $certName, (string) ($server['ip_address'] ?? ''));
-            }
+            // 6. (SSL is obtained NATIVELY in the panel-front phase below — certbot
+            // runs on the host and the native OLS vhosts reference the LE certs.
+            // The container never terminates TLS, so there is nothing to flip here.)
 
             // 7. Warm the DB schema (best-effort) once web is serving, so the first
             // real user request doesn't race lazy DDL / hit missing columns.
@@ -468,13 +458,24 @@ class DockerProvisioningService
                 $this->markDeployment(null, 92, 'Warming schema...');
                 $this->warmSchema();
                 // 8. Seed the default login mailbox (parity with native robert@domain).
-                $this->markDeployment(null, 96, 'Creating default mailbox...');
+                $this->markDeployment(null, 94, 'Creating default mailbox...');
                 $this->seedDefaultMailbox($variables);
 
-                // 9. Host hardening (native parity) — the Docker path used to skip
+                // 9. NATIVE control-plane front (every server = panel + email + security):
+                // install native OpenLiteSpeed + the DevCon Panel + PowerDNS + fleet agent
+                // IN FRONT of the container stack, terminate TLS natively, and reverse-
+                // proxy email.<domain> to the web container. The panel/DNS/agent share the
+                // CONTAINERIZED MariaDB over the loopback publish (127.0.0.1:3306).
+                if (empty($options['skip_panel_front'])) {
+                    $this->markDeployment(null, 96, 'Installing native panel + reverse-proxy front...');
+                    $this->deployPanelFrontAfterProvision($serverId, $variables);
+                }
+
+                // 10. Host hardening (native parity) — the Docker path used to skip
                 // this, leaving boxes on root@22/password with no firewall/fail2ban.
                 // Runs fail2ban + firewalld + pxr@1985 key-only SSH (deny root),
                 // then restarts Docker so its published-port rules survive firewalld.
+                // MUST run last: it flips SSH to pxr@1985, so all root@22 work precedes it.
                 if (empty($options['skip_harden'])) {
                     $this->markDeployment(null, 98, 'Hardening host (SSH/firewall/fail2ban)...');
                     $this->hardenAfterProvision($serverId);
@@ -1150,6 +1151,44 @@ class DockerProvisioningService
             }
         } catch (\Throwable $e) {
             $this->logLine('Hardening error (non-fatal): ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Install the NATIVE panel + reverse-proxy front in front of the container stack.
+     *
+     * Delegated to ProvisioningService::deployNativePanelFront (the native helpers
+     * live there) via an isolated Container so it owns a clean SSH session — same
+     * pattern as hardenAfterProvision. Non-fatal: if the panel front stumbles, the
+     * email container stack is already healthy and the operator can re-run just this
+     * phase. Runs BEFORE hardening so all its root@22 work precedes the SSH flip.
+     */
+    private function deployPanelFrontAfterProvision(int $serverId, array $variables): void
+    {
+        try {
+            if ($this->ssh->isConnected()) {
+                $this->ssh->disconnect();
+            }
+            $isolated = new Container($this->container->getConfig());
+            /** @var ProvisioningService $prov */
+            $prov = $isolated->get(ProvisioningService::class);
+            $res = $prov->deployNativePanelFront($serverId, [
+                'compose_file' => self::COMPOSE_FILE,
+                'env_file'     => self::ENV_FILE,
+                'project'      => self::PROJECT,
+            ]);
+            foreach (($res['log'] ?? []) as $entry) {
+                $msg = is_array($entry) ? ($entry['message'] ?? '') : (string) $entry;
+                if ($msg !== '') {
+                    $this->logLine('[panel] ' . $msg);
+                }
+            }
+            if (empty($res['success'])) {
+                $this->logLine('Panel front did not complete: ' . ($res['error'] ?? 'unknown')
+                    . ' — the email container stack is still up; re-run the panel-front phase after fixing.');
+            }
+        } catch (\Throwable $e) {
+            $this->logLine('Panel front error (non-fatal): ' . $e->getMessage());
         }
     }
 

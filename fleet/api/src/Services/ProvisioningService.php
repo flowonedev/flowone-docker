@@ -4040,6 +4040,170 @@ BASH;
         }
     }
 
+    /** `docker compose` invocation pinned to the on-box stack (project + files). */
+    private static function composeInvocation(string $composeFile, string $envFile, string $project): string
+    {
+        return sprintf(
+            'docker compose -p %s -f %s --env-file %s',
+            escapeshellarg($project),
+            escapeshellarg($composeFile),
+            escapeshellarg($envFile)
+        );
+    }
+
+    /** Minimal MariaDB string literal quoting for a value embedded in SQL. */
+    private function sqlQuote(string $s): string
+    {
+        return "'" . str_replace(['\\', "'"], ['\\\\', "\\'"], $s) . "'";
+    }
+
+    /**
+     * Make the CONTAINERIZED MariaDB usable by the native panel/tooling:
+     *   1. grant root@'%' (the loopback-only publish means it's host-reachable
+     *      only) so `mysql -h 127.0.0.1 -u root` works for the panel schema import,
+     *   2. drop a /root/.my.cnf so any socket-less `mysql`/`mariadb` call in the
+     *      reused native helpers transparently hits the container over TCP.
+     * The root password equals MYSQL_ROOT_PASSWORD (ComposeEnvRenderer maps
+     * DB_ROOT_PASS -> MYSQL_ROOT_PASSWORD), so the container accepts it.
+     */
+    private function ensureContainerDbRootAccess(array $variables, string $composeFile, string $envFile, string $project): void
+    {
+        $root = (string) ($variables['DB_ROOT_PASS'] ?? '');
+        if ($root === '') {
+            $this->log("WARN: no DB_ROOT_PASS — cannot bootstrap container DB root access.");
+            return;
+        }
+        $compose = self::composeInvocation($composeFile, $envFile, $project);
+
+        // 1. Ensure root@'%' inside the container (via its local socket as root).
+        $sql = "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY " . $this->sqlQuote($root) . ";"
+             . " ALTER USER 'root'@'%' IDENTIFIED BY " . $this->sqlQuote($root) . ";"
+             . " GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;";
+        $sqlFile = '/tmp/_fo_dbroot.sql';
+        $this->ssh->uploadContent($sql . "\n", $sqlFile);
+        $this->executeCommand("chmod 600 {$sqlFile}");
+        // The container shell expands $MARIADB_ROOT_PASSWORD; sensitive=true keeps
+        // the password out of the step log.
+        $inner = 'MYSQL_PWD="$MARIADB_ROOT_PASSWORD" mariadb -uroot';
+        $res = $this->ssh->execWithTimeout(
+            "cat {$sqlFile} | {$compose} exec -T mariadb sh -c " . escapeshellarg($inner) . " 2>&1",
+            120,
+            true
+        );
+        $this->executeCommand("rm -f {$sqlFile}");
+        $this->log(($res['success'] ?? false)
+            ? "Container DB root@'%' ensured (native tooling can reach it over TCP)."
+            : "WARN: could not grant container DB root@'%' — panel schema import may fail. " . trim(substr((string) ($res['output'] ?? ''), -160)));
+
+        // 2. /root/.my.cnf -> the client uses TCP to the container for every call
+        //    that doesn't pass an explicit host (seedMailAccount, base-site, etc.).
+        $mycnf = "[client]\nhost=127.0.0.1\nport=3306\nuser=root\npassword={$root}\n";
+        $this->ssh->uploadContent($mycnf, '/root/.my.cnf');
+        $this->executeCommand('chmod 600 /root/.my.cnf');
+        $this->log('/root/.my.cnf now points the mysql client at the container (127.0.0.1:3306).');
+    }
+
+    /**
+     * DOCKER-FRONT install: stand up the NATIVE control plane (OpenLiteSpeed +
+     * lsphp + the DevCon Panel + PowerDNS + fleet agent) IN FRONT OF the already-
+     * running containerized email stack on a Docker-provisioned box:
+     *
+     *   panel.<domain> -> native lsphp app (/var/www/vps-admin)  [full host control]
+     *   email.<domain> -> native OLS reverse-proxy -> web container (127.0.0.1:8080)
+     *
+     * The panel, PowerDNS and agent all point at the CONTAINERIZED MariaDB over TCP
+     * (published on 127.0.0.1:3306). Native Postfix/Dovecot/Redis/Meili/MariaDB are
+     * deliberately NOT installed — they live in containers. Reuses the battle-tested
+     * native helpers (installOpenLiteSpeed / deploySystemVhosts / deployPanel / ...).
+     *
+     * Called by DockerProvisioningService AFTER the compose stack is healthy, via an
+     * isolated Container (its own SSH session). Best-effort per auxiliary phase: a
+     * DNS/base-site hiccup never aborts the core panel + email serving.
+     *
+     * @return array{success:bool, log:array, error?:string}
+     */
+    public function deployNativePanelFront(int $serverId, array $opts = []): array
+    {
+        $this->deploymentLog = [];
+        $composeFile = (string) ($opts['compose_file'] ?? '/opt/flowone/docker-compose.yml');
+        $envFile     = (string) ($opts['env_file'] ?? '/opt/flowone/.env');
+        $project     = (string) ($opts['project'] ?? 'flowone');
+
+        try {
+            $stmt = $this->db->prepare("SELECT * FROM servers WHERE id = ?");
+            $stmt->execute([$serverId]);
+            $server = $stmt->fetch();
+            if (!$server) {
+                return ['success' => false, 'error' => "server {$serverId} not found", 'log' => $this->deploymentLog];
+            }
+            $this->isLocalServer = $this->isLocal($server);
+            $this->log("Deploying NATIVE panel front on {$server['name']} ({$server['ip_address']}) — panel native + email reverse-proxy to the container.");
+            if (!$this->ssh->connectToServer($server)) {
+                return ['success' => false, 'error' => 'SSH connection failed', 'log' => $this->deploymentLog];
+            }
+
+            $variables = $this->templates->generateServerVariables($server);
+            // Route every DB-touching native helper at the containerized MariaDB.
+            $variables['PANEL_DB_HOST'] = '127.0.0.1';
+
+            $this->log('=== [0/9] Wiring native tooling to the containerized MariaDB (127.0.0.1:3306) ===');
+            $this->ensureContainerDbRootAccess($variables, $composeFile, $envFile, $project);
+
+            $this->log('=== [1/9] Installing native OpenLiteSpeed (front tier: owns :80/:443) ===');
+            $this->installOpenLiteSpeed($serverId);
+
+            $this->log('=== [2/9] Installing native PHP (lsphp — panel runtime) ===');
+            $this->installPHP($serverId);
+
+            $this->log('=== [3/9] Deploying vhosts (panel native + email reverse-proxy) ===');
+            $this->deploySystemVhosts($variables, true);
+
+            $this->log('=== [4/9] Deploying FlowOne shared library ===');
+            try { $this->deploySharedLibrary($variables); }
+            catch (\Throwable $e) { $this->log('Shared library (non-fatal): ' . $e->getMessage()); }
+
+            $this->log('=== [5/9] Installing the DevCon Panel (native @ /var/www/vps-admin) ===');
+            $this->deployPanel($variables);
+            try {
+                // Seed mail domain/admin + DNS zone AFTER the panel created the schema.
+                $this->seedMailAccount($variables, $variables['DB_ROOT_PASS'] ?? '');
+                $this->seedDnsRecords($variables);
+            } catch (\Throwable $e) { $this->log('Mail/DNS seed (non-fatal): ' . $e->getMessage()); }
+
+            $this->log('=== [6/9] Installing PowerDNS (gmysql on the container DB) ===');
+            try { $this->installPowerDNS($serverId, $variables); }
+            catch (\Throwable $e) { $this->log('PowerDNS (non-fatal): ' . $e->getMessage()); }
+
+            $this->log('=== [7/9] Installing fleet agent (panel <-> host operations) ===');
+            try { $this->installFleetAgent($serverId, $variables); }
+            catch (\Throwable $e) { $this->log('Fleet agent (non-fatal): ' . $e->getMessage()); }
+
+            $this->log('=== [8/9] Registering base-domain site (Sites V2 via worker) ===');
+            try { $this->provisionBaseDomainSite($variables); }
+            catch (\Throwable $e) { $this->log('Base-domain site (non-fatal): ' . $e->getMessage()); }
+
+            $this->log('=== [9/9] Obtaining SSL certificates (panel + email + mail) ===');
+            try {
+                $this->setupSSL($variables);
+                // certbot standalone stopped OLS; bring it back up with the real certs.
+                $this->executeCommand('systemctl restart lshttpd 2>/dev/null || /usr/local/lsws/bin/lswsctrl restart 2>/dev/null || true');
+                // Host-net mail pod copies the MAIL_DOMAIN cert at boot — restart it
+                // so IMAP/SMTP TLS switches from self-signed to the real certificate.
+                $this->executeCommand(self::composeInvocation($composeFile, $envFile, $project) . ' restart mail 2>&1 | tail -3 || true', 180);
+            } catch (\Throwable $e) { $this->log('SSL (non-fatal): ' . $e->getMessage()); }
+
+            $this->log('Native panel front deployed — panel + email are now served by native OpenLiteSpeed.');
+            return ['success' => true, 'log' => $this->deploymentLog];
+        } catch (\Throwable $e) {
+            $this->log('ERROR: ' . $e->getMessage());
+            return ['success' => false, 'error' => $e->getMessage(), 'log' => $this->deploymentLog];
+        } finally {
+            if ($this->ssh->isConnected()) {
+                $this->ssh->disconnect();
+            }
+        }
+    }
+
     /**
      * Setup databases (idempotent with IF NOT EXISTS)
      */
@@ -4985,11 +5149,17 @@ SQL;
         // Run installer with variables
         $this->log("Running panel installer...");
         $fleetUrl = $this->container->getConfig('app.url') ?? 'https://fleet.devcon1.hu';
+        // On a Docker box the DB is the containerized MariaDB (TCP on the host
+        // loopback), NOT a native socket — pass --db-host so the installer talks
+        // TCP and skips native-mariadb service management. Empty on native.
+        $dbHostArg = ($variables['PANEL_DB_HOST'] ?? '') !== ''
+            ? ' --db-host=' . escapeshellarg((string) $variables['PANEL_DB_HOST'])
+            : '';
         $installerCmd = sprintf(
             'cd /tmp/fleet-deploy/panel && chmod +x install.sh && bash install.sh ' .
             '--domain=%s --db-name=%s --db-user=%s --db-pass=%s --db-root-pass=%s ' .
             '--admin-email=%s --admin-pass=%s --agent-token=%s --fleet-url=%s ' .
-            '--email-api-key=%s --skip-vhost 2>&1',
+            '--email-api-key=%s%s --skip-vhost 2>&1',
             escapeshellarg($variables['PANEL_DOMAIN']),
             escapeshellarg($variables['PANEL_DB_NAME'] ?? 'devc_vps_dash'),
             escapeshellarg($variables['PANEL_DB_USER'] ?? 'vpsadmin'),
@@ -4999,7 +5169,8 @@ SQL;
             escapeshellarg($variables['ADMIN_PASS']),
             escapeshellarg($variables['AGENT_TOKEN']),
             escapeshellarg($fleetUrl),
-            escapeshellarg($variables['EMAIL_API_KEY'] ?? '')
+            escapeshellarg($variables['EMAIL_API_KEY'] ?? ''),
+            $dbHostArg
         );
 
         // Use extended timeout - installer runs composer, db setup, etc.
@@ -5421,11 +5592,17 @@ PHP;
     }
 
     /**
-     * Deploy vhost configurations for system apps (Panel, Email, Fleet)
+     * Deploy vhost configurations for system apps (Panel, Email, Fleet).
+     *
+     * @param bool $dockerFront When true the box runs the DOCKER stack: the email
+     *   app lives in the `web` container (host loopback 127.0.0.1:8080) and this
+     *   native OpenLiteSpeed only reverse-proxies to it. We then deploy the
+     *   `email-proxy` vhost template instead of the native `email` (lsapi) one.
+     *   The panel stays a native lsphp app either way.
      */
-    private function deploySystemVhosts(array $variables): void
+    private function deploySystemVhosts(array $variables, bool $dockerFront = false): void
     {
-        $this->log("Deploying OpenLiteSpeed vhost configurations...");
+        $this->log("Deploying OpenLiteSpeed vhost configurations" . ($dockerFront ? " (Docker front: email is a reverse-proxy)" : "") . "...");
         
         // SSL certs must exist BEFORE we write vhost configs and restart OLS.
         // The vhost vhssl blocks and the main SSL listener all reference
@@ -5452,11 +5629,13 @@ PHP;
         $this->executeCommand("mkdir -p /var/log/lsws/{$variables['PANEL_DOMAIN']}");
         $this->executeCommand("mkdir -p /var/log/lsws/{$variables['EMAIL_DOMAIN']}");
         
-        // Deploy Panel vhost
+        // Deploy Panel vhost (native lsphp app in both modes)
         $this->deployVhostFromTemplate('panel', $variables['PANEL_DOMAIN'], $variables);
         
-        // Deploy Email vhost  
-        $this->deployVhostFromTemplate('email', $variables['EMAIL_DOMAIN'], $variables);
+        // Deploy Email vhost. On a Docker box the email app is the `web` container,
+        // so the native OLS vhost is a TLS-terminating reverse proxy to it
+        // (vhost-email-proxy.conf.template); on a native box it's the lsapi PHP app.
+        $this->deployVhostFromTemplate($dockerFront ? 'email-proxy' : 'email', $variables['EMAIL_DOMAIN'], $variables);
         
         // Create staging folders with SSH users
         $this->createStagingFolder($variables['PANEL_DOMAIN'], 'panel_staging');

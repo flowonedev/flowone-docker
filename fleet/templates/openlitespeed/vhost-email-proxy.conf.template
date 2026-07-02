@@ -1,0 +1,129 @@
+# OpenLiteSpeed Virtual Host - Email App (DOCKER reverse-proxy front)
+# Template for Fleet Manager DOCKER deployments.
+#
+# On a Docker-provisioned box the FlowOne email app runs inside the `web`
+# container (OpenLiteSpeed + lsphp), published on the host loopback at
+# 127.0.0.1:8080. This NATIVE OpenLiteSpeed vhost terminates TLS for
+# {{EMAIL_DOMAIN}} and reverse-proxies every request to that container, so the
+# panel (also native) and the email app can share :80/:443 on one box.
+#
+# WebSockets bypass the web container and go straight to the collab/mailsync
+# containers, which publish on the host loopback (127.0.0.1:1234 / :1235) — this
+# mirrors the native email vhost exactly, only the app backend changed from a
+# local lsapi PHP processor to an HTTP proxy.
+#
+# Variables: {{EMAIL_DOMAIN}}, {{ADMIN_EMAIL}}
+
+docRoot                   /usr/local/lsws/Example/html
+vhDomain                  {{EMAIL_DOMAIN}}
+vhAliases                 www.{{EMAIL_DOMAIN}}
+adminEmails               {{ADMIN_EMAIL}}
+enableGzip                1
+enableIpGeo               1
+
+errorlog /var/log/lsws/{{EMAIL_DOMAIN}}.error_log {
+  useServer               0
+  logLevel                WARN
+  rollingSize             10M
+  keepDays                30
+}
+
+accesslog /var/log/lsws/{{EMAIL_DOMAIN}}.access_log {
+  useServer               0
+  logFormat               "%h %l %u %t \"%r\" %>s %b"
+  rollingSize             10M
+  keepDays                30
+}
+
+# The containerized web tier (OLS + lsphp) on the host loopback. It serves the
+# SPA, the /api backend and the mail-client autodiscover rewrites itself, so
+# this native front is a pure pass-through for everything except the WS paths.
+extprocessor email_backend {
+  type                    proxy
+  address                 127.0.0.1:8080
+  maxConns                200
+  initTimeout             60
+  retryTimeout            0
+  respBuffer              0
+}
+
+extprocessor collab_ws {
+  type                    proxy
+  address                 127.0.0.1:1234
+  maxConns                100
+  initTimeout             60
+  retryTimeout            0
+  respBuffer              0
+}
+
+extprocessor mailsync_ws {
+  type                    proxy
+  address                 127.0.0.1:1235
+  maxConns                100
+  initTimeout             60
+  retryTimeout            0
+  respBuffer              0
+}
+
+websocket /collab-ws {
+  address                 127.0.0.1:1234
+}
+
+websocket /mailsync_ws {
+  address                 127.0.0.1:1235
+}
+
+# WS contexts must precede the catch-all `/` proxy so OLS matches them first.
+context /collab-ws {
+  type                    proxy
+  handler                 collab_ws
+  addDefaultCharset       off
+  extraHeaders            <<<END_extraHeaders
+set Upgrade "websocket"
+set Connection "Upgrade"
+END_extraHeaders
+}
+
+context /mailsync_ws {
+  type                    proxy
+  handler                 mailsync_ws
+  addDefaultCharset       off
+  extraHeaders            <<<END_extraHeaders
+set Upgrade "websocket"
+set Connection "Upgrade"
+END_extraHeaders
+}
+
+# Everything else (SPA + /api + autodiscover) proxies to the web container.
+context / {
+  type                    proxy
+  handler                 email_backend
+  addDefaultCharset       off
+}
+
+vhssl  {
+  keyFile                 /etc/letsencrypt/live/{{EMAIL_DOMAIN}}/privkey.pem
+  certFile                /etc/letsencrypt/live/{{EMAIL_DOMAIN}}/fullchain.pem
+  certChain               1
+  sslProtocol             24
+  ciphers                 ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384
+  enableECDHE             1
+  renegProtection         1
+  sslSessionCache         1
+  enableSpdy              15
+  enableStapling          1
+  ocspRespMaxAge          86400
+}
+
+errorPage 404 {
+  url /error/404.html
+}
+errorPage 403 {
+  url /error/403.html
+}
+errorPage 500 {
+  url /error/500.html
+}
+errorPage 503 {
+  url /error/503.html
+}

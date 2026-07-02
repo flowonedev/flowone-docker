@@ -99,9 +99,14 @@ services:
     environment:
       COLLAB_ADDR: collab:1234
       MAILSYNC_ADDR: mailsync:1235
+    # Native OpenLiteSpeed on the HOST owns public :80/:443 and terminates TLS,
+    # then reverse-proxies email.<domain> to this container. So in production the
+    # container publishes ONLY on the host loopback (native OLS proxies to
+    # 127.0.0.1:8080 -> container :80) and never serves TLS itself (ENABLE_SSL=0).
+    # Local dev has no native OLS, so docker-compose.override.yml re-adds a public
+    # :80 mapping (compose concatenates `ports`, so both bindings coexist there).
     ports:
-      - "80:80"
-      - "443:443"
+      - "127.0.0.1:8080:80"
     # The mail pod runs on the HOST network (network_mode: host), so the bridge
     # service name "mail" won't resolve from here. IMAP_HOST/SMTP_HOST/SIEVE_HOST
     # in .env point at host.docker.internal, which this maps to the host gateway.
@@ -154,6 +159,11 @@ services:
       COLLAB_WS_PORT: "1234"
       # collab validates collaborators against the backend over the bridge net.
       PHP_BACKEND_URL: http://web:80/api
+    # Publish on the host loopback so the native OpenLiteSpeed front tier can
+    # reverse-proxy the /collab-ws WebSocket straight to it (127.0.0.1:1234),
+    # exactly as the native email vhost does. Never exposed on the public iface.
+    ports:
+      - "127.0.0.1:1234:1234"
     volumes:
       - jwt_keys:/etc/flowone/jwt:ro
     depends_on:
@@ -175,6 +185,10 @@ services:
       MAILSYNC_WS_PORT: "1235"
       # mailsync reads DB_PASSWORD; the rest of the stack uses DB_PASS.
       DB_PASSWORD: ${DB_PASS}
+    # Publish on the host loopback so the native OpenLiteSpeed front tier can
+    # reverse-proxy the /mailsync_ws WebSocket straight to it (127.0.0.1:1235).
+    ports:
+      - "127.0.0.1:1235:1235"
     volumes:
       - jwt_keys:/etc/flowone/jwt:ro
     depends_on:
