@@ -4104,6 +4104,58 @@ BASH;
     }
 
     /**
+     * Day-2 PANEL-ONLY update: redeploy the DevCon Panel package to one server
+     * without touching the email stack, DNS, SSL or hardening.
+     *
+     * This is the "update just the panel" leg of the workflow (email has
+     * DockerProvisioningService::updateService, security has hardenExistingServer).
+     * Uses the freshly built packages/panel/panel-latest.tar.gz on this master,
+     * so run master-update.sh first. Docker boxes (deployed_image_tag set) get
+     * PANEL_DB_HOST=127.0.0.1 so the installer talks to the containerized MariaDB.
+     *
+     * @return array{success:bool, log:array, error?:string}
+     */
+    public function updatePanel(int $serverId): array
+    {
+        $this->deploymentLog = [];
+        try {
+            $stmt = $this->db->prepare("SELECT * FROM servers WHERE id = ?");
+            $stmt->execute([$serverId]);
+            $server = $stmt->fetch();
+            if (!$server) {
+                return ['success' => false, 'error' => "server {$serverId} not found", 'log' => $this->deploymentLog];
+            }
+            $this->isLocalServer = $this->isLocal($server);
+            $this->log("Panel-only update on {$server['name']} ({$server['ip_address']})...");
+            if (!$this->ssh->connectToServer($server)) {
+                return ['success' => false, 'error' => 'SSH connection failed', 'log' => $this->deploymentLog];
+            }
+
+            $variables = $this->templates->generateServerVariables($server);
+            if (!empty($server['deployed_image_tag'])) {
+                // Docker box: the DB is the container on the host loopback.
+                $variables['PANEL_DB_HOST'] = '127.0.0.1';
+            }
+
+            try { $this->deploySharedLibrary($variables); }
+            catch (\Throwable $e) { $this->log('Shared library (non-fatal): ' . $e->getMessage()); }
+
+            $this->deployPanel($variables);
+            $this->executeCommand('systemctl restart vpsadmin-agent 2>/dev/null || true');
+
+            $this->log("Panel update complete.");
+            return ['success' => true, 'log' => $this->deploymentLog];
+        } catch (\Throwable $e) {
+            $this->log('ERROR: ' . $e->getMessage());
+            return ['success' => false, 'error' => $e->getMessage(), 'log' => $this->deploymentLog];
+        } finally {
+            if ($this->ssh->isConnected()) {
+                $this->ssh->disconnect();
+            }
+        }
+    }
+
+    /**
      * DOCKER-FRONT install: stand up the NATIVE control plane (OpenLiteSpeed +
      * lsphp + the DevCon Panel + PowerDNS + fleet agent) IN FRONT OF the already-
      * running containerized email stack on a Docker-provisioned box:
