@@ -144,6 +144,23 @@ test('crypto', 'EncryptionService encrypt->decrypt is lossless for a PEM', funct
     assertEq($pair['private'], $enc->decrypt($cipher), 'decrypt must restore the exact PEM (newlines included)');
 });
 
+// --- stable-keys (source-level: EMAIL_API_KEY must persist per server) ---
+section('stable-keys');
+test('crypto', 'TemplateService reuses persisted EMAIL_API_KEY (no per-call random)', function () {
+    $src = file_get_contents(__DIR__ . '/../src/Services/TemplateService.php');
+    assertTrue(strpos($src, "email_api_key_encrypted") !== false,
+        'TemplateService must read/persist email_api_key_encrypted');
+    // The generate path must guard random generation behind the persisted column —
+    // an unconditional bin2hex assignment regenerates the key on every call and
+    // desyncs the email .env (PANEL_API_KEY) from the panel install (--email-api-key).
+    assertTrue(
+        preg_match("/email_api_key_encrypted.*EMAIL_API_KEY/s", $src) === 1,
+        'EMAIL_API_KEY generation must check email_api_key_encrypted first'
+    );
+    assertTrue(strpos($src, "COALESCE(email_api_key_encrypted, ?)") !== false,
+        'persistDockerSecrets must COALESCE-persist email_api_key_encrypted');
+});
+
 // --- integration ---
 section('integration');
 test('integration', 'generated secrets let a fresh box render a valid .env', function () {

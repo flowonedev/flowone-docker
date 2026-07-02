@@ -188,7 +188,16 @@ class TemplateService
         $variables['JWT_SECRET'] = bin2hex(random_bytes(32));
         $variables['ENCRYPTION_KEY'] = bin2hex(random_bytes(32));
         $variables['AGENT_TOKEN'] = $server['agent_token'] ?? $this->encryption->generateToken(32);
-        $variables['EMAIL_API_KEY'] = bin2hex(random_bytes(32)); // Shared key: Panel external_api <-> Email App panel.api_key
+
+        // Shared key: Panel external_api <-> Email App panel.api_key. MUST be
+        // stable per server — the email .env render and the panel install run
+        // in separate service instances, so a per-call random value hands the
+        // two sides different keys and every email->panel API call 401s.
+        if (!empty($server['email_api_key_encrypted'] ?? null)) {
+            $variables['EMAIL_API_KEY'] = $this->encryption->decrypt($server['email_api_key_encrypted']);
+        } else {
+            $variables['EMAIL_API_KEY'] = bin2hex(random_bytes(32));
+        }
 
         // Redis password
         if (!empty($server['redis_password_encrypted'])) {
@@ -324,6 +333,7 @@ class TemplateService
                 imap_encryption_key_encrypted = COALESCE(imap_encryption_key_encrypted, ?),
                 ai_encryption_key_encrypted   = COALESCE(ai_encryption_key_encrypted, ?),
                 sso_server_key_encrypted      = COALESCE(sso_server_key_encrypted, ?),
+                email_api_key_encrypted       = COALESCE(email_api_key_encrypted, ?),
                 jwt_private_key_encrypted     = COALESCE(jwt_private_key_encrypted, ?),
                 jwt_public_key                = COALESCE(jwt_public_key, ?),
                 db_root_password_encrypted    = COALESCE(db_root_password_encrypted, ?),
@@ -340,6 +350,7 @@ class TemplateService
             $enc($variables['IMAP_ENCRYPTION_KEY'] ?? null),
             $enc($variables['AI_ENCRYPTION_KEY'] ?? null),
             $enc($variables['SSO_SERVER_KEY'] ?? null),
+            $enc($variables['EMAIL_API_KEY'] ?? null),
             $enc($variables['JWT_PRIVATE_KEY_PEM'] ?? null),
             !empty($variables['JWT_PUBLIC_KEY_PEM']) ? $variables['JWT_PUBLIC_KEY_PEM'] : null,
             $enc($variables['DB_ROOT_PASS'] ?? null),
