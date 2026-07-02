@@ -50,6 +50,25 @@ class DockerProvisioningService
     /** Day-2 helper scripts shipped next to the stack (SSL + mailbox + DNS ops). */
     public const HELPER_SCRIPTS = ['obtain-certs.sh', 'create-mail-account.sh', 'dns-records.sh'];
 
+    /**
+     * Step plan for a full docker_provision, in execution order. Feeds the
+     * deployment_steps rows the dashboard's "Steps" tab renders — without these
+     * the modal sits on "Waiting for step data..." for the entire deploy.
+     */
+    public const PROVISION_STEPS = [
+        'connect'        => 'Connect via SSH',
+        'docker_install' => 'Install Docker Engine + compose',
+        'ship_files'     => 'Ship stack files',
+        'render_env'     => 'Render .env + seed JWT keys',
+        'pull_images'    => 'Pull images',
+        'start_stack'    => 'Start stack',
+        'wait_health'    => 'Wait for container health',
+        'warm_schema'    => 'Warm DB schema',
+        'seed_mailbox'   => 'Create default mailbox',
+        'panel_front'    => 'Native panel + reverse-proxy front',
+        'harden'         => 'Harden host (SSH/firewall/fail2ban)',
+    ];
+
     private Container $container;
     private SSHService $ssh;
     private ComposeEnvRenderer $envRenderer;
@@ -59,6 +78,8 @@ class DockerProvisioningService
     private array $log = [];
     /** When set (deploy launched from the dashboard), progress + log stream to this row. */
     private ?int $deploymentId = null;
+    /** Step currently marked 'running' in deployment_steps (see step()). */
+    private ?string $currentStepKey = null;
 
     public function __construct(Container $container)
     {
@@ -163,12 +184,19 @@ class DockerProvisioningService
     /** Seed a named volume from a host directory using a throwaway helper container. */
     public static function seedVolumeCmd(string $volume, string $srcDir, string $helperImage = 'alpine:3.20'): string
     {
+        // Private key = root:nogroup 640. The web tier's lsphp workers run as
+        // nobody:nogroup (65534) and MUST read it to sign RS256 tokens — with
+        // the old root-only 600 every login died with "OpenSSL unable to
+        // validate key". Group-read (not world-read) keeps it hidden from the
+        // node uid in collab/mailsync, which only need the public key.
         return sprintf(
             'docker run --rm -v %s:/dst -v %s:/src:ro %s sh -c %s',
             escapeshellarg($volume),
             escapeshellarg($srcDir),
             escapeshellarg($helperImage),
-            escapeshellarg('cp -a /src/. /dst/ && chmod 600 /dst/jwt-private.pem 2>/dev/null; chmod 644 /dst/jwt-public.pem 2>/dev/null; true')
+            escapeshellarg('cp -a /src/. /dst/'
+                . ' && { chown 0:65534 /dst/jwt-private.pem 2>/dev/null; chmod 640 /dst/jwt-private.pem 2>/dev/null; }'
+                . '; chmod 644 /dst/jwt-public.pem 2>/dev/null; true')
         );
     }
 
@@ -387,6 +415,8 @@ class DockerProvisioningService
         $this->deploymentId = isset($options['deployment_id']) ? (int) $options['deployment_id'] : null;
         try {
             $this->markDeployment('running', 5, 'Connecting...');
+            $this->seedSteps();
+            $this->step('connect');
             $server = $this->getServer($serverId);
             $this->logLine("Connecting to {$server['name']}...");
             if (!$this->ssh->connectToServer($server)) {
@@ -423,12 +453,16 @@ class DockerProvisioningService
             // 1. Docker engine + compose plugin
             if (empty($options['skip_docker_install'])) {
                 $this->markDeployment(null, 15, 'Installing Docker...');
+                $this->step('docker_install');
                 $this->logLine('Ensuring Docker Engine + compose plugin...');
                 $this->run(self::dockerInstallCmd(), 600, 'docker install');
+            } else {
+                $this->skipStep('docker_install');
             }
 
             // 2. Stack directory + compose file + sidecar files (mariadb-init, helpers)
             $this->markDeployment(null, 25, 'Shipping stack files...');
+            $this->step('ship_files');
             $this->run('mkdir -p ' . escapeshellarg(self::STACK_DIR), 30, 'mkdir stack');
             $this->uploadComposeFile($options);
             $this->shipStackFiles($options);
@@ -438,6 +472,7 @@ class DockerProvisioningService
             // the web container on the host loopback. The CONTAINER therefore always
             // serves plain HTTP — no cert chicken/egg, and no container-side certbot.
             $this->markDeployment(null, 35, 'Rendering .env...');
+            $this->step('render_env');
             $this->logLine('Rendering per-host .env (container = plain HTTP; native OLS front terminates TLS)...');
             $this->renderAndUploadEnv($variables, $options, false);
 
@@ -447,15 +482,18 @@ class DockerProvisioningService
 
             // 4. Pull images + bring the stack up
             $this->markDeployment(null, 50, 'Pulling images...');
+            $this->step('pull_images');
             $this->maybeDockerLogin($options);
             $this->logLine('Pulling images...');
             $this->run(self::pullCmd(), 900, 'compose pull');
             $this->markDeployment(null, 65, 'Starting stack...');
+            $this->step('start_stack');
             $this->logLine('Starting stack...');
             $this->run(self::upCmd(), 300, 'compose up');
 
             // 5. Wait for health
             $this->markDeployment(null, 75, 'Waiting for health...');
+            $this->step('wait_health');
             $healthy = $this->waitHealthy((int) ($options['wait_timeout'] ?? 180));
 
             // 6. (SSL is obtained NATIVELY in the panel-front phase below — certbot
@@ -466,9 +504,11 @@ class DockerProvisioningService
             // real user request doesn't race lazy DDL / hit missing columns.
             if ($healthy) {
                 $this->markDeployment(null, 92, 'Warming schema...');
+                $this->step('warm_schema');
                 $this->warmSchema();
                 // 8. Seed the default login mailbox (parity with native robert@domain).
                 $this->markDeployment(null, 94, 'Creating default mailbox...');
+                $this->step('seed_mailbox');
                 $this->seedDefaultMailbox($variables);
 
                 // 9. NATIVE control-plane front (every server = panel + email + security):
@@ -478,7 +518,10 @@ class DockerProvisioningService
                 // CONTAINERIZED MariaDB over the loopback publish (127.0.0.1:3306).
                 if (empty($options['skip_panel_front'])) {
                     $this->markDeployment(null, 96, 'Installing native panel + reverse-proxy front...');
+                    $this->step('panel_front');
                     $this->deployPanelFrontAfterProvision($serverId, $variables);
+                } else {
+                    $this->skipStep('panel_front');
                 }
 
                 // 10. Host hardening (native parity) — the Docker path used to skip
@@ -488,10 +531,18 @@ class DockerProvisioningService
                 // MUST run last: it flips SSH to pxr@1985, so all root@22 work precedes it.
                 if (empty($options['skip_harden'])) {
                     $this->markDeployment(null, 98, 'Hardening host (SSH/firewall/fail2ban)...');
+                    $this->step('harden');
                     $this->hardenAfterProvision($serverId);
+                } else {
+                    $this->skipStep('harden');
                 }
             }
 
+            if ($healthy) {
+                $this->step(null); // close the last running step as success
+            } else {
+                $this->failCurrentStep('Stack did not become healthy');
+            }
             $this->markDeployment($healthy ? 'success' : 'failed', 100,
                 $healthy ? 'Completed' : 'Stack did not become healthy');
             $this->setServerStatus($serverId, $healthy ? 'active' : 'error');
@@ -506,6 +557,7 @@ class DockerProvisioningService
             ];
         } catch (\Throwable $e) {
             $this->logLine('ERROR: ' . $e->getMessage());
+            $this->failCurrentStep($e->getMessage());
             $this->markDeployment('failed', null, 'Error: ' . substr($e->getMessage(), 0, 120));
             $this->setServerStatus($serverId, 'error');
             return ['success' => false, 'error' => $e->getMessage(), 'log' => $this->log];
@@ -950,6 +1002,106 @@ class DockerProvisioningService
         } catch (\Throwable $e) {
             // best-effort: never let dashboard bookkeeping fail the deploy
         }
+    }
+
+    /**
+     * Seed the deployment_steps rows for this run (INSERT IGNORE = resume-safe)
+     * so the dashboard's Steps tab has data from second one. Best-effort.
+     */
+    private function seedSteps(): void
+    {
+        if (!$this->deploymentId) {
+            return;
+        }
+        try {
+            $order = 0;
+            $ins = $this->db->prepare(
+                "INSERT IGNORE INTO deployment_steps
+                    (deployment_id, step_key, step_name, step_order, weight, status, can_skip, idempotent, max_retries)
+                 VALUES (?, ?, ?, ?, 1, 'pending', 0, 1, 0)"
+            );
+            foreach (self::PROVISION_STEPS as $key => $name) {
+                $ins->execute([$this->deploymentId, $key, $name, ++$order]);
+            }
+            $this->db->prepare('UPDATE deployments SET steps_total = ?, steps_completed = 0 WHERE id = ?')
+                ->execute([$order, $this->deploymentId]);
+        } catch (\Throwable $e) {
+            // dashboard bookkeeping must never fail the deploy
+        }
+    }
+
+    /**
+     * Advance the step cursor: completes the currently running step as success,
+     * then marks $key running. Pass null to just close the current step (end of
+     * run). Phases are linear here, so a cursor beats a callback-per-step engine.
+     */
+    private function step(?string $key): void
+    {
+        if (!$this->deploymentId) {
+            return;
+        }
+        try {
+            if ($this->currentStepKey !== null) {
+                $this->db->prepare(
+                    "UPDATE deployment_steps
+                        SET status = 'success', completed_at = NOW(),
+                            duration_ms = TIMESTAMPDIFF(MICROSECOND, started_at, NOW()) DIV 1000
+                      WHERE deployment_id = ? AND step_key = ? AND status = 'running'"
+                )->execute([$this->deploymentId, $this->currentStepKey]);
+                $this->db->prepare('UPDATE deployments SET steps_completed = steps_completed + 1 WHERE id = ?')
+                    ->execute([$this->deploymentId]);
+            }
+            if ($key !== null) {
+                $this->db->prepare(
+                    "UPDATE deployment_steps SET status = 'running', started_at = NOW()
+                      WHERE deployment_id = ? AND step_key = ?"
+                )->execute([$this->deploymentId, $key]);
+            }
+            $this->currentStepKey = $key;
+        } catch (\Throwable $e) {
+            // best-effort
+        }
+    }
+
+    /** Mark a step (or the current one) skipped — e.g. skip_docker_install. */
+    private function skipStep(string $key): void
+    {
+        if (!$this->deploymentId) {
+            return;
+        }
+        try {
+            $this->db->prepare(
+                "UPDATE deployment_steps SET status = 'skipped', completed_at = NOW()
+                  WHERE deployment_id = ? AND step_key = ? AND status = 'pending'"
+            )->execute([$this->deploymentId, $key]);
+        } catch (\Throwable $e) {
+            // best-effort
+        }
+    }
+
+    /** Fail the currently running step + stamp deployments.failed_step. */
+    private function failCurrentStep(string $message): void
+    {
+        if (!$this->deploymentId || $this->currentStepKey === null) {
+            return;
+        }
+        try {
+            $this->db->prepare(
+                "UPDATE deployment_steps
+                    SET status = 'failed', completed_at = NOW(), error_message = ?,
+                        duration_ms = TIMESTAMPDIFF(MICROSECOND, started_at, NOW()) DIV 1000
+                  WHERE deployment_id = ? AND step_key = ? AND status = 'running'"
+            )->execute([substr($message, 0, 2000), $this->deploymentId, $this->currentStepKey]);
+            $this->db->prepare('UPDATE deployments SET failed_step = ? WHERE id = ?')
+                ->execute([$this->currentStepKey, $this->deploymentId]);
+            // Anything after the failed step never ran.
+            $this->db->prepare(
+                "UPDATE deployment_steps SET status = 'skipped' WHERE deployment_id = ? AND status = 'pending'"
+            )->execute([$this->deploymentId]);
+        } catch (\Throwable $e) {
+            // best-effort
+        }
+        $this->currentStepKey = null;
     }
 
     /** Set the server row status (active on success, error on failure). Best-effort. */

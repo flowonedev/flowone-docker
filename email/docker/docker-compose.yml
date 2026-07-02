@@ -189,6 +189,10 @@ services:
     # reverse-proxy the /mailsync_ws WebSocket straight to it (127.0.0.1:1235).
     ports:
       - "127.0.0.1:1235:1235"
+    # mailsync opens IMAP IDLE connections to the HOST-networked mail pod via
+    # IMAP_HOST=host.docker.internal (same as web) — map the alias here too.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - jwt_keys:/etc/flowone/jwt:ro
     depends_on:

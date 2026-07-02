@@ -42,6 +42,9 @@ return [
         // Email App services
         'mailsync-server', // Real-time email sync WebSocket (IMAP IDLE, Redis pub/sub) - port 1235
         'collab-server',   // Collaborative document editing WebSocket (Hocuspocus) - port 1234
+        'meilisearch',     // Full-text search engine
+        'spamd',           // SpamAssassin daemon (native name)
+        'spamassassin',    // SpamAssassin daemon (alt name / mail-pod program)
     ],
 
     // Backup retention

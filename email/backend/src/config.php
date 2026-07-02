@@ -69,8 +69,11 @@ $config = [
         'port' => (int)(getenv('SMTP_PORT') ?: 587),
         'encryption' => 'tls',
         'auth' => true,
-        // Only skip peer verification for localhost; external hosts must verify
-        'verify_peer' => $smtpHost !== 'localhost',
+        // Only skip peer verification for localhost; external hosts must verify.
+        // SMTP_VERIFY_PEER=false opts out for in-box hops where the target name
+        // (e.g. host.docker.internal -> host-net mail pod) is not on the cert.
+        'verify_peer' => $smtpHost !== 'localhost'
+            && strtolower((string)(getenv('SMTP_VERIFY_PEER') ?: 'true')) !== 'false',
         // System notification email (for sending share notifications, etc.)
         'username' => 'noreply@devcon1.hu',
         'password' => getenv('SMTP_NOTIFICATION_PASSWORD') ?: '',

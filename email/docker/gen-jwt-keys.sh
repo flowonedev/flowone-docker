@@ -38,7 +38,10 @@ docker run --rm -v "${VOLUME}":/jwt alpine:3 sh -c '
     apk add --no-cache openssl >/dev/null
     openssl genrsa -out /jwt/jwt-private.pem 2048
     openssl rsa -in /jwt/jwt-private.pem -pubout -out /jwt/jwt-public.pem
-    chmod 600 /jwt/jwt-private.pem
+    # root:nogroup 640 — the web tier lsphp runs as nobody:nogroup (65534) and
+    # must READ the private key to sign RS256 tokens (600 root = login 500s).
+    chown 0:65534 /jwt/jwt-private.pem
+    chmod 640 /jwt/jwt-private.pem
     chmod 644 /jwt/jwt-public.pem
     echo "  generated RS256 key pair (jwt-private.pem / jwt-public.pem)."
 '

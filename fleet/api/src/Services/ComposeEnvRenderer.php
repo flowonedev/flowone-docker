@@ -89,9 +89,13 @@ class ComposeEnvRenderer
         // (its SANs also cover the webmail + panel hosts). The mail pod's
         // TLS_CERT_NAME defaults to SERVER_FQDN, so both serve the very same cert.
         $certName    = $serverFqdn !== '' ? $serverFqdn : $emailDomain;
-        // mailsync/IMAP target: prefer the cert-covered FQDN so IMAP_VERIFY_CERT
-        // holds under a real cert (falls back to the mail/base domain off-cert).
-        $mailHost    = (string) ($options['imap_host'] ?? $serverFqdn);
+        // mailsync/IMAP target: the mail pod is HOST-networked, so web/mailsync
+        // reach it via the compose host-gateway alias — this always resolves and
+        // never depends on a public A record for the bare FQDN (devcon3-style
+        // apex domains often have none, which broke webmail login entirely).
+        // Cert verification is off for this hop: the LE cert names the FQDN,
+        // not the gateway alias; the traffic never leaves the box.
+        $mailHost    = (string) ($options['imap_host'] ?? 'host.docker.internal');
         $adminEmail  = (string) ($vars['ADMIN_EMAIL'] ?? "admin@{$emailDomain}");
         $enableSsl   = (isset($options['enable_ssl']) ? (bool) $options['enable_ssl'] : true) ? '1' : '0';
         $registry    = (string) ($options['registry'] ?? 'flowone');
@@ -185,11 +189,18 @@ class ComposeEnvRenderer
         $put('VAPID_PRIVATE_KEY', $vars['VAPID_PRIVATE_KEY'] ?? '');
         $put('VAPID_SUBJECT', 'mailto:' . $adminEmail);
 
-        $sec('Mail server (mailsync IMAP IDLE target)');
+        $sec('Mail server (webmail login + mailsync IMAP IDLE target)');
         $put('IMAP_HOST', $mailHost);
         $put('IMAP_PORT', '993');
         $put('IMAP_TLS', 'true');
-        $put('IMAP_VERIFY_CERT', $enableSsl === '1' ? 'true' : 'false');
+        // The host-gateway alias is never on the cert, so this hop must not
+        // verify the peer name (loopback-equivalent traffic, TLS still on).
+        $put('IMAP_VERIFY_CERT', 'false');
+        $put('SMTP_HOST', $mailHost);
+        $put('SMTP_PORT', '587');
+        $put('SMTP_VERIFY_PEER', 'false');
+        $put('SIEVE_HOST', $mailHost);
+        $put('SIEVE_PORT', '4190');
 
         $sec('Native push toggles (mailsync)');
         $put('FCM_ENABLED', 'false');

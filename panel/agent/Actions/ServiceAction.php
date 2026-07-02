@@ -9,13 +9,45 @@
 namespace VpsAdmin\Agent\Actions;
 
 use VpsAdmin\Agent\Lib\BaseAction;
+use VpsAdmin\Agent\Lib\DockerServiceBridge;
 use VpsAdmin\Agent\Lib\Validator;
 
 class ServiceAction extends BaseAction
 {
+    private ?DockerServiceBridge $docker = null;
+
     public function getNamespace(): string
     {
         return 'service';
+    }
+
+    /**
+     * Hybrid boxes run the mail/email tier as Docker containers, so the systemd
+     * unit for e.g. mariadb/postfix simply does not exist there. When that is
+     * the case (LoadState=not-found) we route status/control/logs through the
+     * Docker bridge instead of reporting a false "Stopped".
+     */
+    private function dockerBridge(): DockerServiceBridge
+    {
+        if ($this->docker === null) {
+            $this->docker = new DockerServiceBridge(
+                fn (string $cmd, array $args, int $timeout) => $this->execCommand($cmd, $args, $timeout)
+            );
+        }
+        return $this->docker;
+    }
+
+    /** True when no systemd unit file exists for this name on this box. */
+    private function unitMissing(string $name): bool
+    {
+        $res = $this->execCommand('systemctl', ['show', '-p', 'LoadState', '--value', $name]);
+        return trim($res['output']) === 'not-found';
+    }
+
+    /** Whether this service should be handled by the Docker bridge here. */
+    private function isDockerBacked(string $name): bool
+    {
+        return DockerServiceBridge::handles($name) && $this->unitMissing($name);
     }
 
     public function getMethods(): array
@@ -85,8 +117,10 @@ class ServiceAction extends BaseAction
             return $this->error("Service not allowed: {$name}");
         }
 
-        $result = $this->execCommand('systemctl', ['restart', $name]);
-        
+        $result = $this->isDockerBacked($name)
+            ? $this->dockerBridge()->control($name, 'restart')
+            : $this->execCommand('systemctl', ['restart', $name]);
+
         if ($result['success']) {
             // Wait a moment and check status
             usleep(500000); // 0.5 seconds
@@ -120,6 +154,8 @@ class ServiceAction extends BaseAction
         // Special handling for OpenLiteSpeed
         if ($name === 'lsws') {
             $result = $this->execCommand('/usr/local/lsws/bin/lswsctrl', ['reload']);
+        } elseif ($this->isDockerBacked($name)) {
+            $result = $this->dockerBridge()->control($name, 'reload');
         } else {
             $result = $this->execCommand('systemctl', ['reload', $name]);
         }
@@ -153,7 +189,9 @@ class ServiceAction extends BaseAction
             return $this->error("Service not allowed: {$name}");
         }
 
-        $result = $this->execCommand('systemctl', ['start', $name]);
+        $result = $this->isDockerBacked($name)
+            ? $this->dockerBridge()->control($name, 'start')
+            : $this->execCommand('systemctl', ['start', $name]);
         
         if ($result['success']) {
             usleep(500000);
@@ -184,7 +222,9 @@ class ServiceAction extends BaseAction
             return $this->error("Service not allowed: {$name}");
         }
 
-        $result = $this->execCommand('systemctl', ['stop', $name]);
+        $result = $this->isDockerBacked($name)
+            ? $this->dockerBridge()->control($name, 'stop')
+            : $this->execCommand('systemctl', ['stop', $name]);
         
         if ($result['success']) {
             usleep(500000);
@@ -216,7 +256,17 @@ class ServiceAction extends BaseAction
         }
 
         $lines = isset($params['lines']) ? min((int)$params['lines'], 200) : 50;
-        
+
+        if ($this->isDockerBacked($name)) {
+            $dockerLogs = $this->dockerBridge()->logs($name, $lines);
+            return $this->success([
+                'service' => $name,
+                'logs' => $dockerLogs['output'] ?? '',
+                'errors' => '',
+                'lines' => $lines,
+            ]);
+        }
+
         // Get recent journal logs
         $result = $this->execCommand('journalctl', [
             '-u', $name,
@@ -251,6 +301,13 @@ class ServiceAction extends BaseAction
      */
     private function getServiceStatus(string $name): array
     {
+        if ($this->isDockerBacked($name)) {
+            $status = $this->dockerBridge()->status($name);
+            if ($status !== null) {
+                return $status;
+            }
+        }
+
         // Check if active - systemctl is-active can return:
         // active, activating, reloading (all mean "running")
         // inactive, deactivating, failed (all mean "stopped")

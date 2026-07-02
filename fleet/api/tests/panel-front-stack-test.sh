@@ -147,10 +147,14 @@ record() {
 
 run() {
     local grp="$1" name="$2" fn="$3"
-    local s; s="$(now_ms)"
+    # Deliberately obscure timer name: bash locals have DYNAMIC scope, so a
+    # plain `s` here gets clobbered by `for s in ...` loops inside test fns,
+    # and the arithmetic below would then expand e.g. "mail" as a variable
+    # name and abort under `set -u`.
+    local _run_t0; _run_t0="$(now_ms)"
     T_STATUS="PASS"; T_MSG="ok"
     "$fn"
-    local ms=$(( $(now_ms) - s ))
+    local ms=$(( $(now_ms) - _run_t0 ))
     record "$grp" "$name" "$T_STATUS" "$ms" "$T_MSG"
 }
 

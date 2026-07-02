@@ -4075,6 +4075,28 @@ BASH;
         }
         $compose = self::composeInvocation($composeFile, $envFile, $project);
 
+        // 0. The hybrid box has NO native MariaDB server, but the native helpers
+        //    (PowerDNS schema load, mail/DNS seeding, panel installer checks) all
+        //    shell out to the `mariadb` CLI against 127.0.0.1:3306. Install just
+        //    the client — without it those steps fail with "command not found".
+        $hasClient = trim($this->executeCommand(
+            'command -v mariadb >/dev/null 2>&1 || command -v mysql >/dev/null 2>&1; echo $?'
+        )['output'] ?? '1');
+        if ($hasClient !== '0') {
+            $this->log('Installing native mariadb-client (CLI for host tooling -> container DB)...');
+            $res = $this->executeCommand(
+                'DEBIAN_FRONTEND=noninteractive apt-get install -y mariadb-client 2>&1 | tail -2'
+                . ' || { apt-get update -qq 2>&1 | tail -1; DEBIAN_FRONTEND=noninteractive apt-get install -y mariadb-client 2>&1 | tail -2; }',
+                600
+            );
+            $installed = trim($this->executeCommand(
+                'command -v mariadb >/dev/null 2>&1 || command -v mysql >/dev/null 2>&1; echo $?'
+            )['output'] ?? '1') === '0';
+            $this->log($installed
+                ? 'mariadb-client installed.'
+                : 'WARN: mariadb-client install failed — PowerDNS schema load and DB seeding will not work: ' . trim((string) ($res['output'] ?? '')));
+        }
+
         // 1. Ensure root@'%' inside the container (via its local socket as root).
         $sql = "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY " . $this->sqlQuote($root) . ";"
              . " ALTER USER 'root'@'%' IDENTIFIED BY " . $this->sqlQuote($root) . ";"
@@ -6262,6 +6284,16 @@ SERVICE;
                 throw new \Exception("Could not write pxr private key to {$privKeyPath}");
             }
             @chmod($privKeyPath, 0600);
+            // Deploys run as root (CLI) but the web API (Test Connection, audits,
+            // status) runs as the web user — a root-owned 600 key makes every
+            // browser-side SSH action fail with "Unable to read key". Align the
+            // key's owner with the keys dir owner (www-data on the master).
+            if (function_exists('posix_geteuid') && posix_geteuid() === 0) {
+                $dirOwner = @fileowner(dirname($privKeyPath));
+                $dirGroup = @filegroup(dirname($privKeyPath));
+                if ($dirOwner !== false) { @chown($privKeyPath, $dirOwner); }
+                if ($dirGroup !== false) { @chgrp($privKeyPath, $dirGroup); }
+            }
         }
         $fmPublicKey = trim($keyObj->getPublicKey()->toString('OpenSSH', ['comment' => "fleet-mgmt@server{$serverId}"]));
         return [$privKeyPath, $privateKeyStr, $fmPublicKey];

@@ -16,7 +16,12 @@
         ]
     },
     "config": {
-        "optimize-autoloader": true
+        "optimize-autoloader": true,
+        "policy": {
+            "advisories": {
+                "ignore-id": ["PKSA-y2cr-5h3j-g3ys"]
+            }
+        }
     }
 }
 

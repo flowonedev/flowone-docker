@@ -172,6 +172,7 @@ test('render', 'all canonical keys are present', function () use ($renderer) {
         'OAUTH_KEYS','OAUTH_CURRENT_VERSION','SSO_SERVER_KEY','COLLAB_ADDR','MAILSYNC_ADDR','COLLAB_WS_URL',
         'STUN_URL','TURN_URL','TURN_SECRET','TURN_TTL','LIVEKIT_API_KEY','LIVEKIT_API_SECRET','LIVEKIT_WS_URL',
         'VAPID_PUBLIC_KEY','VAPID_PRIVATE_KEY','VAPID_SUBJECT','IMAP_HOST','IMAP_PORT','IMAP_TLS','IMAP_VERIFY_CERT',
+        'SMTP_HOST','SMTP_PORT','SMTP_VERIFY_PEER','SIEVE_HOST','SIEVE_PORT',
         'FCM_ENABLED','APNS_VOIP_ENABLED','PANEL_API_URL','PANEL_API_KEY','REGISTRY','TAG','MYSQL_ROOT_PASSWORD'];
     $missing = array_values(array_diff($expected, array_keys($env)));
     assertTrue($missing === [], 'missing keys: ' . implode(', ', $missing));
@@ -208,7 +209,7 @@ test('urls', 'URLs derived from EMAIL_DOMAIN', function () use ($renderer) {
     assertEq('wss://email.acme.com/collab-ws', $env['COLLAB_WS_URL'], 'COLLAB_WS_URL');
     assertEq('https://panel.acme.com/api', $env['PANEL_API_URL'], 'PANEL_API_URL');
     assertEq('mailto:admin@acme.com', $env['VAPID_SUBJECT'], 'VAPID_SUBJECT');
-    assertEq('acme.com', $env['IMAP_HOST'], 'IMAP_HOST should be the mail host');
+    assertEq('host.docker.internal', $env['IMAP_HOST'], 'IMAP_HOST = host gateway (mail pod is host-networked)');
     return true;
 });
 
@@ -242,10 +243,10 @@ test('ssl', 'enable_ssl=false yields http/ws and lenient cert verify', function 
     assertEq('false', $env['IMAP_VERIFY_CERT'], 'IMAP_VERIFY_CERT');
     return true;
 });
-test('ssl', 'enable_ssl defaults to on', function () use ($renderer) {
+test('ssl', 'enable_ssl defaults to on; IMAP verify stays off (gateway alias not on cert)', function () use ($renderer) {
     $env = parseEnv($renderer->render(sampleVars()));
     assertEq('1', $env['ENABLE_SSL'], 'ENABLE_SSL default');
-    assertEq('true', $env['IMAP_VERIFY_CERT'], 'IMAP_VERIFY_CERT default');
+    assertEq('false', $env['IMAP_VERIFY_CERT'], 'IMAP_VERIFY_CERT off for the in-box gateway hop');
     return true;
 });
 test('ssl', 'registry/tag overridable', function () use ($renderer) {
@@ -274,10 +275,15 @@ test('mail', 'heavy mail services can be toggled off via vars', function () use 
     assertEq('1', $env['MAIL_ENABLE_RSPAMD'], 'rspamd still on');
     return true;
 });
-test('mail', 'SERVER_FQDN drives IMAP_HOST + one shared cert lineage', function () use ($renderer) {
+test('mail', 'SERVER_FQDN drives cert lineage; IMAP_HOST stays on the host gateway', function () use ($renderer) {
     $env = parseEnv($renderer->render(sampleVars(['SERVER_FQDN' => 'vps.acme.com'])));
     assertEq('vps.acme.com', $env['SERVER_FQDN'], 'SERVER_FQDN passthrough');
-    assertEq('vps.acme.com', $env['IMAP_HOST'], 'IMAP_HOST = cert-covered FQDN');
+    // IMAP_HOST must NOT follow the FQDN: apex/mail FQDNs may have no public A
+    // record and never resolve inside the bridge network — the host-gateway
+    // alias always does (broke devcon3 webmail login when tied to the FQDN).
+    assertEq('host.docker.internal', $env['IMAP_HOST'], 'IMAP_HOST = host gateway alias');
+    assertEq('host.docker.internal', $env['SMTP_HOST'], 'SMTP_HOST = host gateway alias');
+    assertEq('host.docker.internal', $env['SIEVE_HOST'], 'SIEVE_HOST = host gateway alias');
     assertEq('/etc/letsencrypt/live/vps.acme.com/fullchain.pem', $env['SSL_CERT_FILE'], 'cert file lineage');
     assertEq('/etc/letsencrypt/live/vps.acme.com/privkey.pem', $env['SSL_KEY_FILE'], 'key file lineage');
     return true;
