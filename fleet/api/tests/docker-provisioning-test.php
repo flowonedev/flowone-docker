@@ -33,7 +33,7 @@ foreach (array_slice($argv, 1) as $arg) {
     elseif (str_starts_with($arg, '--only=')) $opts['only'] = array_filter(explode(',', substr($arg, 7)));
     else { fwrite(STDERR, "Unknown argument: {$arg}\n"); exit(1); }
 }
-if ($opts['help']) { echo "Usage: php docker-provisioning-test.php [--verbose] [--json] [--only=commands,ssl,login,credentials,livekit,parse,health]\n"; exit(0); }
+if ($opts['help']) { echo "Usage: php docker-provisioning-test.php [--verbose] [--json] [--only=commands,ssl,login,credentials,livekit,parse,health,steps]\n"; exit(0); }
 
 const C_GREEN = "\033[32m"; const C_RED = "\033[31m"; const C_YELLOW = "\033[33m"; const C_RESET = "\033[0m";
 $logDir = __DIR__ . '/../storage/logs';
@@ -110,7 +110,11 @@ test('commands', 'seedVolumeCmd mounts volume + source and fixes key perms', fun
     assertContains($c, 'docker run --rm', 'run');
     assertContains($c, "'flowone_jwt_keys':/dst", 'volume mount');
     assertContains($c, "'/tmp/jwt':/src:ro", 'source mount');
-    assertContains($c, 'chmod 600', 'private key perms');
+    // Private key: root:nogroup 640 so non-root containers read it via group;
+    // public key world-readable.
+    assertContains($c, 'chown 0:65534 /dst/jwt-private.pem', 'private key ownership');
+    assertContains($c, 'chmod 640 /dst/jwt-private.pem', 'private key perms');
+    assertContains($c, 'chmod 644 /dst/jwt-public.pem', 'public key perms');
 });
 test('commands', 'restartCmd targets a single service on our project', function () {
     $c = D::restartCmd('mail');
@@ -367,6 +371,51 @@ test('health', 'extra host-net mail container does not break the managed-stack v
     // the managed bridge-net SERVICES; a present-and-healthy mail must not flip it.
     $s = allHealthy(); $s['mail'] = ['state' => 'running', 'health' => 'healthy'];
     assertTrue(D::isStackHealthy($s), 'mail present + healthy stays healthy');
+});
+
+// --- steps (deployment_steps timeline plans — every deploy type must have one) ---
+section('steps');
+test('steps', 'PROVISION_STEPS carries the full 11-phase provision plan', function () {
+    $keys = array_keys(D::PROVISION_STEPS);
+    assertTrue(count($keys) === 11, 'expected 11 provision steps, got ' . count($keys));
+    assertTrue($keys[0] === 'connect', 'starts with connect');
+    assertTrue(end($keys) === 'harden', 'ends with harden');
+});
+test('steps', 'updateStepPlan: fixed prep phases then one step per service, in order', function () {
+    $plan = D::updateStepPlan(['web', 'mail']);
+    $keys = array_keys($plan);
+    assertTrue($keys === ['connect', 'ship_files', 'render_env', 'registry_login', 'update_web', 'update_mail'],
+        'unexpected plan order: ' . implode(',', $keys));
+    assertTrue($plan['update_web'] === 'Update web (pull + recreate)', 'service step name');
+});
+test('steps', 'updateStepPlan for a single service yields 5 steps', function () {
+    assertTrue(count(D::updateStepPlan(['collab'])) === 5, '4 prep + 1 service');
+});
+test('steps', 'updateService seeds + advances the step timeline (no more 0/0 steps)', function () {
+    $src = file_get_contents(__DIR__ . '/../src/Services/DockerProvisioningService.php');
+    // seedSteps(updateStepPlan(...)) must be called inside updateService()
+    $body = substr($src, strpos($src, 'public function updateService'));
+    $body = substr($body, 0, strpos($body, 'private function warmSchema'));
+    assertTrue(strpos($body, 'seedSteps(self::updateStepPlan($services))') !== false, 'updateService must seed its step plan');
+    assertTrue(strpos($body, "step('connect')") !== false, 'connect step advanced');
+    assertTrue(strpos($body, "step('update_' . \$service)") !== false, 'per-service step advanced');
+    assertTrue(strpos($body, 'failCurrentStep') !== false, 'failure marks the running step failed');
+});
+test('steps', 'panel update: ProvisioningService exposes PANEL_UPDATE_STEPS + phase hook', function () {
+    $src = file_get_contents(__DIR__ . '/../src/Services/ProvisioningService.php');
+    assertTrue(strpos($src, 'const PANEL_UPDATE_STEPS') !== false, 'PANEL_UPDATE_STEPS plan exists');
+    assertTrue(strpos($src, 'public function updatePanel(int $serverId, ?callable $onPhase = null)') !== false,
+        'updatePanel accepts the phase hook');
+    foreach (['connect', 'shared_lib', 'deploy_panel', 'restart_agent'] as $phase) {
+        assertTrue(strpos($src, "\$phase('{$phase}')") !== false, "phase '{$phase}' fired in updatePanel");
+    }
+});
+test('steps', 'cli/update-panel.php seeds deployment_steps from PANEL_UPDATE_STEPS', function () {
+    $src = file_get_contents(__DIR__ . '/../cli/update-panel.php');
+    assertTrue(strpos($src, 'PANEL_UPDATE_STEPS') !== false, 'CLI reads the shared plan');
+    assertTrue(strpos($src, 'INSERT IGNORE INTO deployment_steps') !== false, 'CLI seeds step rows');
+    assertTrue(strpos($src, 'steps_total') !== false, 'CLI sets steps_total');
+    assertTrue(strpos($src, '$svc->updatePanel($serverId, $step)') !== false, 'CLI passes the step cursor as the phase hook');
 });
 
 $total = $results['passed'] + $results['failed'] + $results['warned'];

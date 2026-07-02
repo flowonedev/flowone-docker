@@ -759,7 +759,7 @@ onMounted(() => {
                 <div class="flex justify-between text-sm">
                   <span class="text-surface-600 dark:text-surface-400">{{ deploymentStep }}</span>
                   <span class="font-medium text-surface-900 dark:text-surface-100">
-                    {{ stepsCompleted }}/{{ stepsTotal }} steps &middot; {{ deploymentProgress }}%
+                    <template v-if="stepsTotal > 0">{{ stepsCompleted }}/{{ stepsTotal }} steps &middot; </template>{{ deploymentProgress }}%
                   </span>
                 </div>
                 <div class="h-3 bg-surface-200 dark:bg-surface-700 rounded-full overflow-hidden">
@@ -892,10 +892,16 @@ onMounted(() => {
                 </div>
               </div>
 
-              <!-- No steps yet -->
+              <!-- No steps yet / no step data recorded -->
               <div v-if="activeTab === 'steps' && !steps.length" class="text-center py-6 text-sm text-surface-500 dark:text-surface-400">
-                <span class="material-symbols-rounded text-3xl mb-2 block">hourglass_empty</span>
-                Waiting for step data...
+                <template v-if="deploymentStatus === 'running' || deploymentStatus === 'pending'">
+                  <span class="material-symbols-rounded text-3xl mb-2 block">hourglass_empty</span>
+                  Waiting for step data...
+                </template>
+                <template v-else>
+                  <span class="material-symbols-rounded text-3xl mb-2 block">timeline</span>
+                  No step timeline was recorded for this deployment &mdash; see the Full Log tab.
+                </template>
               </div>
 
               <!-- Full Log Output -->

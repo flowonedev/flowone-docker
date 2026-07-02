@@ -69,6 +69,28 @@ class DockerProvisioningService
         'harden'         => 'Harden host (SSH/firewall/fail2ban)',
     ];
 
+    /**
+     * Step plan for a Docker Update (docker_update / app_update email leg):
+     * fixed prep phases + one `update_<service>` step per rolled service, so
+     * the Steps tab shows real progress instead of "0/0 steps".
+     *
+     * @param string[] $services services being rolled, in execution order
+     * @return array<string,string> step_key => human name
+     */
+    public static function updateStepPlan(array $services): array
+    {
+        $plan = [
+            'connect'        => 'Connect via SSH',
+            'ship_files'     => 'Ship stack files',
+            'render_env'     => 'Render .env',
+            'registry_login' => 'Log in to registry',
+        ];
+        foreach ($services as $service) {
+            $plan['update_' . $service] = "Update {$service} (pull + recreate)";
+        }
+        return $plan;
+    }
+
     private Container $container;
     private SSHService $ssh;
     private ComposeEnvRenderer $envRenderer;
@@ -668,6 +690,8 @@ class DockerProvisioningService
 
         try {
             $this->markDeployment('running', 5, 'Connecting...');
+            $this->seedSteps(self::updateStepPlan($services));
+            $this->step('connect');
             $server = $this->getServer($serverId);
             $this->logLine("Connecting to {$server['name']}...");
             if (!$this->ssh->connectToServer($server)) {
@@ -695,6 +719,7 @@ class DockerProvisioningService
             // full provision. `up -d --no-deps <svc>` below then recreates the picked
             // services with the new config. Cheap + idempotent.
             $this->markDeployment(null, 15, 'Shipping stack files...');
+            $this->step('ship_files');
             $this->run('mkdir -p ' . escapeshellarg(self::STACK_DIR), 30, 'mkdir stack');
             $this->uploadComposeFile($options);
             $this->shipStackFiles($options);
@@ -707,25 +732,30 @@ class DockerProvisioningService
 
             $tag = $this->resolveTag($options);
             $this->markDeployment(null, 20, 'Rendering .env...');
+            $this->step('render_env');
             $this->logLine("Re-rendering .env (tag={$tag}, SSL=" . ($enableSsl ? 'on' : 'off') . ')...');
             $this->renderAndUploadEnv($variables, $options, $enableSsl);
 
             $this->markDeployment(null, 35, 'Logging in to registry...');
+            $this->step('registry_login');
             $this->maybeDockerLogin($options);
 
             $total = count($services);
             foreach ($services as $i => $service) {
                 $pct = 35 + (int) round((($i + 1) / $total) * 55); // 35 -> 90
                 $this->markDeployment(null, $pct, "Updating {$service}...");
+                $this->step('update_' . $service);
                 $this->run(self::pullCmd($service), 900, "pull {$service}");
                 $this->run(self::upCmd($service), 180, "up {$service}");
             }
 
             $this->persistDeployedTag($serverId, $tag);
+            $this->step(null); // close the last running step as success
             $this->markDeployment('success', 100, 'Completed');
             return ['success' => true, 'log' => $this->log];
         } catch (\Throwable $e) {
             $this->logLine('ERROR: ' . $e->getMessage());
+            $this->failCurrentStep($e->getMessage());
             $this->markDeployment('failed', null, 'Error: ' . substr($e->getMessage(), 0, 120));
             return ['success' => false, 'error' => $e->getMessage(), 'log' => $this->log];
         } finally {
@@ -1007,8 +1037,11 @@ class DockerProvisioningService
     /**
      * Seed the deployment_steps rows for this run (INSERT IGNORE = resume-safe)
      * so the dashboard's Steps tab has data from second one. Best-effort.
+     *
+     * @param array<string,string>|null $plan step_key => name; defaults to the
+     *                                        full-provision plan.
      */
-    private function seedSteps(): void
+    private function seedSteps(?array $plan = null): void
     {
         if (!$this->deploymentId) {
             return;
@@ -1020,7 +1053,7 @@ class DockerProvisioningService
                     (deployment_id, step_key, step_name, step_order, weight, status, can_skip, idempotent, max_retries)
                  VALUES (?, ?, ?, ?, 1, 'pending', 0, 1, 0)"
             );
-            foreach (self::PROVISION_STEPS as $key => $name) {
+            foreach (($plan ?? self::PROVISION_STEPS) as $key => $name) {
                 $ins->execute([$this->deploymentId, $key, $name, ++$order]);
             }
             $this->db->prepare('UPDATE deployments SET steps_total = ?, steps_completed = 0 WHERE id = ?')

@@ -75,6 +75,18 @@ class ProvisioningService
         'harden_ssh'         => ['name' => 'Hardening SSH access',             'weight' => 3,  'can_skip' => true,  'idempotent' => true],
     ];
 
+    /**
+     * Phase plan for a day-2 panel-only update (updatePanel + cli/update-panel.php).
+     * Public: the CLI seeds deployment_steps rows from this so the dashboard's
+     * Steps tab shows real phases instead of "0/0 steps".
+     */
+    public const PANEL_UPDATE_STEPS = [
+        'connect'       => 'Connect via SSH',
+        'shared_lib'    => 'Deploy shared library',
+        'deploy_panel'  => 'Deploy panel package (API + dashboard)',
+        'restart_agent' => 'Restart fleet agent',
+    ];
+
     // Steps for packages + config deployment (no apps)
     private const STEPS_PACKAGES_CONFIG = [
         'connect'          => ['name' => 'Connecting to server',                'weight' => 10, 'can_skip' => false, 'idempotent' => true],
@@ -4135,12 +4147,21 @@ BASH;
      * so run master-update.sh first. Docker boxes (deployed_image_tag set) get
      * PANEL_DB_HOST=127.0.0.1 so the installer talks to the containerized MariaDB.
      *
+     * @param callable|null $onPhase optional progress hook, called with a phase
+     *                               key from PANEL_UPDATE_STEPS as each phase
+     *                               starts (drives the dashboard Steps tab).
      * @return array{success:bool, log:array, error?:string}
      */
-    public function updatePanel(int $serverId): array
+    public function updatePanel(int $serverId, ?callable $onPhase = null): array
     {
+        $phase = function (string $key) use ($onPhase): void {
+            if ($onPhase) {
+                try { $onPhase($key); } catch (\Throwable $e) { /* bookkeeping never fails the update */ }
+            }
+        };
         $this->deploymentLog = [];
         try {
+            $phase('connect');
             $stmt = $this->db->prepare("SELECT * FROM servers WHERE id = ?");
             $stmt->execute([$serverId]);
             $server = $stmt->fetch();
@@ -4159,10 +4180,13 @@ BASH;
                 $variables['PANEL_DB_HOST'] = '127.0.0.1';
             }
 
+            $phase('shared_lib');
             try { $this->deploySharedLibrary($variables); }
             catch (\Throwable $e) { $this->log('Shared library (non-fatal): ' . $e->getMessage()); }
 
+            $phase('deploy_panel');
             $this->deployPanel($variables);
+            $phase('restart_agent');
             $this->executeCommand('systemctl restart vpsadmin-agent 2>/dev/null || true');
 
             $this->log("Panel update complete.");
