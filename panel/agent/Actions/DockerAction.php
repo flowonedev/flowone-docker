@@ -8,6 +8,7 @@
 namespace VpsAdmin\Agent\Actions;
 
 use VpsAdmin\Agent\Lib\BaseAction;
+use VpsAdmin\Agent\Lib\DockerInspector;
 
 class DockerAction extends BaseAction
 {
@@ -21,8 +22,11 @@ class DockerAction extends BaseAction
         return [
             'status',
             'install',
+            'overview',
             'containers',
             'images',
+            'volumes',
+            'networks',
             'container',
             'start',
             'stop',
@@ -257,6 +261,60 @@ class DockerAction extends BaseAction
             'version' => trim($verifyResult['output']),
             'log' => $installLog,
         ], 'Docker installed successfully');
+    }
+
+    /** Inspector wired to this action's execCommand (lazy). */
+    private function inspector(): ?DockerInspector
+    {
+        $dockerBin = $this->findDockerBin();
+        if (!$dockerBin) {
+            return null;
+        }
+        return new DockerInspector(
+            fn (string $cmd, array $args, int $timeout) => $this->execCommand($cmd, $args, $timeout),
+            $dockerBin
+        );
+    }
+
+    /**
+     * Deep snapshot for the Docker details page: engine info, containers
+     * (with compose labels), images, volumes (sizes), networks, disk usage
+     * and compose stack grouping — one call, one page.
+     */
+    protected function actionOverview(array $params, string $actor): array
+    {
+        $inspector = $this->inspector();
+        if (!$inspector) {
+            return $this->error('Docker not found');
+        }
+        return $this->success($inspector->overview());
+    }
+
+    /**
+     * List all volumes (with size + in-use flag)
+     */
+    protected function actionVolumes(array $params, string $actor): array
+    {
+        $inspector = $this->inspector();
+        if (!$inspector) {
+            return $this->error('Docker not found');
+        }
+        $containers = $inspector->containers();
+        return $this->success([
+            'volumes' => $inspector->volumes($inspector->volumeNamesInUse($containers)),
+        ]);
+    }
+
+    /**
+     * List all networks
+     */
+    protected function actionNetworks(array $params, string $actor): array
+    {
+        $inspector = $this->inspector();
+        if (!$inspector) {
+            return $this->error('Docker not found');
+        }
+        return $this->success(['networks' => $inspector->networks()]);
     }
 
     /**

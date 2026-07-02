@@ -10,6 +10,7 @@ import StatusBadge from '@/components/StatusBadge.vue'
 import Toggle from '@/components/Toggle.vue'
 
 import EmailAddonsPanel from '@/components/EmailAddonsPanel.vue'
+import DockerPanel from '@/components/DockerPanel.vue'
 import AccountAdminMenu from '@/components/AccountAdminMenu.vue'
 import MigrationChecklist from '@/components/site-manage/MigrationChecklist.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -2841,121 +2842,8 @@ const formatWpDate = (date) => {
 }
 
 // ============================================
-// Docker Tab State & Logic
+// Docker tab is fully handled by <DockerPanel /> (components/DockerPanel.vue)
 // ============================================
-const dockerStatus = ref(null)
-const dockerContainers = ref([])
-const dockerLoading = ref(true)
-const dockerInstalling = ref(false)
-
-const fetchDockerStatus = async (forceRefresh = false) => {
-  // Check cache first
-  if (!forceRefresh) {
-    const cachedStatus = cache.get(CACHE_KEYS.DOCKER_STATUS)
-    const cachedContainers = cache.get(CACHE_KEYS.DOCKER_CONTAINERS)
-    if (cachedStatus) {
-      dockerStatus.value = cachedStatus
-      if (cachedContainers) dockerContainers.value = cachedContainers
-      dockerLoading.value = false
-      return
-    }
-  }
-  
-  dockerLoading.value = true
-  try {
-    const response = await api.get('/docker/status')
-    if (response.data.success) {
-      dockerStatus.value = response.data.data
-      cache.set(CACHE_KEYS.DOCKER_STATUS, dockerStatus.value, TTL.LONG)
-      if (dockerStatus.value.running) {
-        await fetchDockerContainers(forceRefresh)
-      }
-    }
-  } catch (e) {
-    dockerStatus.value = { installed: false, running: false }
-  } finally {
-    dockerLoading.value = false
-  }
-}
-
-const fetchDockerContainers = async (forceRefresh = false) => {
-  if (!forceRefresh) {
-    const cached = cache.get(CACHE_KEYS.DOCKER_CONTAINERS)
-    if (cached) {
-      dockerContainers.value = cached
-      return
-    }
-  }
-  
-  try {
-    const response = await api.get('/docker/containers')
-    if (response.data.success) {
-      dockerContainers.value = response.data.data.containers || []
-      cache.set(CACHE_KEYS.DOCKER_CONTAINERS, dockerContainers.value, TTL.LONG)
-    }
-  } catch (e) {
-    console.error('Failed to fetch containers', e)
-  }
-}
-
-const installDocker = async () => {
-  dockerInstalling.value = true
-  try {
-    const response = await api.post('/docker/install', { include_compose: true })
-    if (response.data.success) {
-      toast.success('Docker installed successfully')
-      await fetchDockerStatus()
-    } else {
-      toast.error(response.data.error || 'Failed to install Docker')
-    }
-  } catch (e) {
-    toast.error(e.response?.data?.error || 'Failed to install Docker')
-  } finally {
-    dockerInstalling.value = false
-  }
-}
-
-const restartContainer = async (id) => {
-  try {
-    const response = await api.post(`/docker/containers/${id}/restart`)
-    if (response.data.success) {
-      toast.success('Container restarted')
-      await fetchDockerContainers()
-    } else {
-      toast.error(response.data.error || 'Failed to restart container')
-    }
-  } catch (e) {
-    toast.error(e.response?.data?.error || 'Failed to restart container')
-  }
-}
-
-const stopContainer = async (id) => {
-  try {
-    const response = await api.post(`/docker/containers/${id}/stop`)
-    if (response.data.success) {
-      toast.success('Container stopped')
-      await fetchDockerContainers()
-    } else {
-      toast.error(response.data.error || 'Failed to stop container')
-    }
-  } catch (e) {
-    toast.error(e.response?.data?.error || 'Failed to stop container')
-  }
-}
-
-const startContainer = async (id) => {
-  try {
-    const response = await api.post(`/docker/containers/${id}/start`)
-    if (response.data.success) {
-      toast.success('Container started')
-      await fetchDockerContainers()
-    } else {
-      toast.error(response.data.error || 'Failed to start container')
-    }
-  } catch (e) {
-    toast.error(e.response?.data?.error || 'Failed to start container')
-  }
-}
 
 // ============================================
 // Load data based on active tab
@@ -2988,9 +2876,7 @@ const loadTabData = (tab, forceRefresh = false) => {
     case 'wordpress':
       fetchWpData(forceRefresh)
       break
-    case 'docker':
-      fetchDockerStatus(forceRefresh)
-      break
+    // 'docker' tab loads itself inside <DockerPanel />
   }
 }
 
@@ -4988,150 +4874,9 @@ onMounted(() => {
       </template>
     </div>
 
-    <!-- Docker Tab -->
-    <div v-if="activeTab === 'docker'" class="space-y-6">
-      <!-- Header with refresh -->
-      <div class="flex justify-between items-center">
-        <span v-if="getCacheAge(CACHE_KEYS.DOCKER_STATUS) !== 'not cached'" class="text-xs text-surface-400">
-          <span class="material-symbols-rounded text-sm align-middle">schedule</span>
-          Updated {{ getCacheAge(CACHE_KEYS.DOCKER_STATUS) }}
-        </span>
-        <span v-else></span>
-        <button @click="fetchDockerStatus(true)" class="btn-secondary" :disabled="dockerLoading">
-          <span class="material-symbols-rounded" :class="dockerLoading && 'animate-spin'">refresh</span>
-          Refresh
-        </button>
-      </div>
-      
-      <div v-if="dockerLoading" class="flex items-center justify-center py-12">
-        <span class="spinner"></span>
-      </div>
-
-      <template v-else>
-        <!-- Docker Not Installed -->
-        <div v-if="!dockerStatus?.installed" class="card p-12 text-center">
-          <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center">
-            <span class="material-symbols-rounded text-3xl text-blue-600 dark:text-blue-400">deployed_code</span>
-          </div>
-          <h3 class="text-xl font-semibold mb-2">Docker Not Installed</h3>
-          <p class="text-surface-500 mb-6 max-w-md mx-auto">
-            Docker is not installed on this server. Install Docker to run containerized applications.
-          </p>
-          <button @click="installDocker" class="btn-primary" :disabled="dockerInstalling">
-            <span v-if="dockerInstalling" class="spinner-sm mr-2"></span>
-            <span class="material-symbols-rounded">download</span>
-            {{ dockerInstalling ? 'Installing...' : 'Install Docker' }}
-          </button>
-        </div>
-
-        <!-- Docker Installed -->
-        <template v-else>
-          <!-- Docker Status -->
-          <div class="card p-6">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="font-semibold flex items-center gap-2">
-                <span class="material-symbols-rounded text-blue-500">deployed_code</span>
-                Docker Status
-              </h3>
-              <button @click="fetchDockerStatus" class="btn-secondary btn-sm">
-                <span class="material-symbols-rounded">refresh</span>
-              </button>
-            </div>
-            
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div class="p-3 bg-surface-50 dark:bg-surface-800 rounded-xl">
-                <p class="text-xs text-surface-500 mb-1">Status</p>
-                <div class="flex items-center gap-2">
-                  <span :class="['w-2 h-2 rounded-full', dockerStatus.running ? 'bg-green-500' : 'bg-red-500']"></span>
-                  <span class="font-semibold">{{ dockerStatus.running ? 'Running' : 'Stopped' }}</span>
-                </div>
-              </div>
-              <div class="p-3 bg-surface-50 dark:bg-surface-800 rounded-xl">
-                <p class="text-xs text-surface-500 mb-1">Version</p>
-                <p class="font-semibold">{{ dockerStatus.version || '-' }}</p>
-              </div>
-              <div class="p-3 bg-surface-50 dark:bg-surface-800 rounded-xl">
-                <p class="text-xs text-surface-500 mb-1">Compose</p>
-                <p class="font-semibold">{{ dockerStatus.compose_installed ? dockerStatus.compose_version : 'Not Installed' }}</p>
-              </div>
-              <div class="p-3 bg-surface-50 dark:bg-surface-800 rounded-xl">
-                <p class="text-xs text-surface-500 mb-1">Containers</p>
-                <p class="font-semibold">{{ dockerContainers.length }}</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Containers -->
-          <div class="card">
-            <div class="card-header flex items-center justify-between">
-              <h3 class="font-semibold flex items-center gap-2">
-                <span class="material-symbols-rounded text-green-500">view_in_ar</span>
-                Containers
-                <span class="text-xs px-2 py-0.5 rounded-full bg-surface-200 dark:bg-surface-700">
-                  {{ dockerContainers.length }}
-                </span>
-              </h3>
-            </div>
-
-            <div v-if="dockerContainers.length === 0" class="p-12 text-center text-surface-500">
-              <span class="material-symbols-rounded text-4xl mb-2 block">inbox</span>
-              <p>No containers found</p>
-              <p class="text-sm mt-1">Start a container using docker-compose or docker run</p>
-            </div>
-
-            <div v-else class="overflow-x-auto">
-              <table class="table">
-                <thead>
-                  <tr class="bg-surface-50 dark:bg-surface-800/50">
-                    <th>Container</th>
-                    <th>Image</th>
-                    <th>Status</th>
-                    <th>Ports</th>
-                    <th class="text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="container in dockerContainers" :key="container.ID">
-                    <td>
-                      <div class="flex items-center gap-3">
-                        <div :class="['w-10 h-10 rounded-lg flex items-center justify-center', container.running ? 'bg-green-100 dark:bg-green-500/20' : 'bg-surface-100 dark:bg-surface-800']">
-                          <span :class="['material-symbols-rounded', container.running ? 'text-green-600' : 'text-surface-400']">deployed_code</span>
-                        </div>
-                        <div>
-                          <div class="font-medium">{{ container.Names }}</div>
-                          <div class="text-xs text-surface-500 font-mono">{{ container.ID?.substring(0, 12) }}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td><span class="font-mono text-sm">{{ container.Image }}</span></td>
-                    <td>
-                      <span :class="[
-                        'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium',
-                        container.running ? 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400' : 'bg-surface-100 dark:bg-surface-700 text-surface-600'
-                      ]">{{ container.State }}</span>
-                      <p class="text-xs text-surface-500 mt-1">{{ container.Status }}</p>
-                    </td>
-                    <td><span class="text-sm font-mono">{{ container.Ports || '-' }}</span></td>
-                    <td class="text-right">
-                      <div class="flex items-center justify-end gap-1">
-                        <button v-if="container.running" @click="restartContainer(container.ID)" class="btn-ghost btn-sm" title="Restart">
-                          <span class="material-symbols-rounded">restart_alt</span>
-                        </button>
-                        <button v-if="container.running" @click="stopContainer(container.ID)" class="btn-ghost btn-sm text-amber-600" title="Stop">
-                          <span class="material-symbols-rounded">stop_circle</span>
-                        </button>
-                        <button v-else @click="startContainer(container.ID)" class="btn-ghost btn-sm text-green-600" title="Start">
-                          <span class="material-symbols-rounded">play_circle</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </template>
-      </template>
+    <!-- Docker Tab (self-contained: engine, containers, images, volumes, networks) -->
+    <div v-if="activeTab === 'docker'">
+      <DockerPanel />
     </div>
 
     <!-- Service Confirm Modal -->

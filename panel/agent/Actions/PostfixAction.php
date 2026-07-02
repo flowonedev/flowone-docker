@@ -3,6 +3,7 @@
 namespace VpsAdmin\Agent\Actions;
 
 use VpsAdmin\Agent\Lib\BaseAction;
+use VpsAdmin\Agent\Lib\MailPodBridge;
 
 /**
  * Postfix SMTP server configuration management
@@ -10,6 +11,8 @@ use VpsAdmin\Agent\Lib\BaseAction;
 class PostfixAction extends BaseAction
 {
     protected array $allowedActions = ['status', 'settings', 'updateSettings', 'restart', 'flush', 'queue'];
+
+    private ?MailPodBridge $mailPod = null;
 
     public function getNamespace(): string
     {
@@ -27,26 +30,45 @@ class PostfixAction extends BaseAction
     }
 
     /**
+     * On Docker boxes Postfix runs inside the flowone mail pod; read
+     * status/config through docker exec instead of native tooling.
+     */
+    private function mailPod(): MailPodBridge
+    {
+        if ($this->mailPod === null) {
+            $this->mailPod = new MailPodBridge(
+                fn (string $cmd, array $args, int $timeout = 0) => $this->execCommand($cmd, $args, $timeout)
+            );
+        }
+        return $this->mailPod;
+    }
+
+    /**
      * Get Postfix status
      */
     protected function actionStatus(array $params, string $actor): array
     {
-        // Check if running
-        exec('systemctl is-active postfix 2>&1', $activeOutput, $activeCode);
-        $running = ($activeCode === 0);
-        
-        // Get version
-        $version = null;
-        exec('postconf -d mail_version 2>&1', $versionOutput, $versionCode);
-        if ($versionCode === 0 && !empty($versionOutput)) {
-            if (preg_match('/mail_version\s*=\s*(.+)/', $versionOutput[0], $matches)) {
-                $version = trim($matches[1]);
-            }
+        $pod = $this->mailPod();
+
+        if ($pod->active()) {
+            $running = $pod->programRunning('postfix');
+            $versionOut = $pod->exec(['postconf', '-d', 'mail_version'], 20)['output'];
+        } else {
+            exec('systemctl is-active postfix 2>&1', $activeOutput, $activeCode);
+            $running = ($activeCode === 0);
+            exec('postconf -d mail_version 2>&1', $versionOutput);
+            $versionOut = implode("\n", $versionOutput ?? []);
         }
-        
+
+        $version = null;
+        if (preg_match('/mail_version\s*=\s*(.+)/', $versionOut, $matches)) {
+            $version = trim($matches[1]);
+        }
+
         return $this->success([
             'running' => $running,
             'version' => $version,
+            'runtime' => $pod->active() ? 'docker' : 'native',
         ]);
     }
 
@@ -85,14 +107,19 @@ class PostfixAction extends BaseAction
             'smtpd_client_message_rate_limit',
         ];
         
-        foreach ($settingKeys as $key) {
-            exec("postconf {$key} 2>&1", $output, $code);
-            if ($code === 0 && !empty($output)) {
-                if (preg_match('/' . preg_quote($key, '/') . '\s*=\s*(.*)/', $output[0], $matches)) {
-                    $settings[$key] = trim($matches[1]);
+        if ($this->mailPod()->active()) {
+            // One docker exec fetches every key at once.
+            $settings = $this->mailPod()->keyValues('postconf', $settingKeys, 30);
+        } else {
+            foreach ($settingKeys as $key) {
+                exec("postconf {$key} 2>&1", $output, $code);
+                if ($code === 0 && !empty($output)) {
+                    if (preg_match('/' . preg_quote($key, '/') . '\s*=\s*(.*)/', $output[0], $matches)) {
+                        $settings[$key] = trim($matches[1]);
+                    }
                 }
+                $output = [];
             }
-            $output = [];
         }
         
         // Get mail queue
@@ -101,6 +128,8 @@ class PostfixAction extends BaseAction
         return $this->success([
             'settings' => $settings,
             'queue' => $queue,
+            'runtime' => $this->mailPod()->active() ? 'docker' : 'native',
+            'read_only' => $this->mailPod()->active(),
         ]);
     }
 
@@ -110,7 +139,13 @@ class PostfixAction extends BaseAction
     private function getQueue(): array
     {
         $queue = [];
-        exec('postqueue -j 2>&1', $output, $code);
+        if ($this->mailPod()->active()) {
+            $res = $this->mailPod()->exec(['postqueue', '-j'], 30);
+            $output = $res['success'] ? explode("\n", $res['output']) : [];
+            $code = $res['success'] ? 0 : 1;
+        } else {
+            exec('postqueue -j 2>&1', $output, $code);
+        }
         
         if ($code === 0) {
             foreach ($output as $line) {
@@ -135,6 +170,10 @@ class PostfixAction extends BaseAction
      */
     protected function actionUpdateSettings(array $params, string $actor): array
     {
+        if ($this->mailPod()->active()) {
+            return $this->error($this->mailPod()->readOnlyError());
+        }
+
         if (!isset($params['settings']) || !is_array($params['settings'])) {
             return $this->error('Settings array is required');
         }
@@ -201,10 +240,16 @@ class PostfixAction extends BaseAction
      */
     protected function actionRestart(array $params, string $actor): array
     {
-        exec('systemctl restart postfix 2>&1', $output, $exitCode);
-        
-        if ($exitCode !== 0) {
-            return $this->error('Failed to restart Postfix: ' . implode("\n", $output));
+        if ($this->mailPod()->active()) {
+            $res = $this->mailPod()->restartProgram('postfix');
+            if (!$res['success']) {
+                return $this->error('Failed to restart Postfix in mail pod: ' . $res['output']);
+            }
+        } else {
+            exec('systemctl restart postfix 2>&1', $output, $exitCode);
+            if ($exitCode !== 0) {
+                return $this->error('Failed to restart Postfix: ' . implode("\n", $output));
+            }
         }
         
         return $this->success([
@@ -217,10 +262,16 @@ class PostfixAction extends BaseAction
      */
     protected function actionFlush(array $params, string $actor): array
     {
-        exec('postqueue -f 2>&1', $output, $exitCode);
-        
-        if ($exitCode !== 0) {
-            return $this->error('Failed to flush queue: ' . implode("\n", $output));
+        if ($this->mailPod()->active()) {
+            $res = $this->mailPod()->exec(['postqueue', '-f'], 30);
+            if (!$res['success']) {
+                return $this->error('Failed to flush queue: ' . $res['output']);
+            }
+        } else {
+            exec('postqueue -f 2>&1', $output, $exitCode);
+            if ($exitCode !== 0) {
+                return $this->error('Failed to flush queue: ' . implode("\n", $output));
+            }
         }
         
         return $this->success([
@@ -287,6 +338,18 @@ class PostfixAction extends BaseAction
         if (!$this->validatePostfixFile($configPath)) {
             return $this->error('Invalid config file path');
         }
+
+        // Docker box: read the file from inside the mail pod (read-only view).
+        if ($this->mailPod()->active()) {
+            $content = $this->mailPod()->readFile($configPath);
+            return $this->success([
+                'path' => $configPath,
+                'content' => $content ?? '',
+                'exists' => $content !== null,
+                'read_only' => true,
+                'runtime' => 'docker',
+            ]);
+        }
         
         if (!file_exists($configPath)) {
             // For non-main.cf files, return empty content if file doesn't exist
@@ -312,6 +375,10 @@ class PostfixAction extends BaseAction
      */
     protected function actionSaveRawConfig(array $params, string $actor): array
     {
+        if ($this->mailPod()->active()) {
+            return $this->error($this->mailPod()->readOnlyError());
+        }
+
         if (!isset($params['content'])) {
             return $this->error('Content is required');
         }

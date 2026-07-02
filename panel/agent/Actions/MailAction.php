@@ -8,6 +8,7 @@
 namespace VpsAdmin\Agent\Actions;
 
 use VpsAdmin\Agent\Lib\BaseAction;
+use VpsAdmin\Agent\Lib\MailPodBridge;
 use VpsAdmin\Agent\Lib\PanelDbTrait;
 use VpsAdmin\Agent\Lib\Validator;
 
@@ -277,14 +278,41 @@ class MailAction extends BaseAction
     }
 
     /**
+     * Mail pod bridge (lazy). On Docker boxes postfix/dovecot live inside
+     * the flowone-mail-1 container, so status/queue/hostname must be read
+     * through docker exec instead of native systemctl/postqueue/postconf.
+     */
+    private ?MailPodBridge $mailPod = null;
+
+    private function mailPod(): MailPodBridge
+    {
+        if ($this->mailPod === null) {
+            $this->mailPod = new MailPodBridge(
+                fn (string $cmd, array $args, int $timeout = 0) => $this->execCommand($cmd, $args, $timeout)
+            );
+        }
+        return $this->mailPod;
+    }
+
+    /**
      * Get mail system status
      */
     protected function actionStatus(array $params, string $actor): array
     {
-        $postfixStatus = $this->execCommand('systemctl', ['is-active', 'postfix']);
-        $dovecotStatus = $this->execCommand('systemctl', ['is-active', 'dovecot']);
+        $pod = $this->mailPod();
 
-        $queueResult = $this->execCommand('postqueue', ['-p']);
+        if ($pod->active()) {
+            $postfixRunning = $pod->programRunning('postfix');
+            $dovecotRunning = $pod->programRunning('dovecot');
+            $queueResult = $pod->exec(['postqueue', '-p'], 30);
+            $hostnameResult = $pod->exec(['postconf', '-h', 'myhostname'], 20);
+        } else {
+            $postfixRunning = trim($this->execCommand('systemctl', ['is-active', 'postfix'])['output']) === 'active';
+            $dovecotRunning = trim($this->execCommand('systemctl', ['is-active', 'dovecot'])['output']) === 'active';
+            $queueResult = $this->execCommand('postqueue', ['-p']);
+            $hostnameResult = $this->execCommand('postconf', ['-h', 'myhostname']);
+        }
+
         $queueCount = 0;
         if (preg_match('/-- (\d+) Kbytes in (\d+) Request/', $queueResult['output'], $m)) {
             $queueCount = (int)$m[2];
@@ -294,7 +322,6 @@ class MailAction extends BaseAction
         // (postconf -h myhostname). This is the value the TLS certificate is
         // issued for and what clients should use for IMAP/POP3/SMTP, so the
         // panel can show real connection settings instead of a placeholder.
-        $hostnameResult = $this->execCommand('postconf', ['-h', 'myhostname']);
         $mailHostname = trim($hostnameResult['output'] ?? '');
         if ($mailHostname === '' || empty($hostnameResult['success'])) {
             $mailHostname = gethostname() ?: '';
@@ -302,13 +329,14 @@ class MailAction extends BaseAction
 
         return $this->success([
             'postfix' => [
-                'running' => trim($postfixStatus['output']) === 'active',
+                'running' => $postfixRunning,
             ],
             'dovecot' => [
-                'running' => trim($dovecotStatus['output']) === 'active',
+                'running' => $dovecotRunning,
             ],
             'queue_count' => $queueCount,
             'hostname' => $mailHostname,
+            'runtime' => $pod->active() ? 'docker' : 'native',
         ]);
     }
 
@@ -1839,8 +1867,10 @@ class MailAction extends BaseAction
      */
     protected function actionQueue(array $params, string $actor): array
     {
-        $result = $this->execCommand('postqueue', ['-j']);
-        
+        $result = $this->mailPod()->active()
+            ? $this->mailPod()->exec(['postqueue', '-j'], 30)
+            : $this->execCommand('postqueue', ['-j']);
+
         if (!$result['success']) {
             return $this->error('Failed to get queue: ' . $result['output']);
         }
@@ -1868,8 +1898,10 @@ class MailAction extends BaseAction
      */
     protected function actionQueueFlush(array $params, string $actor): array
     {
-        $result = $this->execCommand('postqueue', ['-f']);
-        
+        $this->mailPod()->active()
+            ? $this->mailPod()->exec(['postqueue', '-f'], 30)
+            : $this->execCommand('postqueue', ['-f']);
+
         return $this->success([], 'Mail queue flushed');
     }
 
@@ -1889,8 +1921,10 @@ class MailAction extends BaseAction
             return $this->error('Invalid queue ID format');
         }
 
-        $result = $this->execCommand('postsuper', ['-d', $queueId]);
-        
+        $result = $this->mailPod()->active()
+            ? $this->mailPod()->exec(['postsuper', '-d', $queueId], 30)
+            : $this->execCommand('postsuper', ['-d', $queueId]);
+
         if ($result['success']) {
             return $this->success([
                 'queue_id' => $queueId,

@@ -3,6 +3,7 @@
 namespace VpsAdmin\Agent\Actions;
 
 use VpsAdmin\Agent\Lib\BaseAction;
+use VpsAdmin\Agent\Lib\MailPodBridge;
 
 /**
  * Dovecot IMAP/POP3 server configuration management
@@ -10,6 +11,8 @@ use VpsAdmin\Agent\Lib\BaseAction;
 class DovecotAction extends BaseAction
 {
     protected array $allowedActions = ['status', 'settings', 'updateSettings', 'restart', 'connections'];
+
+    private ?MailPodBridge $mailPod = null;
 
     public function getNamespace(): string
     {
@@ -27,26 +30,45 @@ class DovecotAction extends BaseAction
     }
 
     /**
+     * On Docker boxes Dovecot runs inside the flowone mail pod; read
+     * status/config through docker exec instead of native tooling.
+     */
+    private function mailPod(): MailPodBridge
+    {
+        if ($this->mailPod === null) {
+            $this->mailPod = new MailPodBridge(
+                fn (string $cmd, array $args, int $timeout = 0) => $this->execCommand($cmd, $args, $timeout)
+            );
+        }
+        return $this->mailPod;
+    }
+
+    /**
      * Get Dovecot status
      */
     protected function actionStatus(array $params, string $actor): array
     {
-        // Check if running
-        exec('systemctl is-active dovecot 2>&1', $activeOutput, $activeCode);
-        $running = ($activeCode === 0);
-        
-        // Get version
+        $pod = $this->mailPod();
+
+        if ($pod->active()) {
+            $running = $pod->programRunning('dovecot');
+            $versionOut = $pod->exec(['dovecot', '--version'], 20)['output'];
+        } else {
+            exec('systemctl is-active dovecot 2>&1', $activeOutput, $activeCode);
+            $running = ($activeCode === 0);
+            exec('dovecot --version 2>&1', $versionOutput);
+            $versionOut = $versionOutput[0] ?? '';
+        }
+
         $version = null;
-        exec('dovecot --version 2>&1', $versionOutput, $versionCode);
-        if ($versionCode === 0 && !empty($versionOutput)) {
-            if (preg_match('/(\d+\.\d+\.\d+)/', $versionOutput[0], $matches)) {
-                $version = $matches[1];
-            }
+        if (preg_match('/(\d+\.\d+\.\d+)/', $versionOut, $matches)) {
+            $version = $matches[1];
         }
         
         return $this->success([
             'running' => $running,
             'version' => $version,
+            'runtime' => $pod->active() ? 'docker' : 'native',
         ]);
     }
 
@@ -84,27 +106,41 @@ class DovecotAction extends BaseAction
             'postmaster_address',
         ];
         
+        // Route doveconf either natively or through the mail pod. Returns the
+        // first output line for a query, or null on failure.
+        $podActive = $this->mailPod()->active();
+        $doveconf = function (string $query) use ($podActive): ?string {
+            if ($podActive) {
+                $res = $this->mailPod()->exec(['doveconf', '-h', $query], 20);
+                if (!$res['success']) {
+                    return null;
+                }
+                $line = strtok($res['output'], "\n");
+                return $line === false ? null : $line;
+            }
+            exec('doveconf -h ' . escapeshellarg($query) . ' 2>&1', $output, $code);
+            return ($code === 0 && !empty($output)) ? $output[0] : null;
+        };
+
         foreach ($settingKeys as $key) {
-            exec("doveconf -h {$key} 2>&1", $output, $code);
-            if ($code === 0 && !empty($output)) {
-                $value = trim($output[0]);
+            $line = $doveconf($key);
+            if ($line !== null) {
+                $value = trim($line);
                 // Handle Dovecot's special < prefix for file paths
                 if (strpos($value, '<') === 0) {
                     $value = substr($value, 1);
                 }
                 $settings[$key] = $value;
             }
-            $output = [];
         }
         
         // Get protocol-specific plugins
         $protocolPlugins = ['imap', 'pop3', 'lmtp'];
         foreach ($protocolPlugins as $proto) {
-            exec("doveconf -h 'protocol {$proto} { mail_plugins }' 2>&1", $output, $code);
-            if ($code === 0 && !empty($output)) {
-                $settings["protocol_{$proto}_mail_plugins"] = trim($output[0]);
+            $line = $doveconf("protocol {$proto} { mail_plugins }");
+            if ($line !== null) {
+                $settings["protocol_{$proto}_mail_plugins"] = trim($line);
             }
-            $output = [];
         }
         
         // Get plugin settings
@@ -114,11 +150,10 @@ class DovecotAction extends BaseAction
             'zlib_save', 'zlib_save_level',
         ];
         foreach ($pluginSettings as $key) {
-            exec("doveconf -h 'plugin { {$key} }' 2>&1", $output, $code);
-            if ($code === 0 && !empty($output) && trim($output[0]) !== '') {
-                $settings["plugin_{$key}"] = trim($output[0]);
+            $line = $doveconf("plugin { {$key} }");
+            if ($line !== null && trim($line) !== '') {
+                $settings["plugin_{$key}"] = trim($line);
             }
-            $output = [];
         }
         
         // Get protocols as array
@@ -134,6 +169,8 @@ class DovecotAction extends BaseAction
             'settings' => $settings,
             'protocols' => $protocols,
             'connections' => $connections,
+            'runtime' => $podActive ? 'docker' : 'native',
+            'read_only' => $podActive,
         ]);
     }
 
@@ -143,7 +180,13 @@ class DovecotAction extends BaseAction
     private function getConnections(): array
     {
         $connections = [];
-        exec('doveadm who 2>&1', $output, $code);
+        if ($this->mailPod()->active()) {
+            $res = $this->mailPod()->exec(['doveadm', 'who'], 20);
+            $output = $res['success'] ? explode("\n", $res['output']) : [];
+            $code = $res['success'] ? 0 : 1;
+        } else {
+            exec('doveadm who 2>&1', $output, $code);
+        }
         
         if ($code === 0) {
             foreach ($output as $i => $line) {
@@ -170,6 +213,10 @@ class DovecotAction extends BaseAction
      */
     protected function actionUpdateSettings(array $params, string $actor): array
     {
+        if ($this->mailPod()->active()) {
+            return $this->error($this->mailPod()->readOnlyError());
+        }
+
         if (!isset($params['settings']) || !is_array($params['settings'])) {
             return $this->error('Settings array is required');
         }
@@ -287,10 +334,16 @@ class DovecotAction extends BaseAction
      */
     protected function actionRestart(array $params, string $actor): array
     {
-        exec('systemctl restart dovecot 2>&1', $output, $exitCode);
-        
-        if ($exitCode !== 0) {
-            return $this->error('Failed to restart Dovecot: ' . implode("\n", $output));
+        if ($this->mailPod()->active()) {
+            $res = $this->mailPod()->restartProgram('dovecot');
+            if (!$res['success']) {
+                return $this->error('Failed to restart Dovecot in mail pod: ' . $res['output']);
+            }
+        } else {
+            exec('systemctl restart dovecot 2>&1', $output, $exitCode);
+            if ($exitCode !== 0) {
+                return $this->error('Failed to restart Dovecot: ' . implode("\n", $output));
+            }
         }
         
         return $this->success([
@@ -382,6 +435,18 @@ class DovecotAction extends BaseAction
         if (!$this->validateDovecotFile($configPath)) {
             return $this->error('Invalid config file path');
         }
+
+        // Docker box: read the file from inside the mail pod (read-only view).
+        if ($this->mailPod()->active()) {
+            $content = $this->mailPod()->readFile($configPath);
+            return $this->success([
+                'path' => $configPath,
+                'content' => $content ?? '',
+                'exists' => $content !== null,
+                'read_only' => true,
+                'runtime' => 'docker',
+            ]);
+        }
         
         if (!file_exists($configPath)) {
             // For optional files, return empty content if file doesn't exist
@@ -407,6 +472,10 @@ class DovecotAction extends BaseAction
      */
     protected function actionSaveRawConfig(array $params, string $actor): array
     {
+        if ($this->mailPod()->active()) {
+            return $this->error($this->mailPod()->readOnlyError());
+        }
+
         if (!isset($params['content'])) {
             return $this->error('Content is required');
         }

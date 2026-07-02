@@ -47,6 +47,49 @@ class DockerController extends BaseController
     }
 
     /**
+     * Deep engine snapshot: info, containers, images, volumes, networks,
+     * disk usage and compose stacks — feeds the Docker details page.
+     */
+    public function overview(Request $request): Response
+    {
+        $result = $this->agent->execute('docker.overview', [], $this->getActor());
+
+        if (!$result['success']) {
+            return Response::error($result['error'] ?? 'Failed to get Docker overview');
+        }
+
+        return Response::success($result['data'], $result['message'] ?? 'Success');
+    }
+
+    /**
+     * List all volumes
+     */
+    public function volumes(Request $request): Response
+    {
+        $result = $this->agent->execute('docker.volumes', [], $this->getActor());
+
+        if (!$result['success']) {
+            return Response::error($result['error'] ?? 'Failed to list volumes');
+        }
+
+        return Response::success($result['data'], $result['message'] ?? 'Success');
+    }
+
+    /**
+     * List all networks
+     */
+    public function networks(Request $request): Response
+    {
+        $result = $this->agent->execute('docker.networks', [], $this->getActor());
+
+        if (!$result['success']) {
+            return Response::error($result['error'] ?? 'Failed to list networks');
+        }
+
+        return Response::success($result['data'], $result['message'] ?? 'Success');
+    }
+
+    /**
      * List all containers
      */
     public function containers(Request $request): Response

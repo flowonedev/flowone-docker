@@ -13,10 +13,26 @@
 namespace VpsAdmin\Agent\Actions;
 
 use VpsAdmin\Agent\Lib\BaseAction;
+use VpsAdmin\Agent\Lib\MailPodBridge;
 
 class SystemAction extends BaseAction
 {
     private ?\PDO $pdo = null;
+
+    private ?MailPodBridge $mailPod = null;
+
+    /** Services whose config lives inside the Docker mail pod on hybrid boxes. */
+    private const MAIL_POD_SERVICES = ['postfix', 'dovecot'];
+
+    private function mailPod(): MailPodBridge
+    {
+        if ($this->mailPod === null) {
+            $this->mailPod = new MailPodBridge(
+                fn (string $cmd, array $args, int $timeout = 0) => $this->execCommand($cmd, $args, $timeout)
+            );
+        }
+        return $this->mailPod;
+    }
 
     public function getNamespace(): string
     {
@@ -2859,11 +2875,15 @@ HTML;
         if ($service === null) {
             return $this->error('Service parameter is required');
         }
-        
+
         if (!isset($this->serviceConfigs[$service])) {
             return $this->error("Unknown service: {$service}");
         }
-        
+
+        if (in_array($service, self::MAIL_POD_SERVICES, true) && $this->mailPod()->active()) {
+            return $this->error($this->mailPod()->readOnlyError());
+        }
+
         $fixed = [];
         $errors = [];
         $svcInfo = $this->serviceConfigs[$service];
@@ -2934,7 +2954,39 @@ HTML;
         $svcInfo = $this->serviceConfigs[$service];
         $configs = [];
         $allOk = true;
-        
+
+        // Docker box: postfix/dovecot config lives inside the mail pod, not
+        // on the host. The files are baked by the container image with
+        // correct ownership, so report them as managed-and-OK instead of
+        // "File does not exist" noise.
+        if (in_array($service, self::MAIL_POD_SERVICES, true) && $this->mailPod()->active()) {
+            foreach ($svcInfo['configs'] as $config) {
+                $exists = $this->mailPod()->fileExists($config['path']);
+                $configs[] = [
+                    'path' => $config['path'],
+                    'exists' => $exists,
+                    'is_dir' => isset($config['is_dir']) && $config['is_dir'],
+                    'expected_owner' => $config['owner'],
+                    'expected_group' => $config['group'],
+                    'expected_perms' => $config['perms'],
+                    'ok' => $exists,
+                    'issues' => $exists
+                        ? ['Managed inside the ' . MailPodBridge::POD . ' container']
+                        : ['File not found inside the ' . MailPodBridge::POD . ' container'],
+                ];
+                if (!$exists) {
+                    $allOk = false;
+                }
+            }
+            return [
+                'service' => $service,
+                'name' => $svcInfo['name'],
+                'ok' => $allOk,
+                'configs' => $configs,
+                'runtime' => 'docker',
+            ];
+        }
+
         foreach ($svcInfo['configs'] as $config) {
             $path = $config['path'];
             $exists = file_exists($path);

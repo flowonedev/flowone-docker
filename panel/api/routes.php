@@ -642,8 +642,11 @@ $router->group(['middleware' => 'auth'], function($router) {
     // Docker Management
     $router->get('/api/docker/status', [DockerController::class, 'status']);
     $router->post('/api/docker/install', [DockerController::class, 'install']);
+    $router->get('/api/docker/overview', [DockerController::class, 'overview']);
     $router->get('/api/docker/containers', [DockerController::class, 'containers']);
     $router->get('/api/docker/images', [DockerController::class, 'images']);
+    $router->get('/api/docker/volumes', [DockerController::class, 'volumes']);
+    $router->get('/api/docker/networks', [DockerController::class, 'networks']);
     $router->get('/api/docker/containers/{id}', [DockerController::class, 'container']);
     $router->post('/api/docker/containers/{id}/start', [DockerController::class, 'start']);
     $router->post('/api/docker/containers/{id}/stop', [DockerController::class, 'stop']);

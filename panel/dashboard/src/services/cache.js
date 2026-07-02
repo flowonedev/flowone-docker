@@ -177,7 +177,7 @@ export const CACHE_KEYS = {
   DNS_ZONES: "overview:dns:zones",
   WORDPRESS: "overview:wordpress",
   DOCKER_STATUS: "overview:docker:status",
-  DOCKER_CONTAINERS: "overview:docker:containers",
+  DOCKER_OVERVIEW: "overview:docker:overview",
 
   // Sites
   SITES: "sites:list",
