@@ -319,6 +319,14 @@ done
 if [ -d "$SCRIPT_DIR/fonts" ]; then
     mkdir -p "$INSTALL_PATH/fonts"
     cp -r "$SCRIPT_DIR/fonts/"* "$INSTALL_PATH/fonts/"
+    # Flatten an accidental fonts/fonts/ nesting (older packages staged the dir
+    # into an existing dir) — core.css imports /fonts/<family>/font.css, so a
+    # nested copy leaves every font 404ing and icons render as ligature text.
+    if [ -d "$INSTALL_PATH/fonts/fonts" ]; then
+        cp -r "$INSTALL_PATH/fonts/fonts/"* "$INSTALL_PATH/fonts/"
+        rm -rf "$INSTALL_PATH/fonts/fonts"
+        log_info "Flattened nested fonts/fonts/ from package"
+    fi
     FONT_FAMILIES=$(ls -d "$INSTALL_PATH"/fonts/*/ 2>/dev/null | wc -l)
     log_info "Fonts deployed (${FONT_FAMILIES} families)"
 else

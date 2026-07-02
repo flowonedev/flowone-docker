@@ -184,7 +184,11 @@ if [ "$SKIP_PACKAGES" = "0" ]; then
     cp -r "$REPO/panel/database" "$STAGE/database"
     # Self-hosted fonts (icons render as raw ligature text without them).
     # The repo keeps ONE copy under fleet/dashboard/public/fonts.
-    cp -r "$REPO/fleet/dashboard/public/fonts" "$STAGE/fonts"
+    # NOTE: copy CONTENTS ('.'), not the dir — the vite build already created
+    # $STAGE/fonts (public/fonts/core.css lands in dist), so copying the dir
+    # itself would nest everything under fonts/fonts/ and 404 every font file.
+    mkdir -p "$STAGE/fonts"
+    cp -r "$REPO/fleet/dashboard/public/fonts/." "$STAGE/fonts/"
 
     bash "$PROD/packages/panel/build.sh" "$PKG_VER" --source="$STAGE" --output="$PROD/packages/panel" >/dev/null \
         && ok "panel package built (panel-v$PKG_VER.tar.gz)" \

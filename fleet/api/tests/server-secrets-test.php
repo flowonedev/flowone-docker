@@ -106,12 +106,12 @@ test('jwt', 'RS256 sign with private verifies with public', function () {
 
 // --- ensure ---
 section('ensure');
-test('ensure', 'empty vars generate all four secrets', function () {
+test('ensure', 'empty vars generate all five secrets', function () {
     $r = Gen::ensureDockerSecrets([]);
-    foreach (['IMAP_ENCRYPTION_KEY', 'AI_ENCRYPTION_KEY', 'SSO_SERVER_KEY', 'JWT_PRIVATE_KEY_PEM', 'JWT_PUBLIC_KEY_PEM'] as $k) {
+    foreach (['IMAP_ENCRYPTION_KEY', 'AI_ENCRYPTION_KEY', 'SSO_SERVER_KEY', 'JWT_PRIVATE_KEY_PEM', 'JWT_PUBLIC_KEY_PEM', 'VAPID_PUBLIC_KEY', 'VAPID_PRIVATE_KEY'] as $k) {
         assertTrue(!empty($r['vars'][$k]), "missing {$k}");
     }
-    foreach (['IMAP_ENCRYPTION_KEY', 'AI_ENCRYPTION_KEY', 'SSO_SERVER_KEY', 'JWT_KEY_PAIR'] as $g) {
+    foreach (['IMAP_ENCRYPTION_KEY', 'AI_ENCRYPTION_KEY', 'SSO_SERVER_KEY', 'JWT_KEY_PAIR', 'VAPID_KEY_PAIR'] as $g) {
         assertTrue(in_array($g, $r['generated'], true), "should report {$g} generated");
     }
 });
@@ -122,11 +122,23 @@ test('ensure', 'existing secrets are preserved, not regenerated', function () {
         'SSO_SERVER_KEY' => str_repeat('c', 64),
         'JWT_PRIVATE_KEY_PEM' => "-----BEGIN PRIVATE KEY-----\nX\n-----END PRIVATE KEY-----\n",
         'JWT_PUBLIC_KEY_PEM' => "-----BEGIN PUBLIC KEY-----\nY\n-----END PUBLIC KEY-----\n",
+        'VAPID_PUBLIC_KEY' => 'BFakePublicKey',
+        'VAPID_PRIVATE_KEY' => 'FakePrivateKey',
     ];
     $r = Gen::ensureDockerSecrets($existing);
     assertTrue($r['generated'] === [], 'nothing should be generated: ' . implode(',', $r['generated']));
     assertEq($existing['IMAP_ENCRYPTION_KEY'], $r['vars']['IMAP_ENCRYPTION_KEY'], 'IMAP preserved');
     assertEq($existing['JWT_PRIVATE_KEY_PEM'], $r['vars']['JWT_PRIVATE_KEY_PEM'], 'JWT preserved');
+    assertEq($existing['VAPID_PUBLIC_KEY'], $r['vars']['VAPID_PUBLIC_KEY'], 'VAPID preserved');
+});
+test('ensure', 'VAPID pair has web-push shape (87/43 base64url chars)', function () {
+    $pair = Gen::vapidKeyPair();
+    // 65-byte uncompressed point -> 87 base64url chars starting with "B" (0x04).
+    assertTrue(preg_match('/^B[A-Za-z0-9_-]{86}$/', $pair['public']) === 1, 'bad public: ' . $pair['public']);
+    // 32-byte scalar -> 43 base64url chars.
+    assertTrue(preg_match('/^[A-Za-z0-9_-]{43}$/', $pair['private']) === 1, 'bad private');
+    $b = Gen::vapidKeyPair();
+    assertTrue($pair['public'] !== $b['public'], 'two calls must differ');
 });
 test('ensure', 'AI key reuses ENCRYPTION_KEY when present', function () {
     $r = Gen::ensureDockerSecrets(['ENCRYPTION_KEY' => str_repeat('e', 64)]);

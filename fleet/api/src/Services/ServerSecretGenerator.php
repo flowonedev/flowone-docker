@@ -61,6 +61,41 @@ class ServerSecretGenerator
     }
 
     /**
+     * Generate a VAPID key pair (web push, RFC 8292): P-256 EC keys encoded the
+     * way the web-push libraries expect — base64url of the 65-byte uncompressed
+     * public point and of the 32-byte private scalar. Must stay stable per
+     * server: push subscriptions are bound to the public key, rotating it
+     * orphans every subscribed browser.
+     *
+     * @return array{public:string,private:string}
+     * @throws \RuntimeException if openssl EC keygen fails.
+     */
+    public static function vapidKeyPair(): array
+    {
+        $res = openssl_pkey_new([
+            'private_key_type' => OPENSSL_KEYTYPE_EC,
+            'curve_name' => 'prime256v1',
+        ]);
+        if ($res === false) {
+            throw new \RuntimeException('openssl_pkey_new (EC) failed: ' . self::opensslErrors());
+        }
+        $d = openssl_pkey_get_details($res);
+        if ($d === false || empty($d['ec']['x']) || empty($d['ec']['y']) || empty($d['ec']['d'])) {
+            throw new \RuntimeException('openssl_pkey_get_details (EC) failed: ' . self::opensslErrors());
+        }
+
+        // Coordinates/scalar can come back shorter than 32 bytes (leading zeros
+        // stripped) — left-pad so the encoding is always exactly 65/32 bytes.
+        $pad = fn(string $bin) => str_pad($bin, 32, "\0", STR_PAD_LEFT);
+        $b64url = fn(string $bin) => rtrim(strtr(base64_encode($bin), '+/', '-_'), '=');
+
+        return [
+            'public'  => $b64url("\x04" . $pad($d['ec']['x']) . $pad($d['ec']['y'])),
+            'private' => $b64url($pad($d['ec']['d'])),
+        ];
+    }
+
+    /**
      * Fill in any missing Docker crypto on a variables array, leaving already-set
      * (persisted/migrated) values untouched. Returns the augmented array plus the
      * list of keys that were freshly generated (so the caller knows what to persist).
@@ -90,6 +125,12 @@ class ServerSecretGenerator
             $vars['JWT_PRIVATE_KEY_PEM'] = $pair['private'];
             $vars['JWT_PUBLIC_KEY_PEM'] = $pair['public'];
             $generated[] = 'JWT_KEY_PAIR';
+        }
+        if (empty($vars['VAPID_PUBLIC_KEY']) || empty($vars['VAPID_PRIVATE_KEY'])) {
+            $pair = self::vapidKeyPair();
+            $vars['VAPID_PUBLIC_KEY'] = $pair['public'];
+            $vars['VAPID_PRIVATE_KEY'] = $pair['private'];
+            $generated[] = 'VAPID_KEY_PAIR';
         }
 
         return ['vars' => $vars, 'generated' => $generated];

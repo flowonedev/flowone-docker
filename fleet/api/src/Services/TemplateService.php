@@ -305,6 +305,14 @@ class TemplateService
         if (!empty($server['jwt_public_key'] ?? null)) {
             $variables['JWT_PUBLIC_KEY_PEM'] = $server['jwt_public_key'];
         }
+        // VAPID (web push) — subscriptions are bound to the public key, so it
+        // must never rotate across re-provisions (migration 031).
+        if (!empty($server['vapid_public_key'] ?? null)) {
+            $variables['VAPID_PUBLIC_KEY'] = $server['vapid_public_key'];
+        }
+        if (!empty($server['vapid_private_key_encrypted'] ?? null)) {
+            $variables['VAPID_PRIVATE_KEY'] = $this->encryption->decrypt($server['vapid_private_key_encrypted']);
+        }
 
         return $variables;
     }
@@ -336,6 +344,8 @@ class TemplateService
                 email_api_key_encrypted       = COALESCE(email_api_key_encrypted, ?),
                 jwt_private_key_encrypted     = COALESCE(jwt_private_key_encrypted, ?),
                 jwt_public_key                = COALESCE(jwt_public_key, ?),
+                vapid_public_key              = COALESCE(vapid_public_key, ?),
+                vapid_private_key_encrypted   = COALESCE(vapid_private_key_encrypted, ?),
                 db_root_password_encrypted    = COALESCE(db_root_password_encrypted, ?),
                 panel_db_password_encrypted   = COALESCE(panel_db_password_encrypted, ?),
                 email_db_password_encrypted   = COALESCE(email_db_password_encrypted, ?),
@@ -353,6 +363,8 @@ class TemplateService
             $enc($variables['EMAIL_API_KEY'] ?? null),
             $enc($variables['JWT_PRIVATE_KEY_PEM'] ?? null),
             !empty($variables['JWT_PUBLIC_KEY_PEM']) ? $variables['JWT_PUBLIC_KEY_PEM'] : null,
+            !empty($variables['VAPID_PUBLIC_KEY']) ? $variables['VAPID_PUBLIC_KEY'] : null,
+            $enc($variables['VAPID_PRIVATE_KEY'] ?? null),
             $enc($variables['DB_ROOT_PASS'] ?? null),
             $enc($variables['PANEL_DB_PASS'] ?? null),
             $enc($variables['EMAIL_DB_PASS'] ?? null),
