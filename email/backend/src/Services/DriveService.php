@@ -51,6 +51,21 @@ class DriveService
     private bool $lastReadTouchUnavailable = false;
 
     /**
+     * Mirrors of FlowOne\Storage\TierState::COLD / ::RECALLING.
+     *
+     * Deliberately literals, NOT the class constants: every other use of the
+     * shared storage lib in this file is behind class_exists() so the app
+     * fails open where the lib isn't deployed (the Docker web image ships
+     * /var/www/shared EMPTY). A constant dereference autoloads the class and
+     * fatals ("Class not found") — which 500'd every download/preview/
+     * thumbnail on Docker boxes, since migration 167 gives all rows a
+     * tier_state. The alphabet is frozen by the DB enum in migration 167,
+     * so the literals cannot drift.
+     */
+    private const TIER_COLD = 'cold';
+    private const TIER_RECALLING = 'recalling';
+
+    /**
      * Records which storage tier the most recent getUserPath() resolved to.
      * Values: 'nfs' (NAS happy-path, the configured primary), or 'local' (the
      * VPS fallback used when NasHealthCheck reports the NAS down). Read by
@@ -2375,8 +2390,8 @@ class DriveService
         // Non-cold rows: regular fast path. The 'recalling' state is
         // treated like 'cold' so a parallel request that sees the row
         // mid-recall still produces a 202 instead of racing.
-        if ($tierState !== \FlowOne\Storage\TierState::COLD
-            && $tierState !== \FlowOne\Storage\TierState::RECALLING) {
+        if ($tierState !== self::TIER_COLD
+            && $tierState !== self::TIER_RECALLING) {
             $path = $this->getFilePath($email, $id);
             return $path !== null
                 ? ['status' => 'ready', 'path' => $path, 'file' => $file]
@@ -2396,7 +2411,7 @@ class DriveService
         // so the recall progresses while the client polls, and return 202.
         // We only spawn a new warmer when tier_state is still 'cold' - if
         // it's already 'recalling', another worker is on it.
-        if ($tierState === \FlowOne\Storage\TierState::COLD) {
+        if ($tierState === self::TIER_COLD) {
             $this->triggerBackgroundRecall($id);
         }
 
@@ -2654,7 +2669,7 @@ class DriveService
         if ($tierState === null) {
             return null;
         }
-        if ($tierState !== \FlowOne\Storage\TierState::COLD) {
+        if ($tierState !== self::TIER_COLD) {
             return null;
         }
 
