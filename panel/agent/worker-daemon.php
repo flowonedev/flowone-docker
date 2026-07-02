@@ -135,24 +135,20 @@ try {
         $agentConfig = array_replace_recursive($agentConfig, (array) require $agentLocalPath);
     }
     $serverIp = (string) ($agentConfig['server']['ip'] ?? '');
-    $nsConfigFile = '/var/www/vps-admin/.dns_ns_config.json';
-    $nsConfig = ['ns1' => 'ns1.devcon1.hu', 'ns2' => 'ns2.devcon1.hu'];
-    if (is_readable($nsConfigFile)) {
-        $decoded = json_decode((string) file_get_contents($nsConfigFile), true);
-        if (is_array($decoded)) {
-            $nsConfig = array_merge($nsConfig, $decoded);
-        }
-    }
+    // Config file wins; fallback derives ns1/ns2.<this box's base domain>
+    // (never a hardcoded operator domain) — see NsDefaults.
+    $nsConfig = \VpsAdmin\Agent\Lib\NsDefaults::load();
 
     // InstallAppStep needs the agent config to spawn a WordPressInstaller
     // when it actually runs. Passing the merged $agentConfig keeps the
     // installer using config.php's paths['ols_bin'] / paths['backups']
     // which matches what AppAction does for /api/apps installs.
+    $nsEnabled = !empty($nsConfig['enabled']);
     $registry = new SagaRegistry(
         vhostTemplate: new \VpsAdmin\Agent\Provisioner\Ols\VhostConfigTemplate(),
         serverIp: $serverIp,
-        ns1: (string) $nsConfig['ns1'],
-        ns2: (string) $nsConfig['ns2'],
+        ns1: $nsEnabled ? (string) $nsConfig['ns1'] : '',
+        ns2: $nsEnabled ? (string) $nsConfig['ns2'] : '',
         wordPressInstaller: null,
         appInstallerConfig: $agentConfig,
     );

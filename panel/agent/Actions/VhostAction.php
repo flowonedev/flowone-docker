@@ -9,6 +9,7 @@
 namespace VpsAdmin\Agent\Actions;
 
 use VpsAdmin\Agent\Lib\BaseAction;
+use VpsAdmin\Agent\Lib\NsDefaults;
 use VpsAdmin\Agent\Lib\Validator;
 
 class VhostAction extends BaseAction
@@ -16,30 +17,12 @@ class VhostAction extends BaseAction
     private ?\PDO $panelPdo = null;
 
     /**
-     * Path to NS configuration file (shared with DnsAction)
-     */
-    private const NS_CONFIG_FILE = '/var/www/vps-admin/.dns_ns_config.json';
-
-    /**
-     * Get nameserver configuration (shared with DnsAction)
+     * Get nameserver configuration (shared with DnsAction). Config file wins;
+     * fallback derives ns1/ns2.<this box's base domain> — see NsDefaults.
      */
     private function getNsConfiguration(): array
     {
-        $defaults = [
-            'enabled' => true,
-            'ns1' => 'ns1.devcon1.hu',
-            'ns2' => 'ns2.devcon1.hu',
-        ];
-
-        if (file_exists(self::NS_CONFIG_FILE)) {
-            $content = file_get_contents(self::NS_CONFIG_FILE);
-            $config = json_decode($content, true);
-            if (is_array($config)) {
-                return array_merge($defaults, $config);
-            }
-        }
-
-        return $defaults;
+        return NsDefaults::load();
     }
 
     public function getNamespace(): string

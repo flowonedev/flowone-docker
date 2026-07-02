@@ -262,9 +262,9 @@ class ServerController extends BaseController
         $updates = [];
         $params = [];
 
-        $fields = ['name', 'ip_address', 'ssh_port', 'ssh_user', 'ssh_auth_method', 'panel_domain', 'email_domain', 
+        $fields = ['name', 'ip_address', 'ssh_port', 'ssh_user', 'ssh_auth_method', 'panel_domain', 'email_domain',
                    'mail_domain', 'blueprint_id', 'status', 'notes', 'vpn_enabled', 'nas_enabled',
-                   'nas_ip', 'nas_path', 'nas_mount'];
+                   'nas_ip', 'nas_path', 'nas_mount', 'ns1_domain', 'ns2_domain'];
 
         foreach ($fields as $field) {
             if ($request->has($field)) {
@@ -298,6 +298,44 @@ class ServerController extends BaseController
         $this->logAction('server.update', $id, $server['name'], 'success');
 
         return Response::success(null, 'Server updated successfully');
+    }
+
+    /**
+     * Push the per-server policy files (nameservers + NAS opt-in) to the box
+     * over SSH — day-2, no redeploy. Writes /var/www/vps-admin/.dns_ns_config.json
+     * and /etc/flowone/storage.local.php from the server row, so the operator
+     * can manage both from Fleet without logging in to the panel.
+     *
+     * POST /api/servers/{id}/apply-settings
+     */
+    public function applySettings(Request $request): Response
+    {
+        $id = (int)$request->getParam('id');
+        $db = $this->getDatabase();
+
+        $stmt = $db->prepare("SELECT id, name FROM servers WHERE id = ?");
+        $stmt->execute([$id]);
+        $server = $stmt->fetch();
+        if (!$server) {
+            return Response::notFound('Server not found');
+        }
+
+        $provisioning = $this->container->get(\FleetManager\Api\Services\ProvisioningService::class);
+        $result = $provisioning->applyHostPolicy($id);
+
+        $this->logAction('server.apply_settings', $id, $server['name'], $result['success'] ? 'success' : 'failed');
+
+        if (empty($result['success'])) {
+            return Response::error(
+                'Could not apply settings on the server: ' . ($result['error'] ?? 'unknown error'),
+                502
+            );
+        }
+
+        return Response::success(
+            ['log' => $result['log'] ?? []],
+            'Nameserver + NAS settings applied on the server'
+        );
     }
 
     /**

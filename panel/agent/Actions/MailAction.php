@@ -9,6 +9,7 @@ namespace VpsAdmin\Agent\Actions;
 
 use VpsAdmin\Agent\Lib\BaseAction;
 use VpsAdmin\Agent\Lib\MailPodBridge;
+use VpsAdmin\Agent\Lib\MailServerDb;
 use VpsAdmin\Agent\Lib\PanelDbTrait;
 use VpsAdmin\Agent\Lib\Validator;
 
@@ -294,6 +295,71 @@ class MailAction extends BaseAction
         return $this->mailPod;
     }
 
+    // ------------------------------------------------------------------
+    // Authoritative mail database
+    //
+    // Native boxes: Dovecot/Postfix read the panel DB directly, so the
+    // panel DB is authoritative. Docker boxes: the mail pod authenticates
+    // against the `mailserver` database inside the containerized MariaDB
+    // (published on 127.0.0.1:3306) — accounts/forwards/domains MUST be
+    // managed there or Dovecot never sees them (the "0 accounts" bug).
+    // The panel DB copy is kept as a best-effort mirror so email-app
+    // integrations (webmail flags, admin views) stay consistent.
+    // ------------------------------------------------------------------
+
+    /** PDO to the database Dovecot/Postfix actually read on this box. */
+    private function mailDb(): ?\PDO
+    {
+        if (!$this->mailPod()->active()) {
+            return $this->getPanelDb();
+        }
+
+        $pdo = MailServerDb::connect();
+        if ($pdo === null) {
+            $this->logger->error('mailDb: containerized mailserver DB unavailable');
+        }
+        return $pdo;
+    }
+
+    /**
+     * Table qualifier for email-app tables (webmail_accounts, drive_quotas,
+     * ...). On Docker boxes the mail queries run on the `mailserver` DB
+     * connection, so app tables must be prefixed with the app DB name for
+     * cross-database joins; natively everything lives in one DB.
+     */
+    private function appDbQualifier(): string
+    {
+        return $this->mailPod()->active() ? MailServerDb::appDbQualifier() : '';
+    }
+
+    /**
+     * Hash a mailbox password in the scheme Dovecot on this box verifies.
+     * Docker: plain bcrypt ($2y$), matching create-mail-account.sh and the
+     * pod's BLF-CRYPT default scheme (doveadm is not installed on the host).
+     * Native: doveadm BLF-CRYPT with the existing fallback chain.
+     */
+    private function hashMailPassword(string $password): string
+    {
+        if ($this->mailPod()->active()) {
+            return password_hash($password, PASSWORD_BCRYPT);
+        }
+
+        $hashResult = $this->execCommand('doveadm', ['pw', '-s', 'BLF-CRYPT', '-p', $password]);
+        $passwordHash = trim($hashResult['output']);
+        if ($passwordHash && $hashResult['success']) {
+            return $passwordHash;
+        }
+
+        $hashResult = $this->execCommand('doveadm', ['pw', '-s', 'SHA512-CRYPT', '-p', $password]);
+        $passwordHash = trim($hashResult['output']);
+        if ($passwordHash && $hashResult['success']) {
+            return $passwordHash;
+        }
+
+        $salt = base64_encode(random_bytes(12));
+        return '{SHA512-CRYPT}' . crypt($password, '$6$' . $salt);
+    }
+
     /**
      * Get mail system status
      */
@@ -347,8 +413,9 @@ class MailAction extends BaseAction
     {
         $domains = [];
 
-        // Read from our panel's database (primary after migration)
-        $pdo = $this->getPanelDb();
+        // Read from the authoritative mail DB (panel DB natively, containerized
+        // mailserver DB on Docker boxes).
+        $pdo = $this->mailDb();
         if ($pdo) {
             try {
                 $stmt = $pdo->query("SELECT domain FROM mail_domains WHERE status = 'active' ORDER BY domain");
@@ -383,32 +450,47 @@ class MailAction extends BaseAction
             return $this->error('Invalid domain format');
         }
 
-        // Add to our panel database (primary)
-        $panelDb = $this->getPanelDb();
-        if ($panelDb) {
+        // Add to the authoritative mail DB (panel DB natively, containerized
+        // mailserver DB on Docker boxes — Postfix only accepts mail for
+        // domains present THERE).
+        $mailDb = $this->mailDb();
+        if ($mailDb) {
             try {
                 // Check if exists
-                $stmt = $panelDb->prepare("SELECT id FROM mail_domains WHERE domain = ?");
+                $stmt = $mailDb->prepare("SELECT id FROM mail_domains WHERE domain = ?");
                 $stmt->execute([$domain]);
                 if ($stmt->fetch()) {
                     return $this->error("Domain already exists: {$domain}");
                 }
 
                 // Insert domain
-                $stmt = $panelDb->prepare("INSERT INTO mail_domains (domain, status) VALUES (?, 'active')");
+                $stmt = $mailDb->prepare("INSERT INTO mail_domains (domain, status) VALUES (?, 'active')");
                 $stmt->execute([$domain]);
             } catch (\Exception $e) {
                 return $this->error("Failed to add domain: " . $e->getMessage());
             }
         } else {
-            return $this->error("Cannot connect to panel database");
+            return $this->error("Cannot connect to mail database");
         }
 
-        // Create mail directory
-        $mailDir = $this->mailPath . '/' . $domain;
-        if (!is_dir($mailDir)) {
-            mkdir($mailDir, 0755, true);
-            $this->execCommand('chown', ['-R', 'vmail:vmail', $mailDir]);
+        if ($this->mailPod()->active()) {
+            // Mirror into the panel DB so app-side views stay consistent.
+            $panelDb = $this->getPanelDb();
+            if ($panelDb) {
+                try {
+                    $panelDb->prepare("INSERT IGNORE INTO mail_domains (domain, status) VALUES (?, 'active')")->execute([$domain]);
+                } catch (\Exception $e) {
+                    $this->logger->warning("Panel DB mirror of domain {$domain} failed: " . $e->getMessage());
+                }
+            }
+        } else {
+            // Create mail directory (native layout; the pod creates maildirs
+            // inside its own volume on first delivery)
+            $mailDir = $this->mailPath . '/' . $domain;
+            if (!is_dir($mailDir)) {
+                mkdir($mailDir, 0755, true);
+                $this->execCommand('chown', ['-R', 'vmail:vmail', $mailDir]);
+            }
         }
 
         // Automatically set up mail DNS records (DKIM, SPF, DMARC)
@@ -646,26 +728,40 @@ class MailAction extends BaseAction
             return $this->error('Invalid domain format');
         }
 
-        // Delete from our panel database (primary)
-        $panelDb = $this->getPanelDb();
-        if ($panelDb) {
+        // Delete from the authoritative mail DB (and mirror the delete into
+        // the panel DB on Docker boxes so app-side views stay consistent).
+        $mailDb = $this->mailDb();
+        if ($mailDb) {
             try {
                 // Delete all accounts for this domain first
-                $stmt = $panelDb->prepare("DELETE FROM mail_accounts WHERE domain = ?");
+                $stmt = $mailDb->prepare("DELETE FROM mail_accounts WHERE domain = ?");
                 $stmt->execute([$domain]);
                 
                 // Delete all forwards for this domain
-                $stmt = $panelDb->prepare("DELETE FROM mail_forwards WHERE source_domain = ?");
+                $stmt = $mailDb->prepare("DELETE FROM mail_forwards WHERE source_domain = ?");
                 $stmt->execute([$domain]);
                 
                 // Delete the domain
-                $stmt = $panelDb->prepare("DELETE FROM mail_domains WHERE domain = ?");
+                $stmt = $mailDb->prepare("DELETE FROM mail_domains WHERE domain = ?");
                 $stmt->execute([$domain]);
             } catch (\Exception $e) {
                 return $this->error("Failed to remove domain: " . $e->getMessage());
             }
         } else {
-            return $this->error("Cannot connect to panel database");
+            return $this->error("Cannot connect to mail database");
+        }
+
+        if ($this->mailPod()->active()) {
+            $panelDb = $this->getPanelDb();
+            if ($panelDb) {
+                try {
+                    $panelDb->prepare("DELETE FROM mail_accounts WHERE domain = ?")->execute([$domain]);
+                    $panelDb->prepare("DELETE FROM mail_forwards WHERE source_domain = ?")->execute([$domain]);
+                    $panelDb->prepare("DELETE FROM mail_domains WHERE domain = ?")->execute([$domain]);
+                } catch (\Exception $e) {
+                    $this->logger->warning("Panel DB mirror delete of domain {$domain} failed: " . $e->getMessage());
+                }
+            }
         }
 
         return $this->success([
@@ -781,8 +877,11 @@ class MailAction extends BaseAction
      */
     private function getAccountsFromDatabase(?string $domain = null): array
     {
-        // Read from our panel's database (primary after migration)
-        $pdo = $this->getPanelDb();
+        // Read from the authoritative mail DB: panel DB natively, the
+        // containerized `mailserver` DB on Docker boxes (where Dovecot
+        // actually authenticates — reading the panel DB there shows 0
+        // accounts forever).
+        $pdo = $this->mailDb();
         if (!$pdo) {
             return [];
         }
@@ -794,6 +893,11 @@ class MailAction extends BaseAction
         $this->ensureLoginSuspendedColumn($pdo);
         $this->ensureQuotaColumn($pdo);
 
+        // Email-app tables (webmail_*, drive_quotas) live in the app DB; on
+        // Docker boxes that is a different database on the same MariaDB
+        // server, so qualify them for the cross-database join.
+        $app = $this->appDbQualifier();
+
         try {
             // Query includes email app data (auxiliary accounts, OAuth accounts, and drive usage)
             $sql = "SELECT 
@@ -804,14 +908,14 @@ class MailAction extends BaseAction
                 ma.force_password_change,
                 ma.login_suspended,
                 ma.suspended_at,
-                (SELECT COUNT(*) FROM webmail_accounts wa 
+                (SELECT COUNT(*) FROM {$app}webmail_accounts wa 
                  WHERE wa.primary_email COLLATE utf8mb4_unicode_ci = ma.email COLLATE utf8mb4_unicode_ci) as aux_accounts,
-                (SELECT COUNT(*) FROM webmail_oauth_tokens wot 
+                (SELECT COUNT(*) FROM {$app}webmail_oauth_tokens wot 
                  WHERE wot.primary_email COLLATE utf8mb4_unicode_ci = ma.email COLLATE utf8mb4_unicode_ci) as oauth_accounts,
                 COALESCE(dq.used_bytes, 0) as drive_used,
                 COALESCE(dq.quota_bytes, -1) as drive_quota
             FROM mail_accounts ma
-            LEFT JOIN drive_quotas dq ON dq.user_email COLLATE utf8mb4_unicode_ci = ma.email COLLATE utf8mb4_unicode_ci
+            LEFT JOIN {$app}drive_quotas dq ON dq.user_email COLLATE utf8mb4_unicode_ci = ma.email COLLATE utf8mb4_unicode_ci
             WHERE ma.status = 'active'";
             
             if ($domain) {
@@ -871,8 +975,56 @@ class MailAction extends BaseAction
             }
         } catch (\Exception $e) {
             error_log("Mail DB error: " . $e->getMessage());
+            // The enrichment joins depend on email-app tables that may not
+            // exist (yet) on this box. Retry with the accounts table alone so
+            // a missing app schema never hides real mailboxes.
+            return $this->getAccountsPlain($pdo, $domain);
         }
 
+        return $accounts;
+    }
+
+    /**
+     * Accounts list without email-app enrichment — fallback when the
+     * webmail/drive tables are unavailable.
+     */
+    private function getAccountsPlain(\PDO $pdo, ?string $domain): array
+    {
+        $accounts = [];
+        try {
+            $sql = "SELECT email, domain, disk_usage_kb, quota_mb, force_password_change, login_suspended, suspended_at
+                    FROM mail_accounts WHERE status = 'active'"
+                . ($domain ? " AND domain = ?" : "")
+                . " ORDER BY domain, email";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($domain ? [$domain] : []);
+            while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+                $size = (int) ($row['disk_usage_kb'] ?? 0) * 1024;
+                $quotaMb = (int) ($row['quota_mb'] ?? 0);
+                $accounts[] = [
+                    'email' => $row['email'],
+                    'domain' => $row['domain'],
+                    'size' => $size,
+                    'size_human' => $this->humanFileSize($size),
+                    'mailbox_quota_mb' => $quotaMb,
+                    'mailbox_quota_human' => $quotaMb <= 0 ? 'Unlimited' : $this->humanFileSize($quotaMb * 1048576),
+                    'force_password_change' => (bool) ($row['force_password_change'] ?? false),
+                    'suspended' => (bool) ($row['login_suspended'] ?? false),
+                    'suspended_at' => $row['suspended_at'] ?? null,
+                    'uses_email_app' => false,
+                    'aux_accounts' => 0,
+                    'oauth_accounts' => 0,
+                    'linked_accounts' => 0,
+                    'linked_accounts_list' => [],
+                    'drive_used' => 0,
+                    'drive_used_human' => $this->humanFileSize(0),
+                    'drive_quota' => -1,
+                    'drive_quota_human' => 'Unlimited',
+                ];
+            }
+        } catch (\Exception $e) {
+            error_log("Mail DB plain query error: " . $e->getMessage());
+        }
         return $accounts;
     }
     
@@ -882,12 +1034,16 @@ class MailAction extends BaseAction
     private function getLinkedAccounts(\PDO $pdo, string $email): array
     {
         $linked = [];
-        
+
+        // webmail_* live in the app DB — qualify for Docker boxes where the
+        // mail queries run on the mailserver DB connection.
+        $app = $this->appDbQualifier();
+
         try {
             // Get IMAP auxiliary accounts
             $stmt = $pdo->prepare("
                 SELECT account_email, display_name, 'imap' as type 
-                FROM webmail_accounts 
+                FROM {$app}webmail_accounts 
                 WHERE primary_email COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci
             ");
             $stmt->execute([$email]);
@@ -902,7 +1058,7 @@ class MailAction extends BaseAction
             // Get OAuth accounts
             $stmt = $pdo->prepare("
                 SELECT oauth_email, display_name, provider, 'oauth' as type 
-                FROM webmail_oauth_tokens 
+                FROM {$app}webmail_oauth_tokens 
                 WHERE primary_email COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci
             ");
             $stmt->execute([$email]);
@@ -941,44 +1097,37 @@ class MailAction extends BaseAction
         $user = $parts[0];
         $domain = $parts[1];
 
-        // Check if account exists in our database
-        $panelDb = $this->getPanelDb();
-        if ($panelDb) {
-            $stmt = $panelDb->prepare("SELECT id FROM mail_accounts WHERE email = ?");
+        // Check if account exists in the authoritative mail DB (the one
+        // Dovecot reads — mailserver DB on Docker boxes, panel DB natively).
+        $mailDb = $this->mailDb();
+        if ($mailDb) {
+            $stmt = $mailDb->prepare("SELECT id FROM mail_accounts WHERE email = ?");
             $stmt->execute([$email]);
             if ($stmt->fetch()) {
                 return $this->error("Account already exists: {$email}");
             }
         }
 
-        // Generate password hash using BLF-CRYPT (bcrypt) for compatibility
-        $hashResult = $this->execCommand('doveadm', ['pw', '-s', 'BLF-CRYPT', '-p', $password]);
-        $passwordHash = trim($hashResult['output']);
-
-        if (!$passwordHash || !$hashResult['success']) {
-            // Fallback to SHA512-CRYPT
-            $hashResult = $this->execCommand('doveadm', ['pw', '-s', 'SHA512-CRYPT', '-p', $password]);
-            $passwordHash = trim($hashResult['output']);
-            
-            if (!$passwordHash || !$hashResult['success']) {
-                $salt = base64_encode(random_bytes(12));
-                $passwordHash = '{SHA512-CRYPT}' . crypt($password, '$6$' . $salt);
-            }
-        }
+        // Hash in the scheme Dovecot on this box verifies (bcrypt on Docker,
+        // doveadm BLF-CRYPT natively).
+        $passwordHash = $this->hashMailPassword($password);
 
         $mailboxPath = "{$domain}/{$user}/";
         $mailDir = $this->mailPath . '/' . $domain . '/' . $user;
+        $dockerMail = $this->mailPod()->active();
 
         // A brand-new account must start with an empty mailbox. We only reach
         // this point when no DB row exists for the address, so any maildir still
         // sitting on disk is an orphan left behind by an older (buggy) delete —
         // inheriting it is what made deleted+recreated accounts come back with
         // their old mail. Move the orphan aside (recoverable) and start fresh.
+        // (Native only: on Docker boxes maildirs live inside the pod's volume
+        // and the pod creates them on first delivery/login.)
         $safePath = $user !== '' && $domain !== ''
             && strpos($user, '/') === false && strpos($user, '..') === false
             && strpos($domain, '/') === false && strpos($domain, '..') === false;
 
-        if ($safePath && is_dir($mailDir)) {
+        if (!$dockerMail && $safePath && is_dir($mailDir)) {
             $backupBase = $this->config['paths']['backups'] ?? '';
             $moved = false;
             if ($backupBase !== '') {
@@ -997,8 +1146,8 @@ class MailAction extends BaseAction
             }
         }
 
-        // Create a fresh mail directory
-        if (!is_dir($mailDir)) {
+        // Create a fresh mail directory (native layout only)
+        if (!$dockerMail && !is_dir($mailDir)) {
             mkdir($mailDir, 0700, true);
             $this->execCommand('chown', ['-R', 'vmail:vmail', $mailDir]);
         }
@@ -1011,17 +1160,17 @@ class MailAction extends BaseAction
         // legacy quota; fall back to the schema default when absent/invalid.
         $quotaMb = $this->sanitizeQuotaMb($params['quota_mb'] ?? $params['quota'] ?? null, 5120);
 
-        // Write to our panel database (primary)
-        if ($panelDb) {
+        // Write to the authoritative mail DB
+        if ($mailDb) {
             try {
-                $this->ensureForcePasswordChangeColumn($panelDb);
-                $this->ensureQuotaColumn($panelDb);
+                $this->ensureForcePasswordChangeColumn($mailDb);
+                $this->ensureQuotaColumn($mailDb);
 
                 // Ensure domain exists
-                $panelDb->prepare("INSERT IGNORE INTO mail_domains (domain) VALUES (?)")->execute([$domain]);
+                $mailDb->prepare("INSERT IGNORE INTO mail_domains (domain) VALUES (?)")->execute([$domain]);
 
                 // Insert account
-                $stmt = $panelDb->prepare("
+                $stmt = $mailDb->prepare("
                     INSERT INTO mail_accounts (email, domain, username, password_hash, maildir_path, status, force_password_change, quota_mb)
                     VALUES (?, ?, ?, ?, ?, 'active', ?, ?)
                 ");
@@ -1030,7 +1179,27 @@ class MailAction extends BaseAction
                 return $this->error("Failed to create account: " . $e->getMessage());
             }
         } else {
-            return $this->error("Cannot connect to panel database");
+            return $this->error("Cannot connect to mail database");
+        }
+
+        // On Docker boxes mirror into the panel DB (best effort) so email-app
+        // admin views keep working; Dovecot never reads this copy.
+        if ($dockerMail) {
+            $panelDb = $this->getPanelDb();
+            if ($panelDb) {
+                try {
+                    $this->ensureForcePasswordChangeColumn($panelDb);
+                    $this->ensureQuotaColumn($panelDb);
+                    $panelDb->prepare("INSERT IGNORE INTO mail_domains (domain) VALUES (?)")->execute([$domain]);
+                    $panelDb->prepare("
+                        INSERT INTO mail_accounts (email, domain, username, password_hash, maildir_path, status, force_password_change, quota_mb)
+                        VALUES (?, ?, ?, ?, ?, 'active', ?, ?)
+                        ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), status = 'active', quota_mb = VALUES(quota_mb)
+                    ")->execute([$email, $domain, $user, $passwordHash, $mailboxPath, $forcePasswordChange, $quotaMb]);
+                } catch (\Exception $e) {
+                    $this->logger->warning("Panel DB mirror of account {$email} failed: " . $e->getMessage());
+                }
+            }
         }
 
         return $this->success([
@@ -1120,17 +1289,29 @@ class MailAction extends BaseAction
         $user = $parts[0];
         $domain = $parts[1];
 
-        // Delete from our panel database (primary)
-        $panelDb = $this->getPanelDb();
-        if ($panelDb) {
+        // Delete from the authoritative mail DB
+        $mailDb = $this->mailDb();
+        if ($mailDb) {
             try {
-                $stmt = $panelDb->prepare("DELETE FROM mail_accounts WHERE email = ?");
+                $stmt = $mailDb->prepare("DELETE FROM mail_accounts WHERE email = ?");
                 $stmt->execute([$email]);
             } catch (\Exception $e) {
                 return $this->error("Failed to delete account: " . $e->getMessage());
             }
         } else {
-            return $this->error("Cannot connect to panel database");
+            return $this->error("Cannot connect to mail database");
+        }
+
+        // Mirror the delete into the panel DB on Docker boxes (best effort).
+        if ($this->mailPod()->active()) {
+            $panelDb = $this->getPanelDb();
+            if ($panelDb) {
+                try {
+                    $panelDb->prepare("DELETE FROM mail_accounts WHERE email = ?")->execute([$email]);
+                } catch (\Exception $e) {
+                    $this->logger->warning("Panel DB mirror delete of {$email} failed: " . $e->getMessage());
+                }
+            }
         }
 
         // Always clear the LIVE mail directory so the mailbox is genuinely gone.
@@ -1172,6 +1353,16 @@ class MailAction extends BaseAction
             if (!$movedToBackup) {
                 $this->execCommand('rm', ['-rf', $mailDir]);
                 $this->logger->info("Removed maildir for {$email}: {$mailDir}");
+            }
+        }
+
+        // Docker boxes: the maildir lives inside the mail pod's volume, not on
+        // the host — clear it there so recreating the address starts empty.
+        if ($safeToRemove && $this->mailPod()->active()) {
+            $podMailDir = "/home/vmail/{$domain}/{$user}";
+            $res = $this->mailPod()->exec(['rm', '-rf', $podMailDir], 60);
+            if (!empty($res['success'])) {
+                $this->logger->info("Removed pod maildir for {$email}: {$podMailDir}");
             }
         }
 
@@ -1400,34 +1591,23 @@ class MailAction extends BaseAction
 
         $this->logger->info("Resetting password for {$email}");
 
-        // Generate password hash using BLF-CRYPT (bcrypt) for compatibility
-        $hashResult = $this->execCommand('doveadm', ['pw', '-s', 'BLF-CRYPT', '-p', $password]);
-        $passwordHash = trim($hashResult['output']);
+        // Hash in the scheme Dovecot on this box verifies (bcrypt on Docker,
+        // doveadm BLF-CRYPT natively).
+        $passwordHash = $this->hashMailPassword($password);
 
-        if (!$passwordHash || !$hashResult['success']) {
-            // Fallback to SHA512-CRYPT
-            $hashResult = $this->execCommand('doveadm', ['pw', '-s', 'SHA512-CRYPT', '-p', $password]);
-            $passwordHash = trim($hashResult['output']);
-            
-            if (!$passwordHash || !$hashResult['success']) {
-                $salt = base64_encode(random_bytes(12));
-                $passwordHash = '{SHA512-CRYPT}' . crypt($password, '$6$' . $salt);
-            }
-        }
-        
         $this->logger->info("Generated password hash for {$email}");
 
         $domain = substr($email, strpos($email, '@') + 1);
 
-        // Update in our panel database
-        $panelDb = $this->getPanelDb();
-        if (!$panelDb) {
-            return $this->error("Cannot connect to panel database");
+        // Update in the authoritative mail DB
+        $mailDb = $this->mailDb();
+        if (!$mailDb) {
+            return $this->error("Cannot connect to mail database");
         }
         
         try {
             // First check if account exists
-            $stmt = $panelDb->prepare("SELECT id, email FROM mail_accounts WHERE email = ? OR LOWER(email) = ?");
+            $stmt = $mailDb->prepare("SELECT id, email FROM mail_accounts WHERE email = ? OR LOWER(email) = ?");
             $stmt->execute([$email, $email]);
             $account = $stmt->fetch(\PDO::FETCH_ASSOC);
             
@@ -1439,7 +1619,7 @@ class MailAction extends BaseAction
             $this->logger->info("Found account ID {$account['id']} for {$email}");
             
             // Update password using the ID for precision
-            $stmt = $panelDb->prepare("UPDATE mail_accounts SET password_hash = ?, updated_at = NOW() WHERE id = ?");
+            $stmt = $mailDb->prepare("UPDATE mail_accounts SET password_hash = ?, updated_at = NOW() WHERE id = ?");
             $result = $stmt->execute([$passwordHash, $account['id']]);
             
             if (!$result) {
@@ -1453,6 +1633,19 @@ class MailAction extends BaseAction
         } catch (\Exception $e) {
             $this->logger->error("Exception during password reset: " . $e->getMessage());
             return $this->error("Failed to reset password: " . $e->getMessage());
+        }
+
+        // Mirror into the panel DB on Docker boxes (best effort).
+        if ($this->mailPod()->active()) {
+            $panelDb = $this->getPanelDb();
+            if ($panelDb) {
+                try {
+                    $panelDb->prepare("UPDATE mail_accounts SET password_hash = ?, updated_at = NOW() WHERE LOWER(email) = ?")
+                        ->execute([$passwordHash, $email]);
+                } catch (\Exception $e) {
+                    $this->logger->warning("Panel DB mirror of password reset for {$email} failed: " . $e->getMessage());
+                }
+            }
         }
 
         return $this->success([
@@ -1477,20 +1670,20 @@ class MailAction extends BaseAction
 
         $enabled = array_key_exists('enabled', $params) ? (!empty($params['enabled']) ? 1 : 0) : 1;
 
-        $panelDb = $this->getPanelDb();
-        if (!$panelDb) {
-            return $this->error("Cannot connect to panel database");
+        $mailDb = $this->mailDb();
+        if (!$mailDb) {
+            return $this->error("Cannot connect to mail database");
         }
 
         try {
-            $this->ensureForcePasswordChangeColumn($panelDb);
+            $this->ensureForcePasswordChangeColumn($mailDb);
 
-            $stmt = $panelDb->prepare("UPDATE mail_accounts SET force_password_change = ?, updated_at = NOW() WHERE LOWER(email) = ?");
+            $stmt = $mailDb->prepare("UPDATE mail_accounts SET force_password_change = ?, updated_at = NOW() WHERE LOWER(email) = ?");
             $stmt->execute([$enabled, $email]);
 
             if ($stmt->rowCount() === 0) {
                 // Verify the account actually exists (rowCount can be 0 when the value is unchanged).
-                $check = $panelDb->prepare("SELECT id FROM mail_accounts WHERE LOWER(email) = ?");
+                $check = $mailDb->prepare("SELECT id FROM mail_accounts WHERE LOWER(email) = ?");
                 $check->execute([$email]);
                 if (!$check->fetch()) {
                     return $this->error("Account not found: {$email}");
@@ -1535,15 +1728,15 @@ class MailAction extends BaseAction
             $reason = mb_substr($reason, 0, 255);
         }
 
-        $panelDb = $this->getPanelDb();
-        if (!$panelDb) {
-            return $this->error("Cannot connect to panel database");
+        $mailDb = $this->mailDb();
+        if (!$mailDb) {
+            return $this->error("Cannot connect to mail database");
         }
 
         try {
-            $this->ensureLoginSuspendedColumn($panelDb);
+            $this->ensureLoginSuspendedColumn($mailDb);
 
-            $stmt = $panelDb->prepare("
+            $stmt = $mailDb->prepare("
                 UPDATE mail_accounts
                 SET login_suspended = 1, suspended_at = NOW(), suspended_reason = ?, updated_at = NOW()
                 WHERE LOWER(email) = ?
@@ -1552,7 +1745,7 @@ class MailAction extends BaseAction
 
             if ($stmt->rowCount() === 0) {
                 // rowCount can be 0 when nothing changed; confirm the account exists.
-                $check = $panelDb->prepare("SELECT id FROM mail_accounts WHERE LOWER(email) = ?");
+                $check = $mailDb->prepare("SELECT id FROM mail_accounts WHERE LOWER(email) = ?");
                 $check->execute([$email]);
                 if (!$check->fetch()) {
                     return $this->error("Account not found: {$email}");
@@ -1564,8 +1757,11 @@ class MailAction extends BaseAction
 
         // Drop any live IMAP/POP3 sessions so the lockout is immediate. Best
         // effort: if doveadm is unavailable the DB flag still blocks the next
-        // login, so a kick failure must not fail the whole operation.
-        $kick = $this->execCommand('doveadm', ['kick', $email]);
+        // login, so a kick failure must not fail the whole operation. On
+        // Docker boxes doveadm lives inside the mail pod.
+        $kick = $this->mailPod()->active()
+            ? $this->mailPod()->exec(['doveadm', 'kick', $email], 20)
+            : $this->execCommand('doveadm', ['kick', $email]);
         if (empty($kick['success'])) {
             $this->logger->warning("doveadm kick failed for {$email}: " . ($kick['output'] ?? ''));
         }
@@ -1577,8 +1773,11 @@ class MailAction extends BaseAction
         // stored credential. Best effort: the table lives in the shared app DB
         // and may be absent on a panel-only box, so failures are non-fatal.
         try {
-            $sess = $panelDb->prepare("DELETE FROM webmail_sessions WHERE LOWER(email) = ?");
-            $sess->execute([$email]);
+            $panelDb = $this->getPanelDb();
+            if ($panelDb) {
+                $sess = $panelDb->prepare("DELETE FROM webmail_sessions WHERE LOWER(email) = ?");
+                $sess->execute([$email]);
+            }
         } catch (\Exception $e) {
             $this->logger->warning("Could not revoke webmail sessions for {$email}: " . $e->getMessage());
         }
@@ -1608,15 +1807,15 @@ class MailAction extends BaseAction
             return $this->error('Invalid email format');
         }
 
-        $panelDb = $this->getPanelDb();
-        if (!$panelDb) {
-            return $this->error("Cannot connect to panel database");
+        $mailDb = $this->mailDb();
+        if (!$mailDb) {
+            return $this->error("Cannot connect to mail database");
         }
 
         try {
-            $this->ensureLoginSuspendedColumn($panelDb);
+            $this->ensureLoginSuspendedColumn($mailDb);
 
-            $stmt = $panelDb->prepare("
+            $stmt = $mailDb->prepare("
                 UPDATE mail_accounts
                 SET login_suspended = 0, suspended_at = NULL, suspended_reason = NULL, updated_at = NOW()
                 WHERE LOWER(email) = ?
@@ -1624,7 +1823,7 @@ class MailAction extends BaseAction
             $stmt->execute([$email]);
 
             if ($stmt->rowCount() === 0) {
-                $check = $panelDb->prepare("SELECT id FROM mail_accounts WHERE LOWER(email) = ?");
+                $check = $mailDb->prepare("SELECT id FROM mail_accounts WHERE LOWER(email) = ?");
                 $check->execute([$email]);
                 if (!$check->fetch()) {
                     return $this->error("Account not found: {$email}");
@@ -1731,8 +1930,8 @@ class MailAction extends BaseAction
      */
     private function getForwardsFromDatabase(?string $domain = null): array
     {
-        // Read from our panel's database (primary after migration)
-        $pdo = $this->getPanelDb();
+        // Read from the authoritative mail DB (Postfix resolves forwards there)
+        $pdo = $this->mailDb();
         if (!$pdo) {
             return [];
         }
@@ -1782,19 +1981,19 @@ class MailAction extends BaseAction
 
         $domain = explode('@', $source)[1] ?? '';
 
-        // Write to our panel database (primary)
-        $panelDb = $this->getPanelDb();
-        if ($panelDb) {
+        // Write to the authoritative mail DB (Postfix resolves forwards there)
+        $mailDb = $this->mailDb();
+        if ($mailDb) {
             try {
                 // Check if exists
-                $stmt = $panelDb->prepare("SELECT id FROM mail_forwards WHERE source_email = ? AND destination = ?");
+                $stmt = $mailDb->prepare("SELECT id FROM mail_forwards WHERE source_email = ? AND destination = ?");
                 $stmt->execute([$source, $destination]);
                 if ($stmt->fetch()) {
                     return $this->error("Forward already exists: {$source} -> {$destination}");
                 }
 
                 // Insert forward
-                $stmt = $panelDb->prepare("
+                $stmt = $mailDb->prepare("
                     INSERT INTO mail_forwards (source_email, source_domain, destination, status)
                     VALUES (?, ?, ?, 'active')
                 ");
@@ -1803,7 +2002,22 @@ class MailAction extends BaseAction
                 return $this->error("Failed to add forward: " . $e->getMessage());
             }
         } else {
-            return $this->error("Cannot connect to panel database");
+            return $this->error("Cannot connect to mail database");
+        }
+
+        // Mirror into the panel DB on Docker boxes (best effort).
+        if ($this->mailPod()->active()) {
+            $panelDb = $this->getPanelDb();
+            if ($panelDb) {
+                try {
+                    $panelDb->prepare("
+                        INSERT IGNORE INTO mail_forwards (source_email, source_domain, destination, status)
+                        VALUES (?, ?, ?, 'active')
+                    ")->execute([$source, $domain, $destination]);
+                } catch (\Exception $e) {
+                    $this->logger->warning("Panel DB mirror of forward {$source} failed: " . $e->getMessage());
+                }
+            }
         }
 
         return $this->success([
@@ -1834,18 +2048,18 @@ class MailAction extends BaseAction
             return $this->error('Invalid destination email format');
         }
 
-        // Delete from our panel database (primary)
-        $panelDb = $this->getPanelDb();
-        if ($panelDb) {
+        // Delete from the authoritative mail DB
+        $mailDb = $this->mailDb();
+        if ($mailDb) {
             try {
                 if ($destination) {
                     // Remove specific forward
-                    $stmt = $panelDb->prepare("DELETE FROM mail_forwards WHERE source_email = ? AND destination = ?");
+                    $stmt = $mailDb->prepare("DELETE FROM mail_forwards WHERE source_email = ? AND destination = ?");
                     $stmt->execute([$source, $destination]);
                     $message = "Forward removed: {$source} -> {$destination}";
                 } else {
                     // Remove all forwards for this source
-                    $stmt = $panelDb->prepare("DELETE FROM mail_forwards WHERE source_email = ?");
+                    $stmt = $mailDb->prepare("DELETE FROM mail_forwards WHERE source_email = ?");
                     $stmt->execute([$source]);
                     $message = "All forwards removed for {$source}";
                 }
@@ -1853,7 +2067,23 @@ class MailAction extends BaseAction
                 return $this->error("Failed to remove forward: " . $e->getMessage());
             }
         } else {
-            return $this->error("Cannot connect to panel database");
+            return $this->error("Cannot connect to mail database");
+        }
+
+        // Mirror the delete into the panel DB on Docker boxes (best effort).
+        if ($this->mailPod()->active()) {
+            $panelDb = $this->getPanelDb();
+            if ($panelDb) {
+                try {
+                    if ($destination) {
+                        $panelDb->prepare("DELETE FROM mail_forwards WHERE source_email = ? AND destination = ?")->execute([$source, $destination]);
+                    } else {
+                        $panelDb->prepare("DELETE FROM mail_forwards WHERE source_email = ?")->execute([$source]);
+                    }
+                } catch (\Exception $e) {
+                    $this->logger->warning("Panel DB mirror delete of forward {$source} failed: " . $e->getMessage());
+                }
+            }
         }
 
         return $this->success([
@@ -1939,7 +2169,7 @@ class MailAction extends BaseAction
      */
     private function countAccounts(string $domain): int
     {
-        $pdo = $this->getPanelDb();
+        $pdo = $this->mailDb();
         if (!$pdo) {
             return 0;
         }
@@ -1958,7 +2188,7 @@ class MailAction extends BaseAction
      */
     private function countForwards(string $domain): int
     {
-        $pdo = $this->getPanelDb();
+        $pdo = $this->mailDb();
         if (!$pdo) {
             return 0;
         }

@@ -1151,6 +1151,11 @@ class ProvisioningService
             // early -- the tables don't exist yet, so the inserts silently fail.
             $this->seedMailAccount($variables, $variables['DB_ROOT_PASS'] ?? '');
             $this->seedDnsRecords($variables);
+
+            // Per-server NS + NAS policy files (keeps operator defaults off
+            // client boxes) + the ModSecurity DetectionOnly baseline.
+            $this->deployHostPolicyFiles($variables);
+            $this->deployModsecBaseline();
         });
 
         // --- deploy_email ---
@@ -3812,6 +3817,185 @@ CONF;
     }
 
     /**
+     * Day-2 push of the per-server NS + NAS policy files over SSH — no
+     * redeploy, no container churn. Used by POST /api/servers/{id}/apply-settings
+     * after the operator edits nameservers or NAS opt-in on the server detail
+     * page, so the box picks the change up without a full provision.
+     *
+     * @return array{success:bool, error?:string, log:array}
+     */
+    public function applyHostPolicy(int $serverId): array
+    {
+        $this->deploymentLog = [];
+        try {
+            $stmt = $this->db->prepare("SELECT * FROM servers WHERE id = ?");
+            $stmt->execute([$serverId]);
+            $server = $stmt->fetch();
+            if (!$server) {
+                return ['success' => false, 'error' => "server {$serverId} not found", 'log' => $this->deploymentLog];
+            }
+            $this->isLocalServer = $this->isLocal($server);
+            if (!$this->ssh->connectToServer($server)) {
+                return ['success' => false, 'error' => 'SSH connection failed', 'log' => $this->deploymentLog];
+            }
+
+            $variables = $this->templates->generateServerVariables($server);
+            $this->deployHostPolicyFiles($variables);
+
+            return ['success' => true, 'log' => $this->deploymentLog];
+        } catch (\Throwable $e) {
+            $this->log('ERROR: ' . $e->getMessage());
+            return ['success' => false, 'error' => $e->getMessage(), 'log' => $this->deploymentLog];
+        } finally {
+            if ($this->ssh->isConnected()) {
+                $this->ssh->disconnect();
+            }
+        }
+    }
+
+    /**
+     * Write the per-server host policy files that keep operator-specific
+     * defaults OFF client boxes:
+     *
+     *  - /var/www/vps-admin/.dns_ns_config.json — the authoritative NS1/NS2
+     *    the panel advertises in zones it creates. Enabled ONLY when the
+     *    server row has nameservers configured; otherwise zones are seeded
+     *    without NS records and the panel derives display-only defaults from
+     *    the box's own domain (never the operator's ns1/ns2.devcon1.hu).
+     *
+     *  - /etc/flowone/storage.local.php — NAS/VPN override for the FlowOne
+     *    storage platform. nas.enabled=false by default so health monitors
+     *    report "not configured" instead of probing the operator's Synology;
+     *    when the server row opts in, the client's own NAS values are written
+     *    and the operator's DDNS hostname is blanked.
+     *
+     * Idempotent full-file writes; safe on every provision/redeploy.
+     */
+    private function deployHostPolicyFiles(array $variables): void
+    {
+        // --- Nameserver policy ---------------------------------------------
+        $ns1 = trim((string) ($variables['NS1_DOMAIN'] ?? ''));
+        $ns2 = trim((string) ($variables['NS2_DOMAIN'] ?? ''));
+        $nsConfig = json_encode([
+            'enabled' => $ns1 !== '',
+            'ns1' => $ns1,
+            'ns2' => $ns2,
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+
+        $panelDirCheck = $this->executeCommand('test -d /var/www/vps-admin && echo OK || echo NO');
+        if (strpos($panelDirCheck['output'] ?? '', 'OK') !== false) {
+            $this->ssh->uploadContent($nsConfig . "\n", '/var/www/vps-admin/.dns_ns_config.json');
+            $this->executeCommand('chown www-data:www-data /var/www/vps-admin/.dns_ns_config.json 2>/dev/null || true');
+            $this->executeCommand('chmod 640 /var/www/vps-admin/.dns_ns_config.json');
+            $this->log($ns1 !== ''
+                ? "NS policy: zones will advertise {$ns1}" . ($ns2 !== '' ? " / {$ns2}" : '')
+                : 'NS policy: no client nameservers configured — zones are seeded WITHOUT NS records');
+        } else {
+            $this->log('NS policy: /var/www/vps-admin not present yet — skipping .dns_ns_config.json');
+        }
+
+        // --- NAS / storage policy ------------------------------------------
+        $nasEnabled = ($variables['NAS_ENABLED'] ?? 'false') === 'true';
+        if ($nasEnabled) {
+            $nasIp = trim((string) ($variables['NAS_IP'] ?? ''));
+            $nasMount = trim((string) ($variables['NAS_MOUNT'] ?? '/mnt/nas-drive'));
+            $esc = fn (string $v) => str_replace(["\\", "'"], ["\\\\", "\\'"], $v);
+            $storageLocal = "<?php\n"
+                . "// Managed by Fleet Manager — per-server NAS opt-in (see servers.nas_*).\n"
+                . "return [\n"
+                . "    'nas' => [\n"
+                . "        'enabled'       => true,\n"
+                . "        'lan_ip'        => '{$esc($nasIp)}',\n"
+                . "        'mount_point'   => '{$esc($nasMount)}',\n"
+                . "        // Client NAS: the operator's DDNS hostname must never apply here.\n"
+                . "        'ddns_hostname' => '',\n"
+                . "    ],\n"
+                . "];\n";
+            $this->log("NAS policy: enabled — {$nasIp} on {$nasMount}");
+        } else {
+            $storageLocal = "<?php\n"
+                . "// Managed by Fleet Manager — no NAS is configured for this server.\n"
+                . "// Health checks and monitors report 'not configured' instead of probing.\n"
+                . "return [\n"
+                . "    'nas' => ['enabled' => false],\n"
+                . "];\n";
+            $this->log('NAS policy: disabled — no NAS is provisioned on this server');
+        }
+        $this->executeCommand('mkdir -p /etc/flowone');
+        $this->ssh->uploadContent($storageLocal, '/etc/flowone/storage.local.php');
+        $this->executeCommand('chmod 644 /etc/flowone/storage.local.php');
+    }
+
+    /**
+     * Baseline ModSecurity for the native OpenLiteSpeed front: create
+     * /usr/local/lsws/conf/modsec.conf with SecRuleEngine DetectionOnly and
+     * wire the mod_security module into httpd_config.conf.
+     *
+     * Policy: the WAF must never ship OFF. DetectionOnly logs matches without
+     * blocking, so a fresh box has visibility from day one; the operator can
+     * flip to full blocking from the panel's Security -> ModSecurity view
+     * (agent modsec.setMode). When CPGuard is later installed it overlays its
+     * own modsec wiring + rules and takes charge of the WAF.
+     *
+     * Idempotent: never overwrites an existing modsec.conf (the panel edits
+     * it), and only appends the module block once. Skips cleanly when the OLS
+     * mod_security module is not present on the box.
+     */
+    private function deployModsecBaseline(): void
+    {
+        $moduleCheck = $this->executeCommand('test -f /usr/local/lsws/modules/mod_security.so && echo OK || echo NO');
+        if (strpos($moduleCheck['output'] ?? '', 'OK') === false) {
+            $this->log('ModSecurity: OLS mod_security.so not present — skipping WAF baseline');
+            return;
+        }
+
+        // 1. Baseline rules file (only when absent — the panel manages it after).
+        $confCheck = $this->executeCommand('test -f /usr/local/lsws/conf/modsec.conf && echo OK || echo NO');
+        if (strpos($confCheck['output'] ?? '', 'OK') === false) {
+            $modsecConf = <<<'CONF'
+# ModSecurity baseline — deployed by Fleet Manager at provision time.
+# Mode: DetectionOnly (log matches, never block) so the WAF is active with
+# zero false-positive risk. Manage from the panel: Security -> ModSecurity.
+SecRuleEngine DetectionOnly
+SecRequestBodyAccess On
+SecResponseBodyAccess Off
+SecRequestBodyLimit 13107200
+SecRequestBodyNoFilesLimit 131072
+SecAuditEngine RelevantOnly
+SecAuditLog /usr/local/lsws/logs/modsec_audit.log
+SecAuditLogParts ABIJDEFHZ
+SecDebugLogLevel 0
+CONF;
+            $this->ssh->uploadContent($modsecConf . "\n", '/usr/local/lsws/conf/modsec.conf');
+            $this->executeCommand('chown lsadm:nogroup /usr/local/lsws/conf/modsec.conf 2>/dev/null || true');
+            $this->executeCommand('chmod 644 /usr/local/lsws/conf/modsec.conf');
+            $this->log('ModSecurity: baseline modsec.conf deployed (DetectionOnly)');
+        } else {
+            $this->log('ModSecurity: modsec.conf already present — keeping existing configuration');
+        }
+
+        // 2. Wire the module into httpd_config.conf exactly once. deploySystemVhosts
+        //    force-rewrites httpd_config from the clean template, so this append
+        //    must run after it (and re-runs harmlessly thanks to the grep guard).
+        $wire = <<<'BASH'
+CONF=/usr/local/lsws/conf/httpd_config.conf
+if [ -f "$CONF" ] && ! grep -q '^module mod_security' "$CONF"; then
+  printf '\nmodule mod_security {\n  modsecurity  on\n  modsecurity_rules_file /usr/local/lsws/conf/modsec.conf\n  ls_enabled   1\n}\n' >> "$CONF"
+  echo WIRED
+else
+  echo PRESENT
+fi
+BASH;
+        $res = $this->executeCommand($wire, 30);
+        if (strpos($res['output'] ?? '', 'WIRED') !== false) {
+            $this->executeCommand('/usr/local/lsws/bin/lswsctrl reload 2>/dev/null || systemctl restart lshttpd 2>/dev/null || true');
+            $this->log('ModSecurity: mod_security module wired into httpd_config.conf (OLS reloaded)');
+        } else {
+            $this->log('ModSecurity: module already wired into httpd_config.conf');
+        }
+    }
+
+    /**
      * Deploy SpamAssassin configuration from template
      */
     private function deploySpamAssassinConfig(array $variables): void
@@ -4267,6 +4451,11 @@ BASH;
                 $this->seedMailAccount($variables, $variables['DB_ROOT_PASS'] ?? '');
                 $this->seedDnsRecords($variables);
             } catch (\Throwable $e) { $this->log('Mail/DNS seed (non-fatal): ' . $e->getMessage()); }
+            try {
+                // Per-server NS + NAS policy files + ModSecurity DetectionOnly baseline.
+                $this->deployHostPolicyFiles($variables);
+                $this->deployModsecBaseline();
+            } catch (\Throwable $e) { $this->log('Host policy/ModSec baseline (non-fatal): ' . $e->getMessage()); }
 
             $this->log('=== [6/9] Installing PowerDNS (gmysql on the container DB) ===');
             try { $this->installPowerDNS($serverId, $variables); }

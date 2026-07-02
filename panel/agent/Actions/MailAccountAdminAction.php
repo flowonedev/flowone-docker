@@ -15,12 +15,47 @@
 namespace VpsAdmin\Agent\Actions;
 
 use VpsAdmin\Agent\Lib\BaseAction;
+use VpsAdmin\Agent\Lib\MailPodBridge;
+use VpsAdmin\Agent\Lib\MailServerDb;
 use VpsAdmin\Agent\Lib\PanelDbTrait;
 use VpsAdmin\Agent\Lib\Validator;
 
 class MailAccountAdminAction extends BaseAction
 {
     use PanelDbTrait;
+
+    private ?MailPodBridge $mailPod = null;
+
+    private function mailPod(): MailPodBridge
+    {
+        if ($this->mailPod === null) {
+            $this->mailPod = new MailPodBridge(
+                fn (string $cmd, array $args, int $timeout = 0) => $this->execCommand($cmd, $args, $timeout)
+            );
+        }
+        return $this->mailPod;
+    }
+
+    /**
+     * PDO to the database Dovecot actually reads mail_accounts from: the
+     * containerized `mailserver` DB on Docker boxes, the panel DB natively.
+     */
+    private function mailDb(): ?\PDO
+    {
+        if (!$this->mailPod()->active()) {
+            return $this->getPanelDb();
+        }
+        return MailServerDb::connect();
+    }
+
+    /** Run doveadm on the host or inside the mail pod, whichever owns mail. */
+    private function doveadm(array $args, int $timeout = 20): array
+    {
+        if ($this->mailPod()->active()) {
+            return $this->mailPod()->exec(array_merge(['doveadm'], $args), $timeout);
+        }
+        return $this->execCommand('doveadm', $args, $timeout);
+    }
 
     // Mailbox quota bounds (MB). 0 = unlimited.
     private const MAILBOX_MIN_MB = 100;
@@ -85,13 +120,15 @@ class MailAccountAdminAction extends BaseAction
             }
         }
 
-        $db = $this->getPanelDb();
-        if (!$db) {
-            return $this->error('Cannot connect to panel database');
+        // mail_accounts must be written where Dovecot reads it (mailserver DB
+        // on Docker boxes); drive_quotas is an app table and stays panel-side.
+        $mailDb = $this->mailDb();
+        if (!$mailDb) {
+            return $this->error('Cannot connect to mail database');
         }
 
         // The mailbox must exist; this catches typos before we write anything.
-        $check = $db->prepare("SELECT id FROM mail_accounts WHERE LOWER(email) = ?");
+        $check = $mailDb->prepare("SELECT id FROM mail_accounts WHERE LOWER(email) = ?");
         $check->execute([$email]);
         if (!$check->fetch()) {
             return $this->error("Account not found: {$email}");
@@ -102,10 +139,22 @@ class MailAccountAdminAction extends BaseAction
 
         if ($quotaMb !== null) {
             try {
-                $stmt = $db->prepare("UPDATE mail_accounts SET quota_mb = ?, updated_at = NOW() WHERE LOWER(email) = ?");
+                $stmt = $mailDb->prepare("UPDATE mail_accounts SET quota_mb = ?, updated_at = NOW() WHERE LOWER(email) = ?");
                 $stmt->execute([$quotaMb, $email]);
             } catch (\Exception $e) {
                 return $this->error('Failed to set mailbox quota: ' . $e->getMessage());
+            }
+            // Keep the panel DB copy in sync on Docker (webmail features read it).
+            if ($this->mailPod()->active()) {
+                try {
+                    $panel = $this->getPanelDb();
+                    if ($panel) {
+                        $mirror = $panel->prepare("UPDATE mail_accounts SET quota_mb = ?, updated_at = NOW() WHERE LOWER(email) = ?");
+                        $mirror->execute([$quotaMb, $email]);
+                    }
+                } catch (\Exception $e) {
+                    $this->logger->warning("setQuotas: panel DB mirror failed for {$email}: " . $e->getMessage());
+                }
             }
             $applied['quota_mb'] = $quotaMb;
 
@@ -129,9 +178,13 @@ class MailAccountAdminAction extends BaseAction
         }
 
         if ($driveBytes !== null) {
+            $panel = $this->getPanelDb();
+            if (!$panel) {
+                return $this->error('Cannot connect to panel database for drive quota');
+            }
             try {
                 // drive_quotas is owned by the Email App; row may not exist yet.
-                $stmt = $db->prepare("
+                $stmt = $panel->prepare("
                     INSERT INTO drive_quotas (user_email, quota_bytes)
                     VALUES (?, ?)
                     ON DUPLICATE KEY UPDATE quota_bytes = VALUES(quota_bytes)
@@ -168,15 +221,22 @@ class MailAccountAdminAction extends BaseAction
             return $this->error('Invalid email format');
         }
 
-        $db = $this->getPanelDb();
-        if (!$db) {
-            return $this->error('Cannot connect to panel database');
+        // Existence check against the authoritative mail DB; the webmail_*
+        // tables below are app tables and always live in the panel DB.
+        $mailDb = $this->mailDb();
+        if (!$mailDb) {
+            return $this->error('Cannot connect to mail database');
         }
 
-        $check = $db->prepare("SELECT id FROM mail_accounts WHERE LOWER(email) = ?");
+        $check = $mailDb->prepare("SELECT id FROM mail_accounts WHERE LOWER(email) = ?");
         $check->execute([$email]);
         if (!$check->fetch()) {
             return $this->error("Account not found: {$email}");
+        }
+
+        $db = $this->getPanelDb();
+        if (!$db) {
+            return $this->error('Cannot connect to panel database');
         }
 
         $disabled = false;
@@ -240,14 +300,23 @@ class MailAccountAdminAction extends BaseAction
      */
     private function refreshDovecotQuota(string $email): array
     {
+        $inPod = $this->mailPod()->active();
         $removed = [];
         foreach ($this->maildirsizePaths($email) as $path) {
-            if (is_file($path) && @unlink($path)) {
+            if ($inPod) {
+                // Maildirs live inside the mail pod's volume, not on the host.
+                if ($this->mailPod()->fileExists($path)) {
+                    $rm = $this->mailPod()->exec(['rm', '-f', $path], 20);
+                    if (!empty($rm['success'])) {
+                        $removed[] = $path;
+                    }
+                }
+            } elseif (is_file($path) && @unlink($path)) {
                 $removed[] = $path;
             }
         }
 
-        $recalc = $this->execCommand('doveadm', ['quota', 'recalc', '-u', $email], 20);
+        $recalc = $this->doveadm(['quota', 'recalc', '-u', $email], 20);
 
         return [
             'success' => !empty($recalc['success']),
@@ -269,7 +338,7 @@ class MailAccountAdminAction extends BaseAction
 
         // Authoritative: the mail location Dovecot resolves for this user,
         // e.g. "maildir:/home/vmail/example.com/user[:LAYOUT=fs]".
-        $mail = $this->execCommand('doveadm', ['user', '-f', 'mail', $email], 10);
+        $mail = $this->doveadm(['user', '-f', 'mail', $email], 10);
         if (!empty($mail['success'])) {
             $root = self::maildirRootFromMailField((string) ($mail['output'] ?? ''));
             if ($root !== null) {
@@ -279,7 +348,7 @@ class MailAccountAdminAction extends BaseAction
 
         // Fallback: the home Dovecot reports, covering both maildir-in-home
         // and the classic Maildir/ subdirectory layout.
-        $home = $this->execCommand('doveadm', ['user', '-f', 'home', $email], 10);
+        $home = $this->doveadm(['user', '-f', 'home', $email], 10);
         if (!empty($home['success'])) {
             $h = rtrim(trim((string) ($home['output'] ?? '')), '/');
             if ($h !== '' && $h[0] === '/') {

@@ -231,6 +231,12 @@ class TemplateService
         }
         $variables['LIVEKIT_WS_URL'] = $server['livekit_ws_url'] ?? '';
 
+        // Per-server authoritative nameservers. Empty by default: no NS records
+        // are seeded and the box derives display defaults from its own domain —
+        // the operator's nameservers are never pushed onto a client server.
+        $variables['NS1_DOMAIN'] = trim((string) ($server['ns1_domain'] ?? ''));
+        $variables['NS2_DOMAIN'] = trim((string) ($server['ns2_domain'] ?? ''));
+
         // NAS/VPN variables if enabled
         if (!empty($server['nas_enabled'])) {
             $variables['NAS_ENABLED'] = 'true';

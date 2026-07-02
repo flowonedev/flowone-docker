@@ -290,9 +290,13 @@ final class DnsZoneCreateStep extends AbstractStep
     {
         $serial = date('Ymd') . '01';
         $admin = 'admin.' . $domain;
+        // No configured nameservers (NS config disabled): anchor the SOA on
+        // the zone apex itself and publish no NS records rather than a wrong
+        // (operator-domain) hostname.
+        $soaPrimary = $this->ns1 !== '' ? $this->ns1 : $domain;
         $soaContent = sprintf(
             '%s. %s. %s 10800 3600 604800 3600',
-            $this->ns1,
+            $soaPrimary,
             $admin,
             $serial,
         );
@@ -317,10 +321,16 @@ final class DnsZoneCreateStep extends AbstractStep
         // this zone already uses; all priorities are 0 here.
         $mail = 'mail.' . $domain;
 
+        $nsRecords = [];
+        foreach ([$this->ns1, $this->ns2] as $ns) {
+            if ($ns !== '') {
+                $nsRecords[] = ['name' => $domain, 'type' => 'NS', 'content' => $ns, 'ttl' => $this->defaultTtl, 'prio' => 0];
+            }
+        }
+
         return [
             ['name' => $domain, 'type' => 'SOA', 'content' => $soaContent, 'ttl' => $this->defaultTtl, 'prio' => 0],
-            ['name' => $domain, 'type' => 'NS', 'content' => $this->ns1, 'ttl' => $this->defaultTtl, 'prio' => 0],
-            ['name' => $domain, 'type' => 'NS', 'content' => $this->ns2, 'ttl' => $this->defaultTtl, 'prio' => 0],
+            ...$nsRecords,
             ['name' => $domain, 'type' => 'A', 'content' => $this->serverIp, 'ttl' => $this->defaultTtl, 'prio' => 0],
             ['name' => $mail, 'type' => 'A', 'content' => $this->serverIp, 'ttl' => $this->defaultTtl, 'prio' => 0],
             ['name' => 'www.' . $domain, 'type' => 'CNAME', 'content' => $domain, 'ttl' => $this->defaultTtl, 'prio' => 0],

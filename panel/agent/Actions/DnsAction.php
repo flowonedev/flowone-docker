@@ -9,6 +9,7 @@
 namespace VpsAdmin\Agent\Actions;
 
 use VpsAdmin\Agent\Lib\BaseAction;
+use VpsAdmin\Agent\Lib\NsDefaults;
 use VpsAdmin\Agent\Lib\Validator;
 
 class DnsAction extends BaseAction
@@ -33,31 +34,19 @@ class DnsAction extends BaseAction
     }
 
     /**
-     * Path to NS configuration file
+     * Path to NS configuration file (canonical constant lives in NsDefaults)
      */
-    private const NS_CONFIG_FILE = '/var/www/vps-admin/.dns_ns_config.json';
+    private const NS_CONFIG_FILE = NsDefaults::CONFIG_FILE;
 
     /**
      * Get nameserver configuration
-     * Returns configured NS1 and NS2 hostnames with defaults
+     * Returns configured NS1 and NS2 hostnames. The config file wins; when it
+     * is absent the defaults derive from this box's own base domain
+     * (ns1.<base>/ns2.<base>) — see NsDefaults.
      */
     private function getNsConfiguration(): array
     {
-        $defaults = [
-            'enabled' => true,
-            'ns1' => 'ns1.devcon1.hu',
-            'ns2' => 'ns2.devcon1.hu',
-        ];
-
-        if (file_exists(self::NS_CONFIG_FILE)) {
-            $content = file_get_contents(self::NS_CONFIG_FILE);
-            $config = json_decode($content, true);
-            if (is_array($config)) {
-                return array_merge($defaults, $config);
-            }
-        }
-
-        return $defaults;
+        return NsDefaults::load();
     }
 
     /**
@@ -65,10 +54,11 @@ class DnsAction extends BaseAction
      */
     private function saveNsConfiguration(array $config): bool
     {
+        $derived = NsDefaults::derived();
         $data = [
             'enabled' => $config['enabled'] ?? true,
-            'ns1' => $config['ns1'] ?? 'ns1.devcon1.hu',
-            'ns2' => $config['ns2'] ?? 'ns2.devcon1.hu',
+            'ns1' => $config['ns1'] ?? $derived['ns1'],
+            'ns2' => $config['ns2'] ?? $derived['ns2'],
         ];
 
         return file_put_contents(self::NS_CONFIG_FILE, json_encode($data, JSON_PRETTY_PRINT)) !== false;

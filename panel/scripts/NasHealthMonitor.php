@@ -33,13 +33,39 @@
 // ──────────────────────────────────────────────
 // Configuration
 // ──────────────────────────────────────────────
-define('VPN_NAME',        'synology');
-define('NAS_LAN_IP',      '192.168.1.106');
-define('VPN_PORT',        1194);
-define('NFS_MOUNT',       '/mnt/nas-drive');
-define('DDNS_HOSTNAME',   'pixelranger.synology.me');
-define('NFT_TABLE',       'inet cpguard_fw');
-define('NFT_SET',         'tcp_out');
+// NAS/VPN values come from the shared storage config (canonical file plus the
+// per-host /etc/flowone/storage.local.php override that Fleet writes at
+// provision time). No NAS values are hardcoded here: a server without a NAS
+// has nas.enabled=false in its override and this monitor exits cleanly.
+$flowoneStorageCfg = (static function (): array {
+    $config = [];
+    foreach (['/var/www/shared/config/storage.php', __DIR__ . '/../shared/config/storage.php'] as $candidate) {
+        if (is_readable($candidate)) {
+            $loaded = require $candidate;
+            if (is_array($loaded)) {
+                $config = $loaded;
+            }
+            break;
+        }
+    }
+    $override = '/etc/flowone/storage.local.php';
+    if (is_readable($override)) {
+        $local = require $override;
+        if (is_array($local)) {
+            $config = array_replace_recursive($config, $local);
+        }
+    }
+    return $config;
+})();
+
+define('NAS_ENABLED',     (bool)  ($flowoneStorageCfg['nas']['enabled'] ?? true));
+define('VPN_NAME',        (string)($flowoneStorageCfg['vpn']['name'] ?? 'synology'));
+define('NAS_LAN_IP',      (string)($flowoneStorageCfg['nas']['lan_ip'] ?? ''));
+define('VPN_PORT',        (int)   ($flowoneStorageCfg['vpn']['port'] ?? 1194));
+define('NFS_MOUNT',       (string)($flowoneStorageCfg['nas']['mount_point'] ?? '/mnt/nas-drive'));
+define('DDNS_HOSTNAME',   (string)($flowoneStorageCfg['nas']['ddns_hostname'] ?? ''));
+define('NFT_TABLE',       (string)($flowoneStorageCfg['firewall']['nft_table'] ?? 'inet cpguard_fw'));
+define('NFT_SET',         (string)($flowoneStorageCfg['firewall']['nft_set'] ?? 'tcp_out'));
 
 define('ALERT_EMAIL',     'admin@flowone.pro');
 define('ALERT_FROM_NAME', 'FlowOne Monitor');
@@ -593,6 +619,21 @@ function sendAlert(array $result, ?array $previous): void
 // ──────────────────────────────────────────────
 // Entry point
 // ──────────────────────────────────────────────
+
+// No NAS on this box: write a neutral status (so the dashboard shows
+// "not configured" instead of stale/failing checks) and exit cleanly.
+if (!NAS_ENABLED) {
+    saveStatus([
+        'status'          => 'not_configured',
+        'rootCause'       => null,
+        'rootCauseDetail' => null,
+        'checks'          => [],
+        'timestamp'       => date('Y-m-d H:i:s'),
+        'message'         => 'No NAS is configured for this server.',
+    ]);
+    echo "[" . date('Y-m-d H:i:s') . "] NAS not configured -- monitor skipped\n";
+    exit(0);
+}
 
 $previous = loadPreviousStatus();
 $result   = runAllChecks();

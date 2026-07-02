@@ -17,7 +17,14 @@ return [
     'cluster' => getenv('FLOWONE_CLUSTER') ?: 'default',
 
     // ─── NAS / VPN connectivity ──────────────────────────────────────────
+    // These defaults describe the ORIGIN server's NAS. Fleet-provisioned
+    // servers always receive /etc/flowone/storage.local.php at deploy time:
+    // it sets 'enabled' => false (no NAS) or the client's own NAS values, so
+    // these operator values never leak onto client boxes. When 'enabled' is
+    // false, health checks and monitors report "NAS not configured" instead
+    // of probing.
     'nas' => [
+        'enabled'        => true,
         'lan_ip'         => '192.168.1.106',
         'ddns_hostname'  => 'pixelranger.synology.me',
         'mount_point'    => '/mnt/nas-drive',

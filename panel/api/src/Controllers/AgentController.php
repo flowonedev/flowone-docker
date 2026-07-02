@@ -532,6 +532,13 @@ class AgentController extends BaseController
             ],
         ];
 
+        // One Docker-aware snapshot of every allowed service from the agent.
+        // The agent (root) routes containerized services (mariadb, postfix,
+        // dovecot, ... on Docker boxes) through docker/supervisorctl, so this
+        // never reports a false "stopped" the way a raw `systemctl is-active`
+        // from www-data does. Falls back to systemctl if the agent is down.
+        $serviceMap = $this->getAgentServiceMap($agentRunning);
+
         foreach ($handlers as $className => $info) {
             $filePath = "{$agentPath}/{$className}.php";
             
@@ -542,19 +549,30 @@ class AgentController extends BaseController
             // Check service status if applicable
             $serviceStatus = null;
             $serviceRunning = null;
+            $serviceRuntime = null;
             if ($info['service']) {
-                exec("systemctl is-active {$info['service']} 2>&1", $svcOutput, $code);
-                $serviceRunning = ($code === 0);
-                $serviceStatus = $serviceRunning ? 'running' : 'stopped';
-                unset($svcOutput);
+                $svc = $serviceMap[$info['service']] ?? null;
+                if ($svc !== null) {
+                    $serviceRunning = !empty($svc['active']);
+                    $serviceStatus = (string) ($svc['status'] ?? ($serviceRunning ? 'running' : 'stopped'));
+                    $serviceRuntime = (string) ($svc['runtime'] ?? 'systemd');
+                } else {
+                    exec("systemctl is-active {$info['service']} 2>&1", $svcOutput, $code);
+                    $serviceRunning = ($code === 0);
+                    $serviceStatus = $serviceRunning ? 'running' : 'stopped';
+                    unset($svcOutput);
+                }
             }
             
             // Check config paths - use readable paths only
             $configExists = [];
             foreach ($info['config_paths'] as $configPath) {
-                // For paths in /etc or other readable locations, check directly
-                // For root-only paths, assume they exist if related service is running
-                if (is_readable($configPath)) {
+                if ($serviceRuntime === 'docker') {
+                    // Containerized service: its config lives inside the
+                    // container image/volume, not on the host filesystem.
+                    // The container being up is the proof the config exists.
+                    $configExists[$configPath] = $serviceRunning === true;
+                } elseif (is_readable($configPath)) {
                     $configExists[$configPath] = true;
                 } elseif (strpos($configPath, '/etc/') === 0) {
                     // /etc paths should be readable, if not it's missing
@@ -584,12 +602,40 @@ class AgentController extends BaseController
                 'service' => $info['service'],
                 'service_status' => $serviceStatus,
                 'service_running' => $serviceRunning,
+                'service_runtime' => $serviceRuntime,
                 'config_paths' => $configExists,
                 'status' => $status,
             ];
         }
 
         return $subsystems;
+    }
+
+    /**
+     * Docker-aware service status snapshot, keyed by service name. Sourced
+     * from the agent's service.list (root + DockerServiceBridge); empty when
+     * the agent is not running so callers fall back to plain systemctl.
+     */
+    private function getAgentServiceMap(bool $agentRunning): array
+    {
+        if (!$agentRunning) {
+            return [];
+        }
+        try {
+            $result = $this->callAgent('service.list');
+            if (empty($result['success']) || empty($result['data']['services'])) {
+                return [];
+            }
+            $map = [];
+            foreach ((array) $result['data']['services'] as $svc) {
+                if (!empty($svc['name'])) {
+                    $map[(string) $svc['name']] = $svc;
+                }
+            }
+            return $map;
+        } catch (\Throwable $e) {
+            return [];
+        }
     }
 }
 

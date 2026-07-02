@@ -67,14 +67,18 @@ class SagaRegistry
      *                         args) compiling - in that path the DNS
      *                         step is a no-op because tests use single-
      *                         label domains that the step skips.
-     * @param string $ns1      Authoritative NS hostname #1.
+     * @param string $ns1      Authoritative NS hostname #1. Empty means "no
+     *                          NS configured" — DnsZoneCreateStep then skips
+     *                          NS records instead of publishing a wrong one.
+     *                          Production callers (worker-daemon) pass the
+     *                          NsDefaults-resolved value.
      * @param string $ns2      Authoritative NS hostname #2.
      */
     public function __construct(
         private readonly VhostConfigTemplate $vhostTemplate = new VhostConfigTemplate(),
         private readonly string $serverIp = '',
-        private readonly string $ns1 = 'ns1.devcon1.hu',
-        private readonly string $ns2 = 'ns2.devcon1.hu',
+        private readonly string $ns1 = '',
+        private readonly string $ns2 = '',
         /**
          * Optional WordPress installer used by the (gated) InstallAppStep
          * at the end of the create / restore sagas. When null, the step

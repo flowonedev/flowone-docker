@@ -76,6 +76,9 @@ class ServiceAction extends BaseAction
                 'enabled' => $status['enabled'],
                 'uptime' => $status['uptime'] ?? null,
                 'memory' => $status['memory'] ?? null,
+                // 'docker' when the service is served by a container/mail-pod
+                // program instead of a native systemd unit on this box.
+                'runtime' => $status['runtime'] ?? 'systemd',
             ];
         }
 

@@ -94,6 +94,8 @@ $router->group(['middleware' => 'auth'], function($router) {
     $router->post('/api/servers/{id}/authorized-key', [ServerController::class, 'updateAuthorizedKey']);
     $router->post('/api/servers/{id}/reset-status', [ServerController::class, 'resetStatus']);
     $router->post('/api/servers/{id}/wipe', [ServerController::class, 'wipe']);
+    // Push NS + NAS policy files to the box (day-2, no redeploy)
+    $router->post('/api/servers/{id}/apply-settings', [ServerController::class, 'applySettings']);
 
     // Server Tasks
     $router->get('/api/servers/{id}/tasks', [ServerController::class, 'getTasks']);

@@ -29,6 +29,7 @@
 
 namespace VpsAdmin\Agent\Actions;
 
+use FlowOne\Storage\Config as StorageConfig;
 use FlowOne\Storage\StorageHealth;
 use VpsAdmin\Agent\Lib\BaseAction;
 
@@ -37,14 +38,6 @@ class NasMonitorAction extends BaseAction
     private const DATA_DIR     = '/var/www/vps-admin/data';
     private const STATUS_FILE  = self::DATA_DIR . '/nas-health.json';
     private const HISTORY_FILE = self::DATA_DIR . '/nas-health-history.json';
-
-    private const VPN_NAME      = 'synology';
-    private const NAS_LAN_IP    = '192.168.1.106';
-    private const VPN_PORT      = 1194;
-    private const NFS_MOUNT     = '/mnt/nas-drive';
-    private const DDNS_HOSTNAME = 'pixelranger.synology.me';
-    private const NFT_TABLE     = 'inet cpguard_fw';
-    private const NFT_SET       = 'tcp_out';
 
     public function getNamespace(): string
     {
@@ -62,19 +55,82 @@ class NasMonitorAction extends BaseAction
     }
 
     /**
+     * NAS/VPN connectivity settings from the shared storage config
+     * (shared/config/storage.php merged with /etc/flowone/storage.local.php).
+     * No values are hardcoded here: a fleet-provisioned box without NAS gets
+     * enabled=false via its local override and this action then reports
+     * "not configured" instead of probing someone else's NAS.
+     *
+     * @return array{enabled:bool, lan_ip:string, ddns:string, mount:string,
+     *               vpn_name:string, vpn_port:int, nft_set:string}
+     */
+    private function nasSettings(): array
+    {
+        $defaults = [
+            'enabled'  => false,
+            'lan_ip'   => '',
+            'ddns'     => '',
+            'mount'    => '',
+            'vpn_name' => '',
+            'vpn_port' => 0,
+            'nft_set'  => 'tcp_out',
+        ];
+
+        if (!class_exists(StorageConfig::class)) {
+            return $defaults;
+        }
+
+        try {
+            $cfg = StorageConfig::load();
+        } catch (\Throwable $e) {
+            error_log('[NasMonitorAction] storage config unavailable: ' . $e->getMessage());
+            return $defaults;
+        }
+
+        return [
+            'enabled'  => (bool) ($cfg['nas']['enabled'] ?? true),
+            'lan_ip'   => (string) ($cfg['nas']['lan_ip'] ?? ''),
+            'ddns'     => (string) ($cfg['nas']['ddns_hostname'] ?? ''),
+            'mount'    => (string) ($cfg['nas']['mount_point'] ?? ''),
+            'vpn_name' => (string) ($cfg['vpn']['name'] ?? ''),
+            'vpn_port' => (int) ($cfg['vpn']['port'] ?? 0),
+            'nft_set'  => (string) ($cfg['firewall']['nft_set'] ?? 'tcp_out'),
+        ];
+    }
+
+    /** Uniform "no NAS on this box" payload for both status + healthCheck. */
+    private function notConfiguredPayload(): array
+    {
+        return [
+            'status'            => 'not_configured',
+            'root_cause'        => null,
+            'root_cause_detail' => null,
+            'auto_recovery'     => ['attempted' => false, 'action' => null, 'success' => null],
+            'checks'            => [],
+            'timestamp'         => date('Y-m-d H:i:s'),
+            'message'           => 'No NAS is configured for this server. Enable it in Fleet Manager (server settings) or via /etc/flowone/storage.local.php.',
+        ];
+    }
+
+    /**
      * On-demand chain probe. Runs the full diagnostic chain inline AND
      * also reports the shared-daemon status if available, so the dashboard
      * can show both the ad-hoc result and the daemon's current view.
      */
     public function actionHealthCheck(array $params, string $actor): array
     {
+        $nas = $this->nasSettings();
+        if (!$nas['enabled']) {
+            return $this->success($this->notConfiguredPayload(), 'No NAS configured on this server');
+        }
+
         $checks = [];
         $rootCause = null;
         $rootCauseDetail = null;
         $status = 'healthy';
 
         // Resolve DDNS to get the current public IP (no hardcoded IP)
-        $r = $this->execCommand($this->which('dig'), ['+short', self::DDNS_HOSTNAME, 'A']);
+        $r = $this->execCommand($this->which('dig'), ['+short', $nas['ddns'], 'A']);
         $nasPublicIp = trim($r['output']);
         $ddnsResolved = !empty($nasPublicIp) && filter_var($nasPublicIp, FILTER_VALIDATE_IP);
 
@@ -83,23 +139,23 @@ class NasMonitorAction extends BaseAction
             'label'   => 'DDNS Resolution',
             'icon'    => 'public',
             'message' => $ddnsResolved
-                ? self::DDNS_HOSTNAME . ' -> ' . $nasPublicIp
-                : 'Cannot resolve ' . self::DDNS_HOSTNAME . ' (got: ' . substr($nasPublicIp ?: 'nothing', 0, 80) . ')',
+                ? $nas['ddns'] . ' -> ' . $nasPublicIp
+                : 'Cannot resolve ' . $nas['ddns'] . ' (got: ' . substr($nasPublicIp ?: 'nothing', 0, 80) . ')',
         ];
 
-        $r = $this->execCommand($this->which('nft'), ['list', 'set', 'inet', 'cpguard_fw', self::NFT_SET]);
-        $has1194 = $r['success'] && preg_match('/\b' . self::VPN_PORT . '\b/', $r['output']);
+        $r = $this->execCommand($this->which('nft'), ['list', 'set', 'inet', 'cpguard_fw', $nas['nft_set']]);
+        $hasVpnPort = $r['success'] && preg_match('/\b' . $nas['vpn_port'] . '\b/', $r['output']);
         $checks['cpguard_port'] = [
-            'status'  => (!$r['success'] || $has1194) ? 'ok' : 'error',
+            'status'  => (!$r['success'] || $hasVpnPort) ? 'ok' : 'error',
             'label'   => 'CPGuard Outbound Port',
             'icon'    => 'shield',
-            'message' => $has1194
-                ? 'Port ' . self::VPN_PORT . ' in CPGuard TCP OUT'
-                : ($r['success'] ? 'Port ' . self::VPN_PORT . ' MISSING from CPGuard TCP OUT' : 'CPGuard set not found (filtering may be disabled)'),
+            'message' => $hasVpnPort
+                ? 'Port ' . $nas['vpn_port'] . ' in CPGuard TCP OUT'
+                : ($r['success'] ? 'Port ' . $nas['vpn_port'] . ' MISSING from CPGuard TCP OUT' : 'CPGuard set not found (filtering may be disabled)'),
         ];
         if ($checks['cpguard_port']['status'] === 'error') {
-            $rootCause = 'CPGuard blocking outbound port ' . self::VPN_PORT;
-            $rootCauseDetail = 'CPGuard update removed port ' . self::VPN_PORT . ' from TCP OUT';
+            $rootCause = 'CPGuard blocking outbound port ' . $nas['vpn_port'];
+            $rootCauseDetail = 'CPGuard update removed port ' . $nas['vpn_port'] . ' from TCP OUT';
             $status = 'down';
         }
 
@@ -114,22 +170,22 @@ class NasMonitorAction extends BaseAction
             if (!$ddnsResolved) {
                 $checks['port_reachable'] = [
                     'status'  => 'warning',
-                    'label'   => 'Port ' . self::VPN_PORT . ' Reachable',
+                    'label'   => 'Port ' . $nas['vpn_port'] . ' Reachable',
                     'icon'    => 'lan',
                     'message' => 'Skipped -- DDNS did not resolve to a valid IP',
                 ];
             } else {
-                $r = $this->execCommand($this->which('nc'), ['-z', '-w', '5', $nasPublicIp, (string)self::VPN_PORT]);
+                $r = $this->execCommand($this->which('nc'), ['-z', '-w', '5', $nasPublicIp, (string) $nas['vpn_port']]);
                 $checks['port_reachable'] = [
                     'status'  => $r['success'] ? 'ok' : 'error',
-                    'label'   => 'Port ' . self::VPN_PORT . ' Reachable',
+                    'label'   => 'Port ' . $nas['vpn_port'] . ' Reachable',
                     'icon'    => 'lan',
                     'message' => $r['success']
                         ? 'Port open on ' . $nasPublicIp
                         : 'Port CLOSED on ' . $nasPublicIp,
                 ];
                 if (!$r['success']) {
-                    $rootCause = 'Port ' . self::VPN_PORT . ' unreachable';
+                    $rootCause = 'Port ' . $nas['vpn_port'] . ' unreachable';
                     $rootCauseDetail = 'Router port forwarding, ISP, or NAS VPN server issue';
                     $status = 'down';
                 }
@@ -137,7 +193,7 @@ class NasMonitorAction extends BaseAction
         }
 
         if ($status !== 'down') {
-            $r = $this->execCommand($this->which('systemctl'), ['is-active', 'openvpn-client@' . self::VPN_NAME]);
+            $r = $this->execCommand($this->which('systemctl'), ['is-active', 'openvpn-client@' . $nas['vpn_name']]);
             $active = trim($r['output']) === 'active';
             $checks['vpn_service'] = [
                 'status'  => $active ? 'ok' : 'error',
@@ -147,7 +203,7 @@ class NasMonitorAction extends BaseAction
             ];
             if (!$active) {
                 $rootCause = 'OpenVPN service not running';
-                $rootCauseDetail = 'openvpn-client@' . self::VPN_NAME . ' is ' . trim($r['output']);
+                $rootCauseDetail = 'openvpn-client@' . $nas['vpn_name'] . ' is ' . trim($r['output']);
                 $status = 'down';
             }
         }
@@ -169,7 +225,7 @@ class NasMonitorAction extends BaseAction
         }
 
         if ($status !== 'down') {
-            $r = $this->execCommand($this->which('ping'), ['-c', '1', '-W', '3', self::NAS_LAN_IP]);
+            $r = $this->execCommand($this->which('ping'), ['-c', '1', '-W', '3', $nas['lan_ip']]);
             $latency = null;
             if (preg_match('/time[=<]([\d.]+)\s*ms/', $r['output'], $m)) {
                 $latency = (float)$m[1];
@@ -183,13 +239,13 @@ class NasMonitorAction extends BaseAction
             ];
             if (!$r['success']) {
                 $rootCause = 'NAS unreachable through VPN';
-                $rootCauseDetail = 'NAS at ' . self::NAS_LAN_IP . ' does not respond';
+                $rootCauseDetail = 'NAS at ' . $nas['lan_ip'] . ' does not respond';
                 $status = 'down';
             }
         }
 
         if ($status !== 'down') {
-            $r = $this->execCommand($this->which('mountpoint'), ['-q', self::NFS_MOUNT]);
+            $r = $this->execCommand($this->which('mountpoint'), ['-q', $nas['mount']]);
             $checks['nfs_mount'] = [
                 'status'  => $r['success'] ? 'ok' : 'error',
                 'label'   => 'NFS Mount',
@@ -198,13 +254,13 @@ class NasMonitorAction extends BaseAction
             ];
             if (!$r['success']) {
                 $rootCause = 'NFS not mounted';
-                $rootCauseDetail = self::NFS_MOUNT . ' is not mounted';
+                $rootCauseDetail = $nas['mount'] . ' is not mounted';
                 $status = 'down';
             }
         }
 
         if ($status !== 'down') {
-            $testFile = rtrim(self::NFS_MOUNT, '/') . '/.health_agent_test_' . getmypid();
+            $testFile = rtrim($nas['mount'], '/') . '/.health_agent_test_' . getmypid();
             $content = 'agent-' . time();
             $written = @file_put_contents($testFile, $content);
             $readBack = ($written !== false) ? @file_get_contents($testFile) : false;
@@ -247,6 +303,10 @@ class NasMonitorAction extends BaseAction
      */
     public function actionGetStatus(array $params, string $actor): array
     {
+        if (!$this->nasSettings()['enabled']) {
+            return $this->success($this->notConfiguredPayload());
+        }
+
         $shared = $this->readSharedDaemonStatus();
         if ($shared !== null && !$shared['is_stale']) {
             return $this->success($this->mapSharedToLegacyShape($shared));

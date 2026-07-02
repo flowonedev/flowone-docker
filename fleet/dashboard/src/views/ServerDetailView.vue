@@ -5,6 +5,7 @@ import api from '../services/api'
 import { useToastStore } from '../stores/toast'
 import DeploymentModal from '../components/DeploymentModal.vue'
 import UpdatesPanel from '../components/UpdatesPanel.vue'
+import ServerProvisionSettings from '../components/ServerProvisionSettings.vue'
 import { formatLoad } from '../utils/format'
 
 const route = useRoute()
@@ -2304,6 +2305,9 @@ onUnmounted(() => {
               </p>
             </div>
           </div>
+
+          <!-- Per-server provisioning policy: nameservers + NAS opt-in -->
+          <ServerProvisionSettings :server="server" @saved="fetchServer" />
 
           <!-- Services -->
           <div class="card">

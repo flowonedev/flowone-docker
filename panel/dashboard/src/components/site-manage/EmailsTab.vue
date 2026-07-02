@@ -59,9 +59,11 @@ const redirectModal = ref({
 // Sort state for the email table. Legacy default was "email asc".
 const emailSort = ref({ key: 'email', order: 'asc' })
 
-// Webmail entry point. Per-account URL appends the email so the
-// webmail login form pre-fills.
-const webmailUrl = 'https://email.devcon1.hu/f'
+// Webmail entry point, derived from THIS box's own domain (email.<base>) so
+// client servers never link to the operator's webmail. Per-account URL
+// appends the email so the webmail login form pre-fills.
+const webmailBase = window.location.hostname.replace(/^(panel|vps|www)\./, '')
+const webmailUrl = `https://email.${webmailBase}/f`
 const getWebmailUrl = (email) =>
   `${webmailUrl}?email=${encodeURIComponent(email)}`
 

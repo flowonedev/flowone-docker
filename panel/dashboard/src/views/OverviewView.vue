@@ -329,8 +329,8 @@ const openPhpMyAdmin = async (dbName) => {
     }
   } catch (error) {
     console.error('phpMyAdmin access error:', error)
-    // Fallback: open phpMyAdmin directly (will require manual login)
-    window.open(`https://panel.devcon1.hu/phpmyadmin/?db=${encodeURIComponent(dbName)}`, '_blank')
+    // Fallback: open THIS panel's phpMyAdmin directly (will require manual login)
+    window.open(`${window.location.origin}/phpmyadmin/?db=${encodeURIComponent(dbName)}`, '_blank')
   } finally {
     pmaLoading.value[dbName] = false
   }
