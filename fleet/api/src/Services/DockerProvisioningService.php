@@ -37,6 +37,16 @@ class DockerProvisioningService
     /** Bridge-net services this deploy manages (health-tracked). */
     public const SERVICES = ['mariadb', 'redis', 'meilisearch', 'web', 'collab', 'mailsync'];
 
+    /**
+     * Services a day-2 Docker Update may roll. Adds the host-net `mail` pod —
+     * it's excluded from SERVICES (no compose healthcheck to gate on) but is
+     * absolutely part of "update the email stack".
+     */
+    public const UPDATABLE_SERVICES = ['mariadb', 'redis', 'meilisearch', 'web', 'collab', 'mailsync', 'mail'];
+
+    /** The app-tier services rolled by a plain "Update Email" quick action. */
+    public const APP_SERVICES = ['web', 'collab', 'mailsync', 'mail'];
+
     /** Day-2 helper scripts shipped next to the stack (SSL + mailbox + DNS ops). */
     public const HELPER_SCRIPTS = ['obtain-certs.sh', 'create-mail-account.sh', 'dns-records.sh'];
 
@@ -587,7 +597,7 @@ class DockerProvisioningService
      * registry, then `pull` + `up -d --no-deps` each selected service. The whole
      * stack keeps running; only the picked containers are recreated.
      *
-     * @param string[] $services one or more of self::SERVICES
+     * @param string[] $services one or more of self::UPDATABLE_SERVICES
      * @param array    $options  may carry: tag, registry, deployment_id, registry_user/token
      */
     public function updateService(int $serverId, array $services, array $options = []): array
@@ -599,7 +609,7 @@ class DockerProvisioningService
         if (empty($services)) {
             return ['success' => false, 'error' => 'no services specified'];
         }
-        $unknown = array_diff($services, self::SERVICES);
+        $unknown = array_diff($services, self::UPDATABLE_SERVICES);
         if (!empty($unknown)) {
             return ['success' => false, 'error' => 'unknown service(s): ' . implode(', ', $unknown)];
         }

@@ -399,7 +399,9 @@ const auditChecksByCategory = computed(() => {
   if (!auditData.value?.checks) return {}
   const grouped = {}
   const labels = {
-    services: 'Services',
+    services: 'Services (native host)',
+    containers: 'Docker Containers',
+    mail: 'Mail Stack (in container)',
     packages: 'Packages',
     database: 'Databases',
     filesystem: 'File System',
@@ -409,6 +411,7 @@ const auditChecksByCategory = computed(() => {
     application: 'Applications',
     agent: 'Fleet Agent',
     security: 'Security',
+    config: 'Config Variables',
   }
   for (const check of auditData.value.checks) {
     const cat = check.category
@@ -631,6 +634,35 @@ const openDeployModal = (type = null) => {
   deployType.value = type
   resumeDeployId.value = null
   showDeployModal.value = true
+}
+
+// One-click quick updates (no modal). The backend routes each app to the right
+// mechanism for the box: on Docker boxes panel -> native package update (container
+// DB aware), email -> docker compose pull/up of web+collab+mailsync+mail, agent ->
+// native agent package; security -> the firewall/fail2ban/SSH hardening pass.
+const quickUpdating = ref(null)
+
+const quickUpdate = async (kind) => {
+  showDeployMenu.value = false
+  quickUpdating.value = kind
+  try {
+    if (kind === 'security') {
+      const res = await api.post(`/api/servers/${server.value.id}/harden`)
+      toast.success(res.message || 'Security hardening started')
+    } else {
+      const res = await api.post('/api/deployments', {
+        server_id: server.value.id,
+        type: 'app_update',
+        apps: [kind],
+      })
+      toast.success(res.message || 'Update started')
+    }
+    fetchServer()
+  } catch (error) {
+    toast.error(error.response?.data?.error || error.message || 'Update failed to start')
+  } finally {
+    quickUpdating.value = null
+  }
 }
 
 const openDeployProgress = (deployment) => {
@@ -1104,6 +1136,58 @@ onUnmounted(() => {
               v-if="showDeployMenu"
               class="absolute top-full right-0 mt-2 w-64 bg-white dark:bg-surface-700 rounded-xl shadow-xl border border-surface-200 dark:border-surface-600 overflow-hidden z-50"
             >
+              <!-- One-click updates: fire immediately, run in background -->
+              <p class="px-4 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500">Quick updates</p>
+              <button
+                @click="quickUpdate('panel')"
+                :disabled="quickUpdating"
+                class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface-100 dark:hover:bg-surface-600 transition-colors text-left disabled:opacity-50"
+              >
+                <span v-if="quickUpdating === 'panel'" class="spinner w-4 h-4"></span>
+                <span v-else class="material-symbols-rounded text-primary-600 dark:text-primary-400">dashboard</span>
+                <div>
+                  <p class="font-medium text-surface-900 dark:text-surface-100">Update Panel</p>
+                  <p class="text-xs text-surface-500 dark:text-surface-400">Redeploy latest panel package</p>
+                </div>
+              </button>
+              <button
+                @click="quickUpdate('email')"
+                :disabled="quickUpdating"
+                class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface-100 dark:hover:bg-surface-600 transition-colors text-left disabled:opacity-50"
+              >
+                <span v-if="quickUpdating === 'email'" class="spinner w-4 h-4"></span>
+                <span v-else class="material-symbols-rounded text-blue-600 dark:text-blue-400">mail</span>
+                <div>
+                  <p class="font-medium text-surface-900 dark:text-surface-100">Update Email App</p>
+                  <p class="text-xs text-surface-500 dark:text-surface-400">{{ isDocker ? 'Roll web/collab/mailsync/mail containers' : 'Redeploy email package' }}</p>
+                </div>
+              </button>
+              <button
+                @click="quickUpdate('agent')"
+                :disabled="quickUpdating"
+                class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface-100 dark:hover:bg-surface-600 transition-colors text-left disabled:opacity-50"
+              >
+                <span v-if="quickUpdating === 'agent'" class="spinner w-4 h-4"></span>
+                <span v-else class="material-symbols-rounded text-teal-600 dark:text-teal-400">smart_toy</span>
+                <div>
+                  <p class="font-medium text-surface-900 dark:text-surface-100">Update Fleet Agent</p>
+                  <p class="text-xs text-surface-500 dark:text-surface-400">Heartbeat + fleet communication daemon</p>
+                </div>
+              </button>
+              <button
+                @click="quickUpdate('security')"
+                :disabled="quickUpdating"
+                class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface-100 dark:hover:bg-surface-600 transition-colors text-left disabled:opacity-50"
+              >
+                <span v-if="quickUpdating === 'security'" class="spinner w-4 h-4"></span>
+                <span v-else class="material-symbols-rounded text-amber-600 dark:text-amber-400">shield</span>
+                <div>
+                  <p class="font-medium text-surface-900 dark:text-surface-100">Security Hardening</p>
+                  <p class="text-xs text-surface-500 dark:text-surface-400">Firewall + fail2ban + SSH lockdown</p>
+                </div>
+              </button>
+
+              <div class="border-t border-surface-200 dark:border-surface-600 mt-1"></div>
               <!-- Docker (default workflow) -->
               <p class="px-4 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500">Docker</p>
               <button 

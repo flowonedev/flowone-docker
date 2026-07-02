@@ -84,12 +84,13 @@ const selectedApps = ref({
 
 // Docker Update options (Phase D): which app-tier services to roll, and which
 // image tag to roll them to. Only the version-controlled app tier is offered
-// (mariadb/redis/meilisearch use pinned upstream images; mail is updated via a
-// re-provision). Tag = 'latest', a short git sha (a1b2c3d) or a version (v1.2.3).
+// (mariadb/redis/meilisearch use pinned upstream images). Tag = 'latest', a
+// short git sha (a1b2c3d) or a version (v1.2.3).
 const selectedServices = ref({
   web: true,
   collab: true,
   mailsync: true,
+  mail: true,
 })
 const dockerTag = ref('latest')
 
@@ -1073,9 +1074,9 @@ onMounted(() => {
             <div v-if="selectedType === 'docker_update'" class="space-y-4">
               <div>
                 <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Services to Update</label>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div
-                    v-for="(svcInfo, svcKey) in { web: { icon: 'language', name: 'Web', desc: 'OLS + SPA + API' }, collab: { icon: 'groups', name: 'Collab', desc: 'Hocuspocus WS' }, mailsync: { icon: 'sync', name: 'Mailsync', desc: 'IMAP-IDLE WS' } }"
+                    v-for="(svcInfo, svcKey) in { web: { icon: 'language', name: 'Web', desc: 'OLS + SPA + API' }, collab: { icon: 'groups', name: 'Collab', desc: 'Hocuspocus WS' }, mailsync: { icon: 'sync', name: 'Mailsync', desc: 'IMAP-IDLE WS' }, mail: { icon: 'mail', name: 'Mail Pod', desc: 'Postfix/Dovecot/DKIM/Rspamd' } }"
                     :key="svcKey"
                     @click="selectedServices[svcKey] = !selectedServices[svcKey]"
                     :class="[

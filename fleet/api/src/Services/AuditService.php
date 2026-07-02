@@ -129,6 +129,13 @@ class AuditService
             return ['success' => false, 'error' => 'Server not found'];
         }
 
+        // Docker boxes get the container-aware audit (compose ps, in-pod mail
+        // checks, TCP database checks). This native audit would report walls of
+        // false FAILs for services that deliberately live in containers.
+        if (!empty($server['deployed_image_tag'])) {
+            return $this->container->get(DockerAuditService::class)->run($serverId);
+        }
+
         // Connect to server
         $sshOk = $this->connectToServer($server);
         if (!$sshOk) {
@@ -196,6 +203,12 @@ class AuditService
 
         if (!$server) {
             return ['success' => false, 'error' => 'Server not found'];
+        }
+
+        // Docker boxes: container-aware fixes (compose restart, in-pod
+        // supervisorctl, TCP DB grants) instead of systemctl/apt remediation.
+        if (!empty($server['deployed_image_tag'])) {
+            return $this->container->get(DockerAuditService::class)->fix($serverId, $action, $params);
         }
 
         if (!$this->connectToServer($server)) {

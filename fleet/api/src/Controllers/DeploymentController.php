@@ -262,7 +262,7 @@ class DeploymentController extends BaseController
         if (!is_array($services) || empty($services)) {
             return Response::validationError(['services' => 'At least one service must be selected']);
         }
-        $valid = DockerProvisioningService::SERVICES;
+        $valid = DockerProvisioningService::UPDATABLE_SERVICES;
         foreach ($services as $svc) {
             if (!in_array($svc, $valid, true)) {
                 return Response::validationError(['services' => "Invalid service: {$svc}"]);
@@ -323,7 +323,13 @@ class DeploymentController extends BaseController
     }
 
     /**
-     * Handle app update deployment (code only, preserve configs)
+     * Handle app update deployment (code only, preserve configs).
+     *
+     * Docker boxes (deployed_image_tag set) route each app to its Docker-era
+     * update path so ONE button works on both generations of servers:
+     *   panel -> cli/update-panel.php (native panel, container-DB aware), background
+     *   email -> docker update of the app-tier containers (web/collab/mailsync/mail)
+     *   agent -> native agent package update over SSH (agent is native everywhere)
      */
     private function handleAppUpdate(int $serverId, Request $request): Response
     {
@@ -341,6 +347,41 @@ class DeploymentController extends BaseController
             }
         }
 
+        $db = $this->getDatabase();
+        $stmt = $db->prepare("SELECT deployed_image_tag FROM servers WHERE id = ?");
+        $stmt->execute([$serverId]);
+        $isDockerBox = !empty($stmt->fetchColumn());
+
+        if ($isDockerBox) {
+            $started = [];
+
+            if (in_array('email', $apps, true)) {
+                $deploymentId = $this->startDockerUpdate($serverId, DockerProvisioningService::APP_SERVICES, '');
+                $started[] = ['app' => 'email', 'deployment_id' => $deploymentId, 'mode' => 'docker_update'];
+            }
+            if (in_array('panel', $apps, true)) {
+                $deploymentId = $this->startPanelUpdate($serverId);
+                $started[] = ['app' => 'panel', 'deployment_id' => $deploymentId, 'mode' => 'panel_native'];
+            }
+            if (in_array('agent', $apps, true)) {
+                $provisioning = $this->container->get(ProvisioningService::class);
+                $result = $provisioning->deployAppUpdate($serverId, ['agent']);
+                $started[] = ['app' => 'agent', 'success' => (bool) ($result['success'] ?? false), 'mode' => 'native_sync'];
+            }
+
+            $this->logAction('deployment.app_update', $serverId, DeploymentType::APP_UPDATE, 'success');
+
+            // When exactly one background deployment was created, surface its id
+            // at the top level so the dashboard modal can attach live progress.
+            $ids = array_values(array_filter(array_column($started, 'deployment_id')));
+            $payload = ['started' => $started];
+            if (count($ids) === 1) {
+                $payload['deployment_id'] = $ids[0];
+                $payload['status'] = 'pending';
+            }
+            return Response::success($payload, 'Update started');
+        }
+
         $provisioning = $this->container->get(ProvisioningService::class);
         $result = $provisioning->deployAppUpdate($serverId, $apps);
 
@@ -350,6 +391,42 @@ class DeploymentController extends BaseController
         } else {
             return Response::error($result['error'] ?? 'App update failed');
         }
+    }
+
+    /**
+     * Create a deployment row and launch cli/update-panel.php non-blocking.
+     * The CLI streams status/log into the row (like the Docker paths), so the
+     * dashboard's deployment history shows live progress for panel updates too.
+     *
+     * @return int The new deployment ID.
+     */
+    private function startPanelUpdate(int $serverId): int
+    {
+        $apiPath = dirname(__DIR__, 2);
+        $logDir = $apiPath . '/storage/logs';
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0755, true);
+        }
+        $logFile = $logDir . '/panel_update_' . $serverId . '.log';
+
+        $db = $this->getDatabase();
+        $stmt = $db->prepare(
+            "INSERT INTO deployments (server_id, type, status, progress, current_step)
+             VALUES (?, ?, 'pending', 0, 'Panel update queued...')"
+        );
+        $stmt->execute([$serverId, DeploymentType::APP_UPDATE]);
+        $deploymentId = (int) $db->lastInsertId();
+
+        $cmd = sprintf(
+            'nohup setsid php -d memory_limit=512M -d max_execution_time=0 %s/cli/update-panel.php %d --deployment=%d > %s 2>&1 &',
+            $apiPath,
+            $serverId,
+            $deploymentId,
+            $logFile
+        );
+        exec($cmd);
+
+        return $deploymentId;
     }
 
     /**
@@ -642,6 +719,66 @@ class DeploymentController extends BaseController
         }
 
         return Response::success($result, $result['message'] ?? 'Fix applied');
+    }
+
+    /**
+     * Run the security hardening pass (firewall + fail2ban + SSH lockdown) on
+     * an already-provisioned server, in the background via cli/harden-server.php.
+     * Docker boxes get --docker (restarts the engine after firewalld takes over
+     * iptables so the published-port rules survive). Streams into a deployment
+     * row (type config_update) so progress shows in the dashboard.
+     *
+     * POST /api/servers/{id}/harden
+     */
+    public function harden(Request $request): Response
+    {
+        $serverId = (int)$request->getParam('id');
+        if (!$serverId) {
+            return Response::validationError(['server_id' => 'Server ID is required']);
+        }
+
+        $db = $this->getDatabase();
+        $stmt = $db->prepare("SELECT id, status, deployed_image_tag FROM servers WHERE id = ?");
+        $stmt->execute([$serverId]);
+        $server = $stmt->fetch();
+        if (!$server) {
+            return Response::notFound('Server not found');
+        }
+        if ($server['status'] === 'provisioning') {
+            return Response::error('Server is currently being provisioned', 400);
+        }
+
+        $apiPath = dirname(__DIR__, 2);
+        $logDir = $apiPath . '/storage/logs';
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0755, true);
+        }
+        $logFile = $logDir . '/harden_' . $serverId . '.log';
+
+        $stmt = $db->prepare(
+            "INSERT INTO deployments (server_id, type, status, progress, current_step)
+             VALUES (?, ?, 'pending', 0, 'Security hardening queued...')"
+        );
+        $stmt->execute([$serverId, DeploymentType::CONFIG_UPDATE]);
+        $deploymentId = (int) $db->lastInsertId();
+
+        $dockerFlag = !empty($server['deployed_image_tag']) ? ' --docker' : '';
+        $cmd = sprintf(
+            'nohup setsid php -d memory_limit=512M -d max_execution_time=0 %s/cli/harden-server.php %d --deployment=%d%s > %s 2>&1 &',
+            $apiPath,
+            $serverId,
+            $deploymentId,
+            $dockerFlag,
+            $logFile
+        );
+        exec($cmd);
+
+        $this->logAction('deployment.harden', $serverId, DeploymentType::CONFIG_UPDATE, 'success');
+
+        return Response::success([
+            'deployment_id' => $deploymentId,
+            'status' => 'pending',
+        ], 'Security hardening started');
     }
 
     /**

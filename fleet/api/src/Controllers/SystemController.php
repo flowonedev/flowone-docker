@@ -99,6 +99,95 @@ class SystemController extends BaseController
     }
 
     /**
+     * Refresh THIS Fleet Manager from git: runs master-update.sh in the
+     * background (git pull + sync fleet/email files + rebuild panel/shared/
+     * agent packages + restart PHP). The web user is granted exactly this one
+     * command via /etc/sudoers.d/flowone-fleet-refresh, which master-update.sh
+     * installs on its first (manual) run.
+     *
+     * POST /api/system/refresh
+     */
+    public function refresh(Request $request): Response
+    {
+        $logFile = $this->refreshLogFile();
+        $lockFile = dirname($logFile) . '/master-update.lock';
+
+        // Refuse to double-run: the script restarts PHP at the end, two
+        // overlapping runs would corrupt the package staging dirs.
+        if (file_exists($lockFile)) {
+            $age = time() - (int) filemtime($lockFile);
+            if ($age < 900) {
+                return Response::error('A refresh is already running (started ' . $age . 's ago)', 409);
+            }
+            @unlink($lockFile); // stale lock (>15 min) - a crashed run
+        }
+
+        if (!file_exists('/usr/local/bin/flowone-master-update')) {
+            return Response::error(
+                'Refresh wrapper not installed. Run once on the master as root: '
+                . 'bash /opt/flowone-repo/fleet/master-update.sh (it self-installs the wrapper + sudoers entry)',
+                412
+            );
+        }
+
+        @mkdir(dirname($logFile), 0755, true);
+        @touch($lockFile);
+
+        // nohup + setsid so the run SURVIVES the PHP restart the script performs.
+        // sudo -n: fail immediately instead of hanging on a password prompt if
+        // the sudoers entry is missing.
+        $cmd = sprintf(
+            'nohup setsid bash -c %s > %s 2>&1 &',
+            escapeshellarg('sudo -n /usr/local/bin/flowone-master-update; rc=$?; rm -f ' . $lockFile . '; echo "REFRESH_EXIT_CODE:$rc"'),
+            escapeshellarg($logFile)
+        );
+        exec($cmd);
+
+        $this->logAction('system.refresh', null, null, 'success');
+
+        return Response::success([
+            'status' => 'started',
+            'log_file' => basename($logFile),
+        ], 'Fleet Manager refresh started - packages rebuild in the background');
+    }
+
+    /**
+     * Poll the state of the last refresh: running/success/failed + log tail.
+     * GET /api/system/refresh/status
+     */
+    public function refreshStatus(Request $request): Response
+    {
+        $logFile = $this->refreshLogFile();
+        $lockFile = dirname($logFile) . '/master-update.lock';
+
+        if (!file_exists($logFile)) {
+            return Response::success(['status' => 'never_run', 'log' => '']);
+        }
+
+        $log = (string) file_get_contents($logFile);
+        // Strip ANSI colour codes from the shell script's output.
+        $log = preg_replace('/\x1b\[[0-9;]*m/', '', $log);
+
+        $status = 'running';
+        if (preg_match('/REFRESH_EXIT_CODE:(\d+)/', $log, $m)) {
+            $status = ((int) $m[1]) === 0 ? 'success' : 'failed';
+        } elseif (!file_exists($lockFile) || (time() - (int) filemtime($lockFile)) > 900) {
+            $status = 'failed'; // no exit marker and no live lock - crashed
+        }
+
+        return Response::success([
+            'status' => $status,
+            'finished_at' => $status !== 'running' ? date('c', (int) filemtime($logFile)) : null,
+            'log' => substr($log, -8000),
+        ]);
+    }
+
+    private function refreshLogFile(): string
+    {
+        return dirname(__DIR__, 2) . '/storage/logs/master-update.log';
+    }
+
+    /**
      * Take a server snapshot (reads all configs from local server via agent)
      * POST /api/system/snapshots
      */

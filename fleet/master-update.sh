@@ -56,6 +56,28 @@ die()  { echo -e "${RED}[FAIL]${NC} $1"; exit 1; }
 [ -d "$PROD" ] || die "no fleet install at $PROD"
 
 # ---------------------------------------------------------------------------
+# 0. Self-install the dashboard "Refresh Fleet Manager" hook: a root-owned
+#    wrapper + a sudoers entry so the web user can trigger exactly this script
+#    (no args) from POST /api/system/refresh. Idempotent.
+# ---------------------------------------------------------------------------
+WRAPPER=/usr/local/bin/flowone-master-update
+if [ ! -f "$WRAPPER" ] || ! grep -q "$REPO/fleet/master-update.sh" "$WRAPPER" 2>/dev/null; then
+    printf '#!/bin/bash\nexec bash %s/fleet/master-update.sh\n' "$REPO" > "$WRAPPER"
+    chmod 755 "$WRAPPER"
+    ok "refresh wrapper installed ($WRAPPER)"
+fi
+SUDOERS=/etc/sudoers.d/flowone-fleet-refresh
+if [ ! -f "$SUDOERS" ]; then
+    # Web user = whoever owns the deployed fleet API tree (www-data on OLS).
+    WEBUSER="$(stat -c '%U' "$PROD/api" 2>/dev/null || echo www-data)"
+    # Trailing "" = the command matches ONLY with no arguments.
+    echo "$WEBUSER ALL=(root) NOPASSWD: $WRAPPER \"\"" > "$SUDOERS"
+    chmod 440 "$SUDOERS"
+    visudo -cf "$SUDOERS" >/dev/null 2>&1 || { rm -f "$SUDOERS"; warn "sudoers entry failed validation - dashboard refresh disabled"; }
+    [ -f "$SUDOERS" ] && ok "sudoers entry installed ($WEBUSER may run the wrapper)"
+fi
+
+# ---------------------------------------------------------------------------
 # 1. Pull
 # ---------------------------------------------------------------------------
 if [ "$SKIP_PULL" = "0" ]; then

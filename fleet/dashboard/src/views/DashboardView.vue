@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import api from '../services/api'
 import { useToastStore } from '../stores/toast'
@@ -7,6 +7,48 @@ import { useToastStore } from '../stores/toast'
 const toast = useToastStore()
 const loading = ref(true)
 const data = ref(null)
+
+// Refresh Fleet Manager (git pull + sync + rebuild packages on this master)
+const fleetRefreshing = ref(false)
+const fleetRefreshLog = ref('')
+const showRefreshLog = ref(false)
+let refreshPollTimer = null
+
+const pollRefreshStatus = async () => {
+  try {
+    const res = await api.get('/api/system/refresh/status')
+    const d = res.data || {}
+    fleetRefreshLog.value = d.log || ''
+    if (d.status === 'running') return
+    // finished (success / failed / never_run)
+    clearInterval(refreshPollTimer)
+    refreshPollTimer = null
+    fleetRefreshing.value = false
+    if (d.status === 'success') {
+      toast.success('Fleet Manager refreshed - packages rebuilt from git')
+      fetchDashboard()
+      runSelfCheck()
+    } else if (d.status === 'failed') {
+      showRefreshLog.value = true
+      toast.error('Fleet refresh failed - see the log')
+    }
+  } catch (e) {
+    // transient (PHP restarts mid-run) - keep polling
+  }
+}
+
+const refreshFleetManager = async () => {
+  fleetRefreshing.value = true
+  fleetRefreshLog.value = ''
+  try {
+    await api.post('/api/system/refresh')
+    toast.success('Refresh started: git pull + rebuild packages...')
+    refreshPollTimer = setInterval(pollRefreshStatus, 4000)
+  } catch (error) {
+    fleetRefreshing.value = false
+    toast.error(error.response?.data?.error || error.message || 'Could not start the refresh')
+  }
+}
 
 // Self-check state
 const selfCheck = ref(null)
@@ -162,6 +204,21 @@ onMounted(async () => {
     runSelfCheck(),
     fetchSnapshots(),
   ])
+  // If a refresh was already running when the page opened, resume polling.
+  try {
+    const res = await api.get('/api/system/refresh/status')
+    if (res.data?.status === 'running') {
+      fleetRefreshing.value = true
+      refreshPollTimer = setInterval(pollRefreshStatus, 4000)
+    }
+  } catch (e) { /* non-fatal */ }
+})
+
+onUnmounted(() => {
+  if (refreshPollTimer) {
+    clearInterval(refreshPollTimer)
+    refreshPollTimer = null
+  }
 })
 </script>
 
@@ -170,6 +227,24 @@ onMounted(async () => {
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-bold">Dashboard</h1>
       <div class="flex items-center gap-2">
+        <button
+          @click="refreshFleetManager"
+          :disabled="fleetRefreshing"
+          class="btn-primary btn-sm"
+          title="git pull + sync fleet/email files + rebuild panel/shared/agent packages on this master"
+        >
+          <span v-if="fleetRefreshing" class="spinner-sm mr-1"></span>
+          <span v-else class="material-symbols-rounded text-sm">cloud_sync</span>
+          {{ fleetRefreshing ? 'Refreshing from Git...' : 'Refresh Fleet Manager' }}
+        </button>
+        <button
+          v-if="fleetRefreshLog"
+          @click="showRefreshLog = !showRefreshLog"
+          class="btn-ghost btn-sm"
+          title="Show the master-update log"
+        >
+          <span class="material-symbols-rounded text-sm">terminal</span>
+        </button>
         <button @click="takeSnapshot" :disabled="snapshotRunning" class="btn-primary btn-sm">
           <span v-if="snapshotRunning" class="spinner-sm mr-1"></span>
           <span class="material-symbols-rounded text-sm">photo_camera</span>
@@ -180,6 +255,17 @@ onMounted(async () => {
           Refresh
         </button>
       </div>
+    </div>
+
+    <!-- Master-update log (live while refreshing, or after a failure) -->
+    <div v-if="showRefreshLog && fleetRefreshLog" class="card mb-6">
+      <div class="card-header flex items-center justify-between">
+        <h2 class="font-semibold text-default">Fleet Refresh Log</h2>
+        <button @click="showRefreshLog = false" class="btn-ghost btn-sm">
+          <span class="material-symbols-rounded text-sm">close</span>
+        </button>
+      </div>
+      <pre class="p-4 text-xs font-mono whitespace-pre-wrap max-h-72 overflow-y-auto text-muted">{{ fleetRefreshLog }}</pre>
     </div>
 
     <!-- Self-Check Card (always visible) -->

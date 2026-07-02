@@ -70,6 +70,10 @@ $router->group(['middleware' => 'auth'], function($router) {
     $router->post('/api/system/migrations/run', [SystemController::class, 'runMigrations']);
     $router->get('/api/system/self-check', [SystemController::class, 'selfCheck']);
     $router->post('/api/system/bootstrap', [SystemController::class, 'bootstrap']);
+
+    // Refresh Fleet Manager: git pull + sync + rebuild packages on this master
+    $router->post('/api/system/refresh', [SystemController::class, 'refresh']);
+    $router->get('/api/system/refresh/status', [SystemController::class, 'refreshStatus']);
     $router->get('/api/system/snapshots', [SystemController::class, 'listSnapshots']);
     $router->post('/api/system/snapshots', [SystemController::class, 'takeSnapshot']);
     $router->get('/api/system/snapshots/{id}', [SystemController::class, 'getSnapshot']);
@@ -110,6 +114,9 @@ $router->group(['middleware' => 'auth'], function($router) {
     $router->get('/api/servers/{id}/audit', [ServerController::class, 'getAudit']);
     $router->post('/api/servers/{id}/audit', [DeploymentController::class, 'audit']);
     $router->post('/api/servers/{id}/audit/fix', [DeploymentController::class, 'auditFix']);
+
+    // Day-2 security hardening (firewall + fail2ban + SSH lockdown), background
+    $router->post('/api/servers/{id}/harden', [DeploymentController::class, 'harden']);
 
     // CPGuard (per-server license, installed on demand or during provisioning)
     $router->get('/api/servers/{id}/cpguard', [ServerController::class, 'cpguardStatus']);
