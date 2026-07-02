@@ -29,6 +29,10 @@
 # Update mode flag
 UPDATE_ONLY=0
 
+# Email app domain (optional) — written into config.local.php so the panel's
+# System Health SSL/HTTP checks know which hostnames this box serves.
+EMAIL_DOMAIN=""
+
 # Database host. Native installs use the local unix socket (localhost). DOCKER
 # installs pass --db-host=127.0.0.1 so every mysql client + the panel runtime
 # talk to the containerized MariaDB over TCP (published on the host loopback);
@@ -44,6 +48,7 @@ OLS_CONF="/usr/local/lsws/conf"
 for arg in "$@"; do
     case $arg in
         --domain=*) PANEL_DOMAIN="${arg#*=}" ;;
+        --email-domain=*) EMAIL_DOMAIN="${arg#*=}" ;;
         --db-name=*) DB_NAME="${arg#*=}" ;;
         --db-host=*) DB_HOST="${arg#*=}" ;;
         --db-user=*) DB_USER="${arg#*=}" ;;
@@ -405,6 +410,8 @@ return [
         'url' => 'https://__PANEL_DOMAIN__',
         'debug' => false,
     ],
+    'panel_domain' => '__PANEL_DOMAIN__',
+    'email_domain' => '__EMAIL_DOMAIN__',
     'external_api' => [
         'keys' => [
             'email_app' => '__EMAIL_API_KEY__',
@@ -428,13 +435,13 @@ EOF
         $file = $argv[1];
         $content = file_get_contents($file);
         $content = str_replace(
-            ["__DB_NAME__", "__DB_USER__", "__DB_PASS__", "__JWT_SECRET__", "__PANEL_DOMAIN__", "__AGENT_PATH__", "__EMAIL_API_KEY__"],
-            [$argv[2], $argv[3], $argv[4], $argv[5], $argv[6], $argv[7], $argv[8]],
+            ["__DB_NAME__", "__DB_USER__", "__DB_PASS__", "__JWT_SECRET__", "__PANEL_DOMAIN__", "__AGENT_PATH__", "__EMAIL_API_KEY__", "__EMAIL_DOMAIN__"],
+            [$argv[2], $argv[3], $argv[4], $argv[5], $argv[6], $argv[7], $argv[8], $argv[9]],
             $content
         );
         file_put_contents($file, $content);
     ' "$INSTALL_PATH/api/config.local.php" \
-      "$DB_NAME" "$DB_USER" "$DB_PASS" "$JWT_SECRET" "$PANEL_DOMAIN" "$AGENT_PATH" "$EMAIL_API_KEY" \
+      "$DB_NAME" "$DB_USER" "$DB_PASS" "$JWT_SECRET" "$PANEL_DOMAIN" "$AGENT_PATH" "$EMAIL_API_KEY" "$EMAIL_DOMAIN" \
     2>/dev/null || log_warn "Config replacement with PHP failed - check config.local.php manually"
 fi
 

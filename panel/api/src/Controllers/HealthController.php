@@ -27,10 +27,17 @@ class HealthController extends BaseController
         'dovecot'          => 'dovecot',
         'opendkim'         => 'opendkim',
         'opendmarc'        => 'opendmarc',
-        'spamd'            => 'spamassassin',
+        'spamd'            => 'spamd',
         'clamav-daemon'    => 'clamd',
         'clamav-freshclam' => 'freshclam',
     ];
+
+    /**
+     * The mail pod entrypoint drops these from the supervisor config when
+     * MAIL_ENABLE_CLAMAV / MAIL_ENABLE_SPAMASSASSIN are 0 (RAM savings).
+     * Absent-from-pod means "disabled on purpose", not "crashed".
+     */
+    private const OPTIONAL_POD_PROGRAMS = ['spamd', 'clamd', 'freshclam'];
 
     private array $checks = [];
     private int $passed = 0;
@@ -208,7 +215,7 @@ class HealthController extends BaseController
         if ($this->dockerStates !== null) {
             return $this->dockerStates;
         }
-        $states = ['containers' => [], 'programs' => []];
+        $states = ['containers' => [], 'programs' => [], 'known' => []];
         $ps = $this->run("docker ps --format '{{.Names}}|{{.Status}}'");
         foreach (array_filter(explode("\n", $ps)) as $line) {
             [$cname, $cstatus] = array_pad(explode('|', $line, 2), 2, '');
@@ -219,8 +226,11 @@ class HealthController extends BaseController
         if (isset($states['containers'][self::MAIL_POD])) {
             $sv = $this->run('docker exec ' . self::MAIL_POD . ' supervisorctl status');
             foreach (array_filter(explode("\n", $sv)) as $line) {
-                if (preg_match('/^(\S+)\s+RUNNING\b/', $line, $m)) {
-                    $states['programs'][$m[1]] = true;
+                if (preg_match('/^(\S+)\s+(\S+)/', $line, $m)) {
+                    $states['known'][$m[1]] = $m[2];
+                    if ($m[2] === 'RUNNING') {
+                        $states['programs'][$m[1]] = true;
+                    }
                 }
             }
         }
@@ -241,8 +251,17 @@ class HealthController extends BaseController
         }
         if (isset(self::MAIL_POD_PROGRAMS[$svc]) && isset($states['containers'][self::MAIL_POD])) {
             $prog = self::MAIL_POD_PROGRAMS[$svc];
-            $up = isset($states['programs'][$prog]);
-            return [$up, "mail pod: {$prog} " . ($up ? 'running' : 'stopped'),
+            if (isset($states['programs'][$prog])) {
+                return [true, "mail pod: {$prog} running", null];
+            }
+            // The entrypoint drops toggled-off programs from the supervisor
+            // config entirely — absent means disabled, not crashed, and a
+            // restart fix would fail against a nonexistent program.
+            if (!isset($states['known'][$prog]) && in_array($prog, self::OPTIONAL_POD_PROGRAMS, true)) {
+                return [false, "mail pod: {$prog} disabled (MAIL_ENABLE_* toggle)", null];
+            }
+            $state = strtolower($states['known'][$prog] ?? 'missing');
+            return [false, "mail pod: {$prog} {$state}",
                 'docker exec ' . self::MAIL_POD . " supervisorctl restart {$prog}"];
         }
         return null;

@@ -198,8 +198,16 @@ $harness->test('services', 'docker-backed fix commands target docker, not system
         return ['outcome' => TestHarness::FAIL, 'message' => 'unexpected fix cmd: ' . $state[2]];
     }
     $podState = callPrivate($ctl, 'dockerServiceState', ['dovecot']);
-    if ($podState !== null && !str_contains((string) $podState[2], 'supervisorctl restart')) {
-        return ['outcome' => TestHarness::FAIL, 'message' => 'unexpected mail pod fix cmd: ' . $podState[2]];
+    if ($podState !== null) {
+        // Running programs carry no fix command; stopped ones must point at
+        // supervisorctl inside the pod, never systemctl.
+        $expectNull = $podState[0] === true;
+        $ok = $expectNull
+            ? $podState[2] === null
+            : ($podState[2] === null || str_contains((string) $podState[2], 'supervisorctl restart'));
+        if (!$ok) {
+            return ['outcome' => TestHarness::FAIL, 'message' => 'unexpected mail pod fix cmd: ' . json_encode($podState)];
+        }
     }
 });
 
@@ -214,6 +222,24 @@ $harness->test('services', 'checkServices() flags no running container as failed
         if (in_array($check['name'], $containerBacked, true) && $check['status'] === 'fail') {
             return ['outcome' => TestHarness::FAIL, 'message' => "{$check['name']} failed: {$check['detail']}"];
         }
+    }
+});
+
+$harness->test('services', 'toggled-off mail programs report disabled, no doomed fix', function () use ($stackRunning) {
+    if (!$stackRunning) {
+        return ['outcome' => TestHarness::SKIP, 'message' => 'flowone stack not running on this box'];
+    }
+    $ctl = makeController();
+    $states = callPrivate($ctl, 'dockerStates');
+    if (empty($states['containers']['flowone-mail-1'])) {
+        return ['outcome' => TestHarness::SKIP, 'message' => 'mail pod not running'];
+    }
+    if (isset($states['known']['spamd'])) {
+        return ['outcome' => TestHarness::SKIP, 'message' => 'spamd enabled on this box, toggle path not exercised'];
+    }
+    [$running, $detail, $fixCmd] = callPrivate($ctl, 'dockerServiceState', ['spamd']);
+    if ($running !== false || !str_contains($detail, 'disabled') || $fixCmd !== null) {
+        return ['outcome' => TestHarness::FAIL, 'message' => "unexpected: " . json_encode([$running, $detail, $fixCmd])];
     }
 });
 
@@ -268,7 +294,8 @@ $harness->test('ssl', 'unresolvable apex reports actionable A-record hint', func
     $ctl = makeController();
     callPrivate($ctl, 'checkSSL');
     foreach (readPrivate($ctl, 'checks') as $check) {
-        if ($check['category'] === 'ssl' && str_contains($check['name'], $apex)) {
+        // Exact match: "SSL: panel.devcon3.hu" also CONTAINS the apex string.
+        if ($check['category'] === 'ssl' && $check['name'] === "SSL: {$apex}") {
             if ($check['status'] !== 'warning' || !str_contains($check['detail'], 'A record')) {
                 return ['outcome' => TestHarness::FAIL, 'message' => "apex check wrong: " . json_encode($check)];
             }

@@ -5229,11 +5229,16 @@ SQL;
         $dbHostArg = ($variables['PANEL_DB_HOST'] ?? '') !== ''
             ? ' --db-host=' . escapeshellarg((string) $variables['PANEL_DB_HOST'])
             : '';
+        // Email domain lands in config.local.php so the panel's System Health
+        // SSL/HTTP checks know every hostname this box serves.
+        $emailDomainArg = ($variables['EMAIL_DOMAIN'] ?? '') !== ''
+            ? ' --email-domain=' . escapeshellarg((string) $variables['EMAIL_DOMAIN'])
+            : '';
         $installerCmd = sprintf(
             'cd /tmp/fleet-deploy/panel && chmod +x install.sh && bash install.sh ' .
             '--domain=%s --db-name=%s --db-user=%s --db-pass=%s --db-root-pass=%s ' .
             '--admin-email=%s --admin-pass=%s --agent-token=%s --fleet-url=%s ' .
-            '--email-api-key=%s%s --skip-vhost 2>&1',
+            '--email-api-key=%s%s%s --skip-vhost 2>&1',
             escapeshellarg($variables['PANEL_DOMAIN']),
             escapeshellarg($variables['PANEL_DB_NAME'] ?? 'devc_vps_dash'),
             escapeshellarg($variables['PANEL_DB_USER'] ?? 'vpsadmin'),
@@ -5244,7 +5249,8 @@ SQL;
             escapeshellarg($variables['AGENT_TOKEN']),
             escapeshellarg($fleetUrl),
             escapeshellarg($variables['EMAIL_API_KEY'] ?? ''),
-            $dbHostArg
+            $dbHostArg,
+            $emailDomainArg
         );
 
         // Use extended timeout - installer runs composer, db setup, etc.
